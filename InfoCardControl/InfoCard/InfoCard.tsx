@@ -393,7 +393,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
         gap: 6,
         padding: "6px 10px",
         fontSize: 13,
-        color: theme.brand,
+        color: theme.textPrimary,
         textDecoration: "none",
         whiteSpace: "nowrap",
         borderRadius: 6,
