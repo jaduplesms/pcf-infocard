@@ -33,3 +33,5 @@ debug_*.png
 
 # Dataverse API exports (user-specific)
 EntityDefinitions_*.customization
+*.docx
+CLAUDE.md

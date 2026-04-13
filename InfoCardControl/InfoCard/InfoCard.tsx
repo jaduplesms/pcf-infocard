@@ -99,6 +99,12 @@ const PhoneIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) =
     </svg>
 );
 
+const MobileIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 1C4.4 1 4 1.4 4 2v12c0 0.6 0.4 1 1 1h6c0.6 0 1-0.4 1-1V2c0-0.6-0.4-1-1-1H5zm0 1h6v10H5V2zm2 11h2v1H7v-1z" fill={color} />
+    </svg>
+);
+
 const EmailIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M1 4.5C1 3.7 1.7 3 2.5 3h11C14.3 3 15 3.7 15 4.5v7c0 0.8-0.7 1.5-1.5 1.5h-11C1.7 13 1 12.3 1 11.5v-7zm1.2 0.3v0.4L8 8.5l5.8-3.3v-0.4c0-0.2-0.1-0.3-0.3-0.3h-11c-0.2 0-0.3 0.1-0.3 0.3zm11.6 1.5L8.3 9.4c-0.2 0.1-0.4 0.1-0.6 0L2.2 6.3v5.2c0 0.2 0.1 0.3 0.3 0.3h11c0.2 0 0.3-0.1 0.3-0.3V6.3z" fill={color} />
@@ -380,55 +386,72 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
         cursor: "pointer",
     };
 
+    const chipStyle: React.CSSProperties = {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "6px 10px",
+        fontSize: 13,
+        color: theme.brand,
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+        borderRadius: 6,
+        cursor: "pointer",
+    };
+
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        <div style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 0,
+            borderTop: `1px solid ${theme.borderLight}`,
+            borderBottom: `1px solid ${theme.borderLight}`,
+            padding: "0 6px",
+            margin: "8px 0 0",
+        }}>
             {/* Address */}
             {address && !address.isEmpty && (
-                <div style={rowStyle} title={address.label}>
-                    <span style={iconWrapStyle}><PinIcon size={14} color={theme.textMuted} /></span>
-                    {mapUrl ? (
-                        <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-                            {address.value}
-                        </a>
-                    ) : (
-                        <span>{address.value}</span>
-                    )}
-                </div>
+                mapUrl ? (
+                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={chipStyle} title={address.label}>
+                        <PinIcon size={14} color={theme.brand} />
+                        {address.value}
+                    </a>
+                ) : (
+                    <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
+                        <PinIcon size={14} color={theme.textMuted} />
+                        {address.value}
+                    </span>
+                )
             )}
 
-            {/* Phones */}
+            {/* Phones — phone1 gets landline icon, phone2 gets mobile icon */}
             {phones.map((phone, i) => (
-                <div key={`phone-${i}`} style={rowStyle} title={phone.label}>
-                    <span style={iconWrapStyle}><PhoneIcon size={14} color={theme.textMuted} /></span>
-                    <a href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={linkStyle}>
-                        {phone.value}
-                    </a>
-                </div>
+                <a key={`phone-${i}`} href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={chipStyle} title={phone.label}>
+                    {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
+                    {phone.value}
+                </a>
             ))}
 
             {/* Email */}
             {email && (
-                <div style={rowStyle} title={email.label}>
-                    <span style={iconWrapStyle}><EmailIcon size={14} color={theme.textMuted} /></span>
-                    <a href={`mailto:${email.value}`} style={linkStyle}>
-                        {email.value}
-                    </a>
-                </div>
+                <a href={`mailto:${email.value}`} style={chipStyle} title={email.label}>
+                    <EmailIcon size={14} color={theme.brand} />
+                    {email.value}
+                </a>
             )}
 
             {/* Web */}
             {web && (
-                <div style={rowStyle} title={web.label}>
-                    <span style={iconWrapStyle}><WebIcon size={14} color={theme.textMuted} /></span>
-                    <a
-                        href={web.value.startsWith("http") ? web.value : `https://${web.value}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={linkStyle}
-                    >
-                        {web.value}
-                    </a>
-                </div>
+                <a
+                    href={web.value.startsWith("http") ? web.value : `https://${web.value}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={chipStyle}
+                    title={web.label}
+                >
+                    <WebIcon size={14} color={theme.brand} />
+                    {web.value}
+                </a>
             )}
         </div>
     );
