@@ -30,6 +30,7 @@
       </Addresses>
     </Publisher>
     <RootComponents>
+      <RootComponent type="1" schemaName="bookableresourcebooking" behavior="2" />
       <RootComponent type="66" schemaName="cli_Contoso.InfoCard" behavior="0" />
     </RootComponents>
     <MissingDependencies />
