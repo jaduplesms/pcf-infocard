@@ -49,6 +49,9 @@
     <property name="showVersionInfo" display-name-key="Show Version Info"
               description-key="Show version badge in bottom-right corner"
               of-type="TwoOptions" usage="input" required="false" />
+    <property name="startExpanded" display-name-key="Start Expanded"
+              description-key="Smart layout starts expanded (default: true). Set to false to start collapsed."
+              of-type="TwoOptions" usage="input" required="false" />
 
     <!-- ═══ HEADER (4 properties) ═══ -->
     <property name="titleField" display-name-key="Title"

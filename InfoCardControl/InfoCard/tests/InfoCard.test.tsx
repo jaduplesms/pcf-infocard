@@ -76,6 +76,7 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
     hideEmpty: overrides.hideEmpty ?? true,
     showBorder: overrides.showBorder ?? true,
     showVersion: overrides.showVersion ?? false,
+    startExpanded: overrides.startExpanded ?? true,
     theme: overrides.theme ?? defaultTheme,
     version: overrides.version ?? "2.4.7",
     relatedMappings: overrides.relatedMappings ?? [],

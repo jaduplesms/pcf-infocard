@@ -77,6 +77,7 @@ export interface InfoCardProps {
     hideEmpty: boolean;
     showBorder: boolean;
     showVersion: boolean;
+    startExpanded: boolean;
     theme: InfoCardTheme;
     version: string;
     relatedMappings: RelatedFieldMapping[];
@@ -675,11 +676,12 @@ interface LayoutProps {
     data: InfoCardData;
     theme: InfoCardTheme;
     hideEmpty: boolean;
+    startExpanded?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOpenRecord }) => {
-    const [collapsed, setCollapsed] = React.useState(false);
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, startExpanded = true, onOpenRecord }) => {
+    const [collapsed, setCollapsed] = React.useState(!startExpanded);
 
     const details = filterEmpty(data.details, hideEmpty);
     const gridFields = filterEmpty(data.gridFields, hideEmpty);
@@ -1039,6 +1041,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         data: displayData,
         theme,
         hideEmpty,
+        startExpanded: props.startExpanded,
         onOpenRecord,
     };
 

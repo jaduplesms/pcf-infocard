@@ -39,6 +39,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const hideEmpty = context.parameters.hideEmptyFields?.raw !== false; // default true
         const showBorder = context.parameters.showCardBorder?.raw !== false; // default true
         const showVersion = context.parameters.showVersionInfo?.raw === true; // default false
+        const startExpanded = context.parameters.startExpanded?.raw !== false; // default true
         const relatedMappings = this.detectRelatedFields(context);
         const theme = this.resolveTheme(context);
 
@@ -59,6 +60,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             hideEmpty,
             showBorder,
             showVersion,
+            startExpanded,
             theme,
             version: CONTROL_VERSION,
             relatedMappings,
