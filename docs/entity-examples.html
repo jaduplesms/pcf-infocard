@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoCard v3 — Entity Configuration Examples</title>
+<style>
+  :root {
+    --card-bg: #ffffff;
+    --text-primary: #242424;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border: #e0e0e0;
+    --border-light: #f0f0f0;
+    --brand: #0f6cbd;
+    --brand-light: #e8f1fa;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04);
+    --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --page-bg: #f5f5f5;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: var(--font-family);
+    background: var(--page-bg);
+    color: var(--text-primary);
+    margin: 0; padding: 0; line-height: 1.6;
+  }
+
+  /* ── Banner ──────────────────────────────────────────── */
+  .banner {
+    background: linear-gradient(135deg, #0f6cbd 0%, #1b3a5c 100%);
+    color: #fff; padding: 48px 24px 40px; text-align: center;
+  }
+  .banner h1 { font-size: 32px; font-weight: 700; margin: 0 0 8px; }
+  .banner .subtitle { font-size: 16px; opacity: 0.85; margin: 0; }
+
+  /* ── Container ───────────────────────────────────────── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  /* ── Examples grid ───────────────────────────────────── */
+  .examples-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 32px; margin-top: 24px;
+  }
+  @media (max-width: 740px) { .examples-grid { grid-template-columns: 1fr; } }
+
+  /* ── Example panel ───────────────────────────────────── */
+  .example-panel {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .example-header {
+    padding: 14px 20px; font-size: 15px; font-weight: 600;
+    color: #fff; display: flex; align-items: center; gap: 8px;
+  }
+  .example-header .entity-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .example-header .layout-badge {
+    margin-left: auto; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    background: rgba(255,255,255,0.2); text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Phone frame ─────────────────────────────────────── */
+  .phone-frame {
+    width: 345px; max-width: 100%; margin: 20px auto;
+    border: 2px solid #ccc; border-radius: 24px;
+    padding: 10px; background: #e8e8e8;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  .phone-screen {
+    background: var(--card-bg); border-radius: 14px; overflow: hidden;
+  }
+
+  /* ── InfoCard rendering ──────────────────────────────── */
+  .ic { padding: 14px; font-family: var(--font-family); }
+  .ic-title {
+    font-size: 16px; font-weight: 600; color: var(--brand);
+    line-height: 22px; cursor: pointer;
+  }
+  .ic-subtitle {
+    font-size: 13px; color: var(--text-secondary);
+    line-height: 18px; margin-top: 2px;
+  }
+  .ic-dot { margin: 0 6px; color: var(--text-muted); }
+  .ic-contact {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 6px; margin: 8px 0 0;
+  }
+  .ic-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; font-size: 13px; color: var(--brand);
+    text-decoration: none; white-space: nowrap; border-radius: 6px;
+    cursor: pointer;
+  }
+  .ic-detail {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 4px 0; font-size: 13px; color: var(--text-secondary);
+    line-height: 18px;
+  }
+  .ic-detail-icon { flex-shrink: 0; margin-top: 2px; }
+  .ic-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+    margin-top: 8px;
+  }
+  .ic-grid-label {
+    font-size: 11px; color: var(--text-muted);
+    line-height: 14px; margin-bottom: 2px;
+  }
+  .ic-grid-value {
+    font-size: 13px; color: var(--text-primary);
+    line-height: 18px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .ic-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ic-tag {
+    display: inline-block; padding: 2px 8px; font-size: 11px;
+    font-weight: 500; color: var(--brand); background: var(--brand-light);
+    border-radius: 10px; line-height: 16px; white-space: nowrap;
+  }
+
+  /* ── Compact layout overrides ────────────────────────── */
+  .ic-compact .ic-section-header {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 4px; margin-top: 8px;
+  }
+  .ic-compact .ic-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 2px 0; font-size: 12px; gap: 8px;
+  }
+  .ic-compact .ic-row-label { color: var(--text-muted); }
+  .ic-compact .ic-row-value { color: var(--text-primary); text-align: right; }
+  .ic-compact .ic-row-link { color: var(--brand); text-align: right; text-decoration: none; }
+
+  /* ── Config table ────────────────────────────────────── */
+  .config-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    margin: 0;
+  }
+  .config-table th {
+    text-align: left; padding: 6px 12px; font-weight: 600;
+    background: #f7f7f7; color: var(--text-secondary);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+    border-bottom: 1px solid var(--border);
+  }
+  .config-table td {
+    padding: 5px 12px; border-bottom: 1px solid var(--border-light);
+    vertical-align: top;
+  }
+  .config-table code {
+    font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 11px;
+    background: #f0f0f0; padding: 1px 4px; border-radius: 3px;
+  }
+  .config-table .at-val {
+    color: #e65100; font-weight: 500;
+  }
+  .config-table .prop-name { font-weight: 600; color: var(--text-primary); }
+
+  .config-wrap { padding: 0; }
+
+  /* ── SVG helpers ─────────────────────────────────────── */
+  .svg-phone { display: inline-block; vertical-align: middle; }
+
+  /* ── Section title ───────────────────────────────────── */
+  .section-title {
+    font-size: 22px; font-weight: 600; color: var(--brand);
+    margin: 0 0 8px;
+  }
+  .section-desc {
+    font-size: 14px; color: var(--text-secondary); margin: 0 0 24px;
+  }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .footer {
+    text-align: center; padding: 24px 0; color: var(--text-muted);
+    font-size: 12px; border-top: 1px solid var(--border-light);
+    margin-top: 40px;
+  }
+  .footer a { color: var(--brand); text-decoration: none; }
+
+  /* ── Chevron ─────────────────────────────────────────── */
+  .ic-chevron {
+    cursor: pointer; padding: 4px; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Banner -->
+<div class="banner">
+  <h1>InfoCard v3</h1>
+  <p class="subtitle">Entity Configuration Examples</p>
+</div>
+
+<div class="container">
+
+<h2 class="section-title">Real-World Entity Configurations</h2>
+<p class="section-desc">
+  Four common Dynamics 365 entities, each showing the InfoCard with realistic data
+  and the exact property configuration that produces it.
+</p>
+
+<div class="examples-grid">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 1. BOOKABLE RESOURCE BOOKING                                        -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="example-panel">
+  <div class="example-header" style="background: linear-gradient(135deg, #0f6cbd, #094578);">
+    <div class="entity-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 1v1H3.5C2.7 2 2 2.7 2 3.5v10C2 14.3 2.7 15 3.5 15h9c0.8 0 1.5-0.7 1.5-1.5v-10C14 2.7 13.3 2 12.5 2H11V1h-1v1H6V1H5zM3 5h10v8.5c0 0.3-0.2 0.5-0.5 0.5h-9C3.2 14 3 13.8 3 13.5V5zm1 1.5v2h2v-2H4zm3 0v2h2v-2H7zm3 0v2h2v-2h-2zm-6 3v2h2v-2H4zm3 0v2h2v-2H7z" fill="#fff"/></svg>
+    </div>
+    Bookable Resource Booking
+    <span class="layout-badge">Smart</span>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="ic">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <div class="ic-title">WO-10047</div>
+            <div class="ic-subtitle">
+              Sarah Chen<span class="ic-dot">&middot;</span>Contoso Ltd
+            </div>
+          </div>
+          <div class="ic-chevron">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="#8a8a8a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="ic-contact">
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.6 1.5C3.2 1.1 2.5 1.1 2.1 1.5L1.2 2.4C0.5 3.1 0.3 4.1 0.7 5c1.5 3.3 3.5 6 6.3 8.3 0.9 0.6 1.9 0.4 2.6-0.3l0.9-0.9c0.4-0.4 0.4-1.1 0-1.5l-2-2c-0.4-0.4-1-0.4-1.4 0L6.4 9.3c-0.1 0.1-0.3 0.1-0.4 0C4.5 8.1 3.4 6.9 2.7 5.5c-0.1-0.1-0.1-0.3 0-0.4l0.9-0.9c0.4-0.4 0.4-1 0-1.4L3.6 1.5z" fill="#0f6cbd"/></svg>
+            +1 (425) 555-0142
+          </span>
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 4.1 8.3 4.7 9 0.2 0.2 0.4 0.2 0.6 0C8.9 14.3 13 9.5 13 6c0-2.8-2.2-5-5-5zm0 7c-1.1 0-2-0.9-2-2s0.9-2 2-2 2 0.9 2 2-0.9 2-2 2z" fill="#0f6cbd"/></svg>
+            1 Microsoft Way, Redmond
+          </span>
+        </div>
+        <div class="ic-grid">
+          <div><div class="ic-grid-label">Start Time</div><div class="ic-grid-value">14 Apr 09:00</div></div>
+          <div><div class="ic-grid-label">End Time</div><div class="ic-grid-value">14 Apr 12:00</div></div>
+          <div><div class="ic-grid-label">Duration</div><div class="ic-grid-value">3 hrs</div></div>
+        </div>
+        <div class="ic-tags">
+          <span class="ic-tag">Scheduled</span>
+          <span class="ic-tag">HVAC Repair</span>
+          <span class="ic-tag">High</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-wrap">
+    <table class="config-table">
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">layout</td><td><code>smart</code></td></tr>
+        <tr><td class="prop-name">titleField</td><td><code>msdyn_workorder</code> (lookup &rarr; WO name)</td></tr>
+        <tr><td class="prop-name">subtitleField1</td><td><code>resource</code></td></tr>
+        <tr><td class="prop-name">subtitleField2</td><td><span class="at-val">@msdyn_serviceaccount</span></td></tr>
+        <tr><td class="prop-name">phoneField1</td><td><span class="at-val">@telephone1</span> (from WO &rarr; service account)</td></tr>
+        <tr><td class="prop-name">addressField</td><td><span class="at-val">@msdyn_address</span> (from WO)</td></tr>
+        <tr><td class="prop-name">latitudeField</td><td><code>msdyn_latitude</code></td></tr>
+        <tr><td class="prop-name">longitudeField</td><td><code>msdyn_longitude</code></td></tr>
+        <tr><td class="prop-name">gridField1</td><td><code>starttime</code></td></tr>
+        <tr><td class="prop-name">gridField2</td><td><code>endtime</code></td></tr>
+        <tr><td class="prop-name">gridField3</td><td><code>duration</code></td></tr>
+        <tr><td class="prop-name">tagField1</td><td><code>bookingstatus</code></td></tr>
+        <tr><td class="prop-name">tagField2</td><td><span class="at-val">@msdyn_primaryincidenttype</span></td></tr>
+        <tr><td class="prop-name">tagField3</td><td><span class="at-val">@msdyn_priority</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 2. ACCOUNT                                                          -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="example-panel">
+  <div class="example-header" style="background: linear-gradient(135deg, #498205, #2d5200);">
+    <div class="entity-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v2H2V3zm0 3h12v7H2V6zm2 2v1h3V8H4zm5 0v1h3V8H9zm-5 2v1h3v-1H4z" fill="#fff"/></svg>
+    </div>
+    Account
+    <span class="layout-badge">Smart</span>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="ic">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <div class="ic-title" style="color: var(--text-primary); cursor: default;">Contoso Ltd</div>
+            <div class="ic-subtitle">
+              James Wilson<span class="ic-dot">&middot;</span>Northwest
+            </div>
+          </div>
+          <div class="ic-chevron">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="#8a8a8a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="ic-contact">
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.6 1.5C3.2 1.1 2.5 1.1 2.1 1.5L1.2 2.4C0.5 3.1 0.3 4.1 0.7 5c1.5 3.3 3.5 6 6.3 8.3 0.9 0.6 1.9 0.4 2.6-0.3l0.9-0.9c0.4-0.4 0.4-1.1 0-1.5l-2-2c-0.4-0.4-1-0.4-1.4 0L6.4 9.3c-0.1 0.1-0.3 0.1-0.4 0C4.5 8.1 3.4 6.9 2.7 5.5c-0.1-0.1-0.1-0.3 0-0.4l0.9-0.9c0.4-0.4 0.4-1 0-1.4L3.6 1.5z" fill="#0f6cbd"/></svg>
+            +1 (206) 555-0198
+          </span>
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 4.5C1 3.7 1.7 3 2.5 3h11C14.3 3 15 3.7 15 4.5v7c0 0.8-0.7 1.5-1.5 1.5h-11C1.7 13 1 12.3 1 11.5v-7zm1.2 0.3v0.4L8 8.5l5.8-3.3v-0.4c0-0.2-0.1-0.3-0.3-0.3h-11c-0.2 0-0.3 0.1-0.3 0.3zm11.6 1.5L8.3 9.4c-0.2 0.1-0.4 0.1-0.6 0L2.2 6.3v5.2c0 0.2 0.1 0.3 0.3 0.3h11c0.2 0 0.3-0.1 0.3-0.3V6.3z" fill="#0f6cbd"/></svg>
+            info@contoso.com
+          </span>
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.5 2.3C5.6 3.5 5 5.1 4.8 7H2.1a6 6 0 014.4-4.7zM2.1 9h2.7c0.2 1.9 0.8 3.5 1.7 4.7A6 6 0 012.1 9zm4.7 4.7c-1.1-1.1-1.8-2.8-2-4.7h6.4c-0.2 1.9-0.9 3.6-2 4.7-0.4 0.2-0.8 0.3-1.2 0.3s-0.8-0.1-1.2-0.3zM11.2 7c-0.2-1.9-0.9-3.5-2-4.7 0.4-0.2 0.8-0.3 1.2-0.3 2.4 0 4.4 1.5 5.2 3.6A6 6 0 0013.9 7h-2.7zm-6.4 0c0.2-1.9 0.9-3.6 2-4.7C7.2 2.1 7.6 2 8 2s0.8 0.1 1.2 0.3c1.1 1.1 1.8 2.8 2 4.7H4.8zm4.7 2h2.6a6 6 0 01-4.4 4.7c1-1.2 1.6-2.8 1.8-4.7z" fill="#0f6cbd"/></svg>
+            www.contoso.com
+          </span>
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 4.1 8.3 4.7 9 0.2 0.2 0.4 0.2 0.6 0C8.9 14.3 13 9.5 13 6c0-2.8-2.2-5-5-5zm0 7c-1.1 0-2-0.9-2-2s0.9-2 2-2 2 0.9 2 2-0.9 2-2 2z" fill="#0f6cbd"/></svg>
+            456 Oak Ave, Seattle
+          </span>
+        </div>
+        <div class="ic-grid">
+          <div><div class="ic-grid-label">Annual Revenue</div><div class="ic-grid-value">$4,200,000</div></div>
+          <div><div class="ic-grid-label">Employees</div><div class="ic-grid-value">245</div></div>
+        </div>
+        <div class="ic-tags">
+          <span class="ic-tag">Active</span>
+          <span class="ic-tag">Manufacturing</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-wrap">
+    <table class="config-table">
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">layout</td><td><code>smart</code></td></tr>
+        <tr><td class="prop-name">titleField</td><td><code>name</code></td></tr>
+        <tr><td class="prop-name">subtitleField1</td><td><code>primarycontactid</code> (lookup &rarr; contact name)</td></tr>
+        <tr><td class="prop-name">subtitleField2</td><td><code>territoryid</code></td></tr>
+        <tr><td class="prop-name">phoneField1</td><td><code>telephone1</code></td></tr>
+        <tr><td class="prop-name">emailField</td><td><code>emailaddress1</code></td></tr>
+        <tr><td class="prop-name">webField</td><td><code>websiteurl</code></td></tr>
+        <tr><td class="prop-name">addressField</td><td><code>address1_composite</code></td></tr>
+        <tr><td class="prop-name">gridField1</td><td><code>revenue</code></td></tr>
+        <tr><td class="prop-name">gridField2</td><td><code>numberofemployees</code></td></tr>
+        <tr><td class="prop-name">tagField1</td><td><code>statecode</code></td></tr>
+        <tr><td class="prop-name">tagField2</td><td><code>industrycode</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 3. WORK ORDER                                                       -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="example-panel">
+  <div class="example-header" style="background: linear-gradient(135deg, #8764b8, #5c3d8f);">
+    <div class="entity-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 1h8v2h2v12H2V3h2V1zm2 2h4V2H6v1zM4 5v2h8V5H4zm0 3v2h8V8H4zm0 3v2h5v-2H4z" fill="#fff"/></svg>
+    </div>
+    Work Order
+    <span class="layout-badge">Contact</span>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="ic">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <div class="ic-title" style="color: var(--text-primary); cursor: default;">WO-10047</div>
+            <div class="ic-subtitle">
+              Contoso Ltd<span class="ic-dot">&middot;</span>Preventive Maintenance
+            </div>
+          </div>
+        </div>
+        <div class="ic-contact">
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.6 1.5C3.2 1.1 2.5 1.1 2.1 1.5L1.2 2.4C0.5 3.1 0.3 4.1 0.7 5c1.5 3.3 3.5 6 6.3 8.3 0.9 0.6 1.9 0.4 2.6-0.3l0.9-0.9c0.4-0.4 0.4-1.1 0-1.5l-2-2c-0.4-0.4-1-0.4-1.4 0L6.4 9.3c-0.1 0.1-0.3 0.1-0.4 0C4.5 8.1 3.4 6.9 2.7 5.5c-0.1-0.1-0.1-0.3 0-0.4l0.9-0.9c0.4-0.4 0.4-1 0-1.4L3.6 1.5z" fill="#0f6cbd"/></svg>
+            +1 (425) 555-0142
+          </span>
+          <span class="ic-chip">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 4.1 8.3 4.7 9 0.2 0.2 0.4 0.2 0.6 0C8.9 14.3 13 9.5 13 6c0-2.8-2.2-5-5-5zm0 7c-1.1 0-2-0.9-2-2s0.9-2 2-2 2 0.9 2 2-0.9 2-2 2z" fill="#0f6cbd"/></svg>
+            1 Microsoft Way, Redmond WA 98052
+          </span>
+        </div>
+
+        <!-- Details -->
+        <div style="margin-top: 8px;">
+          <div class="ic-detail">
+            <span class="ic-detail-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a0.8 0.8 0 110 1.6A0.8 0.8 0 018 4zm1 8H7v-1h0.5V7.5H7v-1h1.5V11H9v1z" fill="#8a8a8a"/></svg>
+            </span>
+            <span style="white-space: pre-wrap; word-break: break-word;">Quarterly HVAC inspection and filter replacement for all 3rd-floor units.</span>
+          </div>
+          <div class="ic-detail">
+            <span class="ic-detail-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a0.8 0.8 0 110 1.6A0.8 0.8 0 018 4zm1 8H7v-1h0.5V7.5H7v-1h1.5V11H9v1z" fill="#8a8a8a"/></svg>
+            </span>
+            <span style="white-space: pre-wrap; word-break: break-word;">Check refrigerant levels. Replace filters part# HV-4420.</span>
+          </div>
+        </div>
+
+        <div class="ic-grid">
+          <div><div class="ic-grid-label">System Status</div><div class="ic-grid-value">Open - Unscheduled</div></div>
+          <div><div class="ic-grid-label">Substatus</div><div class="ic-grid-value">Pending Parts</div></div>
+        </div>
+        <div class="ic-tags">
+          <span class="ic-tag">Open</span>
+          <span class="ic-tag">HVAC Repair</span>
+          <span class="ic-tag">High</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-wrap">
+    <table class="config-table">
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">layout</td><td><code>contact</code></td></tr>
+        <tr><td class="prop-name">titleField</td><td><code>msdyn_name</code></td></tr>
+        <tr><td class="prop-name">subtitleField1</td><td><code>msdyn_serviceaccount</code> (lookup &rarr; account name)</td></tr>
+        <tr><td class="prop-name">subtitleField2</td><td><code>msdyn_workordertype</code></td></tr>
+        <tr><td class="prop-name">phoneField1</td><td><span class="at-val">@telephone1</span> (from service account)</td></tr>
+        <tr><td class="prop-name">addressField</td><td><code>msdyn_address</code></td></tr>
+        <tr><td class="prop-name">latitudeField</td><td><code>msdyn_latitude</code></td></tr>
+        <tr><td class="prop-name">longitudeField</td><td><code>msdyn_longitude</code></td></tr>
+        <tr><td class="prop-name">detailField1</td><td><code>msdyn_workordersummary</code></td></tr>
+        <tr><td class="prop-name">detailField2</td><td><code>msdyn_instructions</code></td></tr>
+        <tr><td class="prop-name">gridField1</td><td><code>msdyn_systemstatus</code></td></tr>
+        <tr><td class="prop-name">gridField2</td><td><code>msdyn_substatus</code></td></tr>
+        <tr><td class="prop-name">tagField1</td><td><code>statecode</code></td></tr>
+        <tr><td class="prop-name">tagField2</td><td><code>msdyn_primaryincidenttype</code></td></tr>
+        <tr><td class="prop-name">tagField3</td><td><code>msdyn_priority</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 4. CUSTOMER ASSET                                                   -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="example-panel">
+  <div class="example-header" style="background: linear-gradient(135deg, #e43ba6, #a52773);">
+    <div class="entity-icon">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M7.1 1h1.8l0.3 1.8c0.4 0.1 0.8 0.3 1.2 0.6l1.7-0.7 0.9 1.6-1.4 1.1c0.1 0.4 0.1 0.8 0 1.2l1.4 1.1-0.9 1.6-1.7-0.7c-0.4 0.3-0.8 0.5-1.2 0.6L8.9 15H7.1l-0.3-1.8c-0.4-0.1-0.8-0.3-1.2-0.6l-1.7 0.7-0.9-1.6 1.4-1.1c-0.1-0.4-0.1-0.8 0-1.2L3 8.3l0.9-1.6 1.7 0.7c0.4-0.3 0.8-0.5 1.2-0.6L7.1 1zM8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" fill="#fff"/></svg>
+    </div>
+    Customer Asset
+    <span class="layout-badge">Compact</span>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="ic ic-compact">
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex: 1; min-width: 0;">
+            <div class="ic-title" style="color: var(--text-primary); cursor: default;">HVAC-3F-Unit-07</div>
+            <div class="ic-subtitle">
+              Carrier 50XC<span class="ic-dot">&middot;</span>Contoso Ltd
+            </div>
+          </div>
+        </div>
+
+        <!-- Details section (compact) -->
+        <div class="ic-section-header">Details</div>
+        <div class="ic-row">
+          <span class="ic-row-label">Device ID</span>
+          <span class="ic-row-value">DEV-2024-0847</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-row-label">Serial Number</span>
+          <span class="ic-row-value">SN-XC50-447291</span>
+        </div>
+
+        <!-- Grid section (compact) -->
+        <div class="ic-section-header">Status</div>
+        <div class="ic-row">
+          <span class="ic-row-label">Status</span>
+          <span class="ic-row-value">Active</span>
+        </div>
+        <div class="ic-row">
+          <span class="ic-row-label">Last Service</span>
+          <span class="ic-row-value">12 Jan 2026</span>
+        </div>
+
+        <!-- Tags -->
+        <div class="ic-tags" style="margin-top: 10px;">
+          <span class="ic-tag">Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-wrap">
+    <table class="config-table">
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td class="prop-name">layout</td><td><code>compact</code></td></tr>
+        <tr><td class="prop-name">titleField</td><td><code>msdyn_name</code></td></tr>
+        <tr><td class="prop-name">subtitleField1</td><td><code>msdyn_product</code> (lookup &rarr; product name)</td></tr>
+        <tr><td class="prop-name">subtitleField2</td><td><code>msdyn_account</code> (lookup &rarr; account name)</td></tr>
+        <tr><td class="prop-name">detailField1</td><td><code>msdyn_deviceid</code></td></tr>
+        <tr><td class="prop-name">detailField2</td><td><code>msdyn_serialnumber</code> (custom field example)</td></tr>
+        <tr><td class="prop-name">gridField1</td><td><code>statecode</code></td></tr>
+        <tr><td class="prop-name">gridField2</td><td><code>msdyn_lastservicedate</code> (custom field example)</td></tr>
+        <tr><td class="prop-name">tagField1</td><td><code>statecode</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /examples-grid -->
+
+<!-- ── Notes ───────────────────────────────────────────── -->
+<div style="margin-top: 32px; padding: 16px 20px; background: var(--brand-light); border-radius: var(--radius); font-size: 13px;">
+  <strong style="color: var(--brand);">Configuration Notes</strong>
+  <ul style="margin: 8px 0 0; padding-left: 20px; color: var(--text-secondary);">
+    <li>Values prefixed with <code style="color: #e65100;">@</code> are <strong>related field lookups</strong> &mdash; data is fetched at runtime via WebAPI from the entity referenced by the <code>titleField</code> lookup.</li>
+    <li>All other values are <strong>direct column bindings</strong> on the form entity itself.</li>
+    <li>Lookup columns (e.g., <code>primarycontactid</code>, <code>msdyn_serviceaccount</code>) automatically display the lookup display name.</li>
+    <li>OptionSet/Choice columns (e.g., <code>statecode</code>, <code>industrycode</code>) display the label text, not the numeric value.</li>
+    <li>The <strong>Compact</strong> layout uses section headers and key-value rows instead of icons and chips.</li>
+  </ul>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  InfoCard v3.0.0 &mdash; PCF Virtual Control &mdash; Contoso Namespace<br>
+  See also: <a href="setup-guide.html">Setup Guide</a> &middot;
+  <a href="layout-comparison.html">Layout Comparison</a>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoCard v3 — Setup Guide</title>
+<style>
+  :root {
+    --card-bg: #ffffff;
+    --text-primary: #242424;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border: #e0e0e0;
+    --border-light: #f0f0f0;
+    --brand: #0f6cbd;
+    --brand-light: #e8f1fa;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04);
+    --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --page-bg: #f5f5f5;
+    --section-header-color: #0f6cbd;
+    --zone-header: #2b88d8;
+    --zone-contact: #e8782a;
+    --zone-details: #498205;
+    --zone-grid: #8764b8;
+    --zone-tags: #e43ba6;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: var(--font-family);
+    background: var(--page-bg);
+    color: var(--text-primary);
+    margin: 0; padding: 0;
+    line-height: 1.6;
+  }
+
+  /* ── Top Banner ─────────────────────────────────────── */
+  .banner {
+    background: linear-gradient(135deg, #0f6cbd 0%, #1b3a5c 100%);
+    color: #fff; padding: 48px 24px 40px; text-align: center;
+  }
+  .banner h1 { font-size: 32px; font-weight: 700; margin: 0 0 8px; }
+  .banner .subtitle { font-size: 16px; opacity: 0.85; margin: 0; }
+  .banner .version {
+    display: inline-block; margin-top: 12px; padding: 3px 12px;
+    background: rgba(255,255,255,0.15); border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* ── Container ──────────────────────────────────────── */
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  /* ── Section ────────────────────────────────────────── */
+  .section { margin-bottom: 40px; }
+  .section-title {
+    font-size: 22px; font-weight: 600; color: var(--section-header-color);
+    margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--brand-light);
+  }
+  .section-title .num {
+    display: inline-block; width: 30px; height: 30px;
+    background: var(--brand); color: #fff; border-radius: 50%;
+    text-align: center; line-height: 30px; font-size: 14px;
+    margin-right: 10px; vertical-align: middle;
+  }
+
+  /* ── Card ────────────────────────────────────────────── */
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 20px; margin-bottom: 16px;
+  }
+
+  /* ── Before/After ───────────────────────────────────── */
+  .before-after {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-top: 16px;
+  }
+  @media (max-width: 700px) { .before-after { grid-template-columns: 1fr; } }
+  .before-after .panel { border-radius: var(--radius); overflow: hidden; }
+  .before-after .panel-label {
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .before-after .before .panel-label { background: #fde7e9; color: #a80000; }
+  .before-after .after .panel-label { background: #dff6dd; color: #0b6a0b; }
+  .before-after .panel-body { padding: 16px; background: var(--card-bg); border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); }
+
+  /* ── Form fields mock ───────────────────────────────── */
+  .form-field { margin-bottom: 10px; }
+  .form-field .lbl { font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+  .form-field .val {
+    padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: 4px; background: #fafafa; font-size: 13px;
+    color: var(--text-primary);
+  }
+
+  /* ── Phone frame ────────────────────────────────────── */
+  .phone-frame {
+    width: 375px; max-width: 100%; margin: 0 auto;
+    border: 2px solid #ccc; border-radius: 24px;
+    padding: 12px; background: var(--page-bg);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  .phone-screen {
+    background: var(--card-bg); border-radius: 12px; overflow: hidden;
+  }
+
+  /* ── Info Card mock ─────────────────────────────────── */
+  .ic-card {
+    padding: 14px; font-family: var(--font-family);
+  }
+  .ic-title { font-size: 16px; font-weight: 600; color: var(--brand); line-height: 22px; cursor: pointer; }
+  .ic-subtitle { font-size: 13px; color: var(--text-secondary); line-height: 18px; margin-top: 2px; }
+  .ic-subtitle .dot { margin: 0 6px; color: var(--text-muted); }
+  .ic-contact {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 6px; margin: 8px 0 0;
+  }
+  .ic-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 10px; font-size: 13px; color: var(--brand);
+    text-decoration: none; white-space: nowrap; border-radius: 6px;
+    cursor: pointer;
+  }
+  .ic-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+    margin-top: 8px;
+  }
+  .ic-grid-label { font-size: 11px; color: var(--text-muted); line-height: 14px; margin-bottom: 2px; }
+  .ic-grid-value { font-size: 13px; color: var(--text-primary); line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ic-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .ic-tag {
+    display: inline-block; padding: 2px 8px; font-size: 11px;
+    font-weight: 500; color: var(--brand); background: var(--brand-light);
+    border-radius: 10px; line-height: 16px; white-space: nowrap;
+  }
+  .ic-detail {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 4px 0; font-size: 13px; color: var(--text-secondary); line-height: 18px;
+  }
+  .ic-detail-icon { flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+
+  /* ── Slot architecture zones ────────────────────────── */
+  .zone-card {
+    padding: 14px; font-family: var(--font-family);
+    position: relative; border-radius: var(--radius);
+    background: var(--card-bg); border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .zone {
+    border: 2px dashed; border-radius: 6px; padding: 10px; margin-bottom: 8px;
+    position: relative;
+  }
+  .zone:last-child { margin-bottom: 0; }
+  .zone-label {
+    position: absolute; top: -10px; left: 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 0 6px; border-radius: 3px;
+  }
+  .zone-header  { border-color: var(--zone-header); }
+  .zone-header .zone-label { background: var(--zone-header); color: #fff; }
+  .zone-contact { border-color: var(--zone-contact); }
+  .zone-contact .zone-label { background: var(--zone-contact); color: #fff; }
+  .zone-details { border-color: var(--zone-details); }
+  .zone-details .zone-label { background: var(--zone-details); color: #fff; }
+  .zone-grid    { border-color: var(--zone-grid); }
+  .zone-grid .zone-label { background: var(--zone-grid); color: #fff; }
+  .zone-tags    { border-color: var(--zone-tags); }
+  .zone-tags .zone-label { background: var(--zone-tags); color: #fff; }
+
+  .zone-prop {
+    font-size: 12px; color: var(--text-secondary); padding: 2px 0;
+  }
+  .zone-prop code {
+    font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 11px;
+    background: #f0f0f0; padding: 1px 5px; border-radius: 3px;
+    color: var(--text-primary);
+  }
+
+  /* ── Property table ─────────────────────────────────── */
+  .prop-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+    background: var(--card-bg); border-radius: var(--radius);
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .prop-table thead th {
+    background: var(--brand-light); color: var(--brand);
+    padding: 10px 14px; text-align: left; font-weight: 600;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .prop-table tbody td {
+    padding: 8px 14px; border-top: 1px solid var(--border-light);
+    vertical-align: top;
+  }
+  .prop-table tbody tr:hover { background: #fafafa; }
+  .prop-table code {
+    font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px;
+    background: #f0f0f0; padding: 1px 5px; border-radius: 3px;
+  }
+  .prop-group-header td {
+    background: #f7f7f7; font-weight: 600; font-size: 12px;
+    color: var(--text-secondary); text-transform: uppercase;
+    letter-spacing: 0.3px; padding: 8px 14px !important;
+  }
+  .prop-group-header td::before {
+    content: ''; display: inline-block; width: 4px; height: 14px;
+    border-radius: 2px; margin-right: 8px; vertical-align: middle;
+  }
+  .prop-group-header.header td::before { background: var(--zone-header); }
+  .prop-group-header.contact td::before { background: var(--zone-contact); }
+  .prop-group-header.address td::before { background: #107c10; }
+  .prop-group-header.details td::before { background: var(--zone-details); }
+  .prop-group-header.grid td::before { background: var(--zone-grid); }
+  .prop-group-header.tags td::before { background: var(--zone-tags); }
+  .prop-group-header.config td::before { background: var(--text-muted); }
+
+  /* ── Code block ─────────────────────────────────────── */
+  .code-block {
+    background: #1e1e1e; color: #d4d4d4; padding: 16px 20px;
+    border-radius: var(--radius); font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px; line-height: 1.6; overflow-x: auto;
+    margin: 12px 0; white-space: pre;
+  }
+  .code-block .kw { color: #569cd6; }
+  .code-block .str { color: #ce9178; }
+  .code-block .cmt { color: #6a9955; }
+  .code-block .fn { color: #dcdcaa; }
+
+  /* ── Inline code ────────────────────────────────────── */
+  code {
+    font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px;
+    background: #f0f0f0; padding: 1px 5px; border-radius: 3px;
+    color: var(--text-primary);
+  }
+
+  /* ── Related fields diagram ─────────────────────────── */
+  .related-diagram {
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap; padding: 16px; background: var(--card-bg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    margin: 12px 0;
+  }
+  .entity-box {
+    padding: 12px 20px; border-radius: var(--radius);
+    border: 2px solid; text-align: center; font-size: 13px; min-width: 120px;
+  }
+  .entity-box .entity-name { font-weight: 600; margin-bottom: 4px; }
+  .entity-box .entity-field { font-size: 12px; color: var(--text-secondary); }
+  .arrow { font-size: 20px; color: var(--text-muted); }
+
+  /* ── Tip box ────────────────────────────────────────── */
+  .tip-box {
+    background: #fff8e1; border-left: 4px solid #f9a825;
+    padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 12px 0; font-size: 13px;
+  }
+  .tip-box .tip-title { font-weight: 600; color: #e65100; margin-bottom: 4px; }
+
+  .info-box {
+    background: var(--brand-light); border-left: 4px solid var(--brand);
+    padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 12px 0; font-size: 13px;
+  }
+  .info-box .info-title { font-weight: 600; color: var(--brand); margin-bottom: 4px; }
+
+  /* ── Legend ──────────────────────────────────────────── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; font-size: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .legend-swatch {
+    width: 14px; height: 14px; border-radius: 3px;
+  }
+
+  /* ── Responsive ─────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .container { padding: 16px 12px 40px; }
+    .banner { padding: 32px 16px 28px; }
+    .banner h1 { font-size: 24px; }
+    .phone-frame { width: 100%; }
+    .prop-table { font-size: 12px; }
+    .prop-table thead th, .prop-table tbody td { padding: 6px 8px; }
+  }
+
+  /* ── Steps list ─────────────────────────────────────── */
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li {
+    counter-increment: step; position: relative;
+    padding-left: 40px; margin-bottom: 16px; font-size: 14px;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; background: var(--brand);
+    color: #fff; border-radius: 50%; text-align: center;
+    line-height: 28px; font-size: 13px; font-weight: 600;
+  }
+  .steps li strong { color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- BANNER                                                              -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="banner">
+  <h1>InfoCard v3</h1>
+  <p class="subtitle">Setup &amp; Configuration Guide</p>
+  <span class="version">PCF Virtual Control &mdash; Fluent UI 9</span>
+</div>
+
+<div class="container">
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 1. OVERVIEW                                                         -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">1</span> Overview</h2>
+  <p>
+    <strong>InfoCard</strong> is a compact, read-only PCF virtual control for model-driven Power Apps.
+    It replaces the standard multi-field form layout with a single, slot-based card that consolidates
+    header, contact, detail, grid, and tag information into one component.
+  </p>
+  <p>
+    It is designed for <strong>mobile-first</strong> scenarios where screen real estate is limited
+    &mdash; Field Service technicians on phones, tablets in the field, or embedded quick-view forms.
+    Related entity data is fetched automatically using the <code>@fieldName</code> convention,
+    eliminating the need for multiple form lookups.
+  </p>
+
+  <h3 style="margin-top: 24px; font-size: 16px; color: var(--text-secondary);">Before vs. After</h3>
+  <div class="before-after">
+    <div class="panel before">
+      <div class="panel-label">Before &mdash; Native Form Fields</div>
+      <div class="panel-body">
+        <div class="form-field"><div class="lbl">Work Order</div><div class="val">WO-10047</div></div>
+        <div class="form-field"><div class="lbl">Resource</div><div class="val">Sarah Chen</div></div>
+        <div class="form-field"><div class="lbl">Booking Status</div><div class="val">Scheduled</div></div>
+        <div class="form-field"><div class="lbl">Service Account</div><div class="val">Contoso Ltd</div></div>
+        <div class="form-field"><div class="lbl">Phone</div><div class="val" style="color:var(--text-muted);">&mdash;</div></div>
+        <div class="form-field"><div class="lbl">Start Time</div><div class="val">14 Apr 09:00</div></div>
+        <div class="form-field"><div class="lbl">End Time</div><div class="val">14 Apr 12:00</div></div>
+        <div class="form-field"><div class="lbl">Duration</div><div class="val">3 hrs</div></div>
+        <div class="form-field"><div class="lbl">Incident Type</div><div class="val">HVAC Repair</div></div>
+        <div class="form-field"><div class="lbl">Priority</div><div class="val">High</div></div>
+        <p style="font-size: 12px; color: #a80000; margin: 8px 0 0;">10 fields &middot; requires scrolling &middot; no tap-to-call &middot; no map links</p>
+      </div>
+    </div>
+    <div class="panel after">
+      <div class="panel-label">After &mdash; InfoCard</div>
+      <div class="panel-body" style="padding: 0;">
+        <div class="ic-card">
+          <div class="ic-title">WO-10047</div>
+          <div class="ic-subtitle">
+            Sarah Chen<span class="dot">&middot;</span>Contoso Ltd
+          </div>
+          <div class="ic-contact">
+            <span class="ic-chip">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.6 1.5C3.2 1.1 2.5 1.1 2.1 1.5L1.2 2.4C0.5 3.1 0.3 4.1 0.7 5c1.5 3.3 3.5 6 6.3 8.3 0.9 0.6 1.9 0.4 2.6-0.3l0.9-0.9c0.4-0.4 0.4-1.1 0-1.5l-2-2c-0.4-0.4-1-0.4-1.4 0L6.4 9.3c-0.1 0.1-0.3 0.1-0.4 0C4.5 8.1 3.4 6.9 2.7 5.5c-0.1-0.1-0.1-0.3 0-0.4l0.9-0.9c0.4-0.4 0.4-1 0-1.4L3.6 1.5z" fill="#0f6cbd"/></svg>
+              +1 (425) 555-0142
+            </span>
+            <span class="ic-chip">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 4.1 8.3 4.7 9 0.2 0.2 0.4 0.2 0.6 0C8.9 14.3 13 9.5 13 6c0-2.8-2.2-5-5-5zm0 7c-1.1 0-2-0.9-2-2s0.9-2 2-2 2 0.9 2 2-0.9 2-2 2z" fill="#0f6cbd"/></svg>
+              1 Microsoft Way, Redmond
+            </span>
+          </div>
+          <div class="ic-grid">
+            <div><div class="ic-grid-label">Start Time</div><div class="ic-grid-value">14 Apr 09:00</div></div>
+            <div><div class="ic-grid-label">End Time</div><div class="ic-grid-value">14 Apr 12:00</div></div>
+            <div><div class="ic-grid-label">Duration</div><div class="ic-grid-value">3 hrs</div></div>
+          </div>
+          <div class="ic-tags">
+            <span class="ic-tag">Scheduled</span>
+            <span class="ic-tag">HVAC Repair</span>
+            <span class="ic-tag">High</span>
+          </div>
+        </div>
+        <p style="font-size: 12px; color: #0b6a0b; margin: 8px 14px 4px;">1 control &middot; no scroll &middot; tap-to-call &middot; tap-to-map &middot; collapsible</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 2. INSTALLATION                                                     -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">2</span> Installation</h2>
+
+  <h3 style="font-size: 15px; margin-top: 16px;">Option A &mdash; Direct push (development)</h3>
+  <div class="code-block"><span class="cmt"># From the InfoCardControl directory</span>
+<span class="kw">cd</span> InfoCardControl
+<span class="fn">pac pcf push</span> <span class="str">--publisher-prefix cli</span></div>
+  <p>This pushes the control directly to your connected Dataverse environment. Use <code>pac auth list</code> to verify your target org.</p>
+
+  <h3 style="font-size: 15px; margin-top: 16px;">Option B &mdash; Solution import (production)</h3>
+  <ol class="steps">
+    <li>Build the solution: <code>msbuild /t:build /restore /p:configuration=Release</code> from the <code>InfoCardSolution</code> directory.</li>
+    <li>Navigate to <strong>make.powerapps.com</strong> &rarr; Solutions &rarr; Import.</li>
+    <li>Upload the <code>.zip</code> from <code>InfoCardSolution/bin/Release/</code>.</li>
+    <li>Publish all customizations after import completes.</li>
+  </ol>
+
+  <div class="tip-box">
+    <div class="tip-title">Version Bump Required</div>
+    Always increment the version in <code>ControlManifest.Input.xml</code> before pushing.
+    The Field Service mobile app caches PCF bundles aggressively &mdash; a stale version attribute
+    means your update will not appear on devices until the cache expires.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 3. CONFIGURATION                                                    -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">3</span> Configuration</h2>
+
+  <p>InfoCard is added to a model-driven form like any PCF control:</p>
+
+  <ol class="steps">
+    <li>Open the form editor for your target entity (e.g., Bookable Resource Booking).</li>
+    <li>Add or select a <strong>text field</strong> on the form. This will become the <code>titleField</code> (bound property). It must be named <code>value</code> internally &mdash; PCF enforces this for model-driven forms.</li>
+    <li>Open the field's <strong>Properties</strong> panel &rarr; <strong>Controls</strong> tab &rarr; <strong>Add Control</strong> &rarr; search for <strong>InfoCard</strong>.</li>
+    <li>Configure the <strong>Layout Mode</strong> (smart/contact/compact) and bind each slot property to the appropriate column or <code>@fieldName</code> value.</li>
+    <li>Enable the control for <strong>Phone</strong> and/or <strong>Tablet</strong> form factors.</li>
+    <li><strong>Save and Publish</strong> the form.</li>
+  </ol>
+
+  <div class="info-box">
+    <div class="info-title">Bound Property Constraint</div>
+    The single bound property (<code>titleField</code>) <em>must</em> map to a real column on the form entity.
+    This is how the control anchors itself to the record. All other properties are <code>input</code> (static or expression).
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 4. SLOT ARCHITECTURE                                                -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">4</span> Slot Architecture</h2>
+
+  <p>InfoCard uses a <strong>slot-based</strong> layout: each property maps to a fixed visual zone on the card.
+  Configure only the slots you need &mdash; empty slots are hidden automatically when <code>hideEmptyFields</code> is enabled.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--zone-header);"></div> Header</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--zone-contact);"></div> Contact</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--zone-details);"></div> Details</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--zone-grid);"></div> Grid</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--zone-tags);"></div> Tags</div>
+  </div>
+
+  <!-- Annotated card -->
+  <div style="max-width: 420px; margin: 24px auto;">
+    <div class="zone-card">
+      <!-- Header zone -->
+      <div class="zone zone-header">
+        <span class="zone-label">Header</span>
+        <div style="padding-top: 4px;">
+          <div style="font-size: 16px; font-weight: 600; color: var(--brand);">WO-10047</div>
+          <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+            Sarah Chen<span style="margin: 0 6px; color: var(--text-muted);">&middot;</span>Contoso Ltd
+          </div>
+        </div>
+        <div class="zone-prop"><code>titleField</code> &rarr; Work Order lookup (title text)</div>
+        <div class="zone-prop"><code>subtitleField1</code> &rarr; Resource</div>
+        <div class="zone-prop"><code>subtitleField2</code> &rarr; <code>@msdyn_serviceaccount</code> (from WO)</div>
+        <div class="zone-prop"><code>subtitleField3</code> &rarr; (unused)</div>
+      </div>
+
+      <!-- Contact zone -->
+      <div class="zone zone-contact">
+        <span class="zone-label">Contact</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 0; padding: 4px 0;">
+          <span class="ic-chip" style="font-size: 12px;">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3.6 1.5C3.2 1.1 2.5 1.1 2.1 1.5L1.2 2.4C0.5 3.1 0.3 4.1 0.7 5c1.5 3.3 3.5 6 6.3 8.3 0.9 0.6 1.9 0.4 2.6-0.3l0.9-0.9c0.4-0.4 0.4-1.1 0-1.5l-2-2c-0.4-0.4-1-0.4-1.4 0L6.4 9.3c-0.1 0.1-0.3 0.1-0.4 0C4.5 8.1 3.4 6.9 2.7 5.5c-0.1-0.1-0.1-0.3 0-0.4l0.9-0.9c0.4-0.4 0.4-1 0-1.4L3.6 1.5z" fill="#0f6cbd"/></svg>
+            +1 (425) 555-0142
+          </span>
+          <span class="ic-chip" style="font-size: 12px;">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M1 4.5C1 3.7 1.7 3 2.5 3h11C14.3 3 15 3.7 15 4.5v7c0 0.8-0.7 1.5-1.5 1.5h-11C1.7 13 1 12.3 1 11.5v-7zm1.2 0.3v0.4L8 8.5l5.8-3.3v-0.4c0-0.2-0.1-0.3-0.3-0.3h-11c-0.2 0-0.3 0.1-0.3 0.3zm11.6 1.5L8.3 9.4c-0.2 0.1-0.4 0.1-0.6 0L2.2 6.3v5.2c0 0.2 0.1 0.3 0.3 0.3h11c0.2 0 0.3-0.1 0.3-0.3V6.3z" fill="#0f6cbd"/></svg>
+            service@contoso.com
+          </span>
+          <span class="ic-chip" style="font-size: 12px;">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.2 1 3 3.2 3 6c0 3.5 4.1 8.3 4.7 9 0.2 0.2 0.4 0.2 0.6 0C8.9 14.3 13 9.5 13 6c0-2.8-2.2-5-5-5zm0 7c-1.1 0-2-0.9-2-2s0.9-2 2-2 2 0.9 2 2-0.9 2-2 2z" fill="#0f6cbd"/></svg>
+            1 Microsoft Way, Redmond
+          </span>
+        </div>
+        <div class="zone-prop"><code>phoneField1</code> &rarr; <code>@telephone1</code> (from WO service account)</div>
+        <div class="zone-prop"><code>emailField</code> &rarr; <code>@emailaddress1</code> (from WO service account)</div>
+        <div class="zone-prop"><code>addressField</code> &rarr; <code>@msdyn_address</code> (from WO)</div>
+        <div class="zone-prop"><code>latitudeField</code> / <code>longitudeField</code> &rarr; Geo for map link</div>
+      </div>
+
+      <!-- Details zone -->
+      <div class="zone zone-details">
+        <span class="zone-label">Details</span>
+        <div class="ic-detail" style="font-size: 12px;">
+          <span class="ic-detail-icon">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a0.8 0.8 0 110 1.6A0.8 0.8 0 018 4zm1 8H7v-1h0.5V7.5H7v-1h1.5V11H9v1z" fill="#8a8a8a"/></svg>
+          </span>
+          HVAC unit not cooling. Customer reports intermittent shutoff...
+        </div>
+        <div class="zone-prop"><code>detailField1</code> &rarr; <code>@msdyn_workorderinstructions</code> (from WO)</div>
+        <div class="zone-prop"><code>detailField2</code> / <code>detailField3</code> &rarr; (unused)</div>
+      </div>
+
+      <!-- Grid zone -->
+      <div class="zone zone-grid">
+        <span class="zone-label">Grid</span>
+        <div class="ic-grid" style="margin-top: 4px;">
+          <div><div class="ic-grid-label">Start Time</div><div class="ic-grid-value" style="font-size: 12px;">14 Apr 09:00</div></div>
+          <div><div class="ic-grid-label">End Time</div><div class="ic-grid-value" style="font-size: 12px;">14 Apr 12:00</div></div>
+          <div><div class="ic-grid-label">Duration</div><div class="ic-grid-value" style="font-size: 12px;">3 hrs</div></div>
+        </div>
+        <div class="zone-prop" style="margin-top: 8px;"><code>gridField1</code>&ndash;<code>gridField6</code> &rarr; Key:value pairs in 2-column layout</div>
+      </div>
+
+      <!-- Tags zone -->
+      <div class="zone zone-tags">
+        <span class="zone-label">Tags</span>
+        <div class="ic-tags" style="margin-top: 4px;">
+          <span class="ic-tag">Scheduled</span>
+          <span class="ic-tag">HVAC Repair</span>
+          <span class="ic-tag">High</span>
+        </div>
+        <div class="zone-prop" style="margin-top: 8px;"><code>tagField1</code>&ndash;<code>tagField3</code> &rarr; Compact pill badges</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 5. PROPERTY REFERENCE                                               -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">5</span> Property Reference</h2>
+
+  <p>InfoCard exposes <strong>28 properties</strong>: 5 config, 1 bound title, and 22 input slots.</p>
+
+  <table class="prop-table">
+    <thead>
+      <tr><th>#</th><th>Property</th><th>Type</th><th>Usage</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <!-- CONFIG -->
+      <tr class="prop-group-header config"><td colspan="5">Configuration (5)</td></tr>
+      <tr><td>1</td><td><code>layout</code></td><td>Enum</td><td>input</td><td>Card layout: <code>smart</code>, <code>contact</code>, or <code>compact</code></td></tr>
+      <tr><td>2</td><td><code>hideEmptyFields</code></td><td>TwoOptions</td><td>input</td><td>Hide fields with no value (default: true)</td></tr>
+      <tr><td>3</td><td><code>showCardBorder</code></td><td>TwoOptions</td><td>input</td><td>Show card border and shadow (default: true)</td></tr>
+      <tr><td>4</td><td><code>showVersionInfo</code></td><td>TwoOptions</td><td>input</td><td>Show version badge in bottom-right corner</td></tr>
+      <tr><td>5</td><td><code>startExpanded</code></td><td>TwoOptions</td><td>input</td><td>Smart layout starts expanded (default: true)</td></tr>
+
+      <!-- HEADER -->
+      <tr class="prop-group-header header"><td colspan="5">Header (4)</td></tr>
+      <tr><td>6</td><td><code>titleField</code></td><td>fieldTypes</td><td><strong>bound</strong></td><td>Card title &mdash; anchor field. Related @fields resolve from this lookup.</td></tr>
+      <tr><td>7</td><td><code>subtitleField1</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 1 (dot-separated)</td></tr>
+      <tr><td>8</td><td><code>subtitleField2</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 2</td></tr>
+      <tr><td>9</td><td><code>subtitleField3</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 3</td></tr>
+
+      <!-- CONTACT -->
+      <tr class="prop-group-header contact"><td colspan="5">Contact (4)</td></tr>
+      <tr><td>10</td><td><code>phoneField1</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-call phone button (landline icon)</td></tr>
+      <tr><td>11</td><td><code>phoneField2</code></td><td>fieldTypes</td><td>input</td><td>Secondary phone (mobile icon)</td></tr>
+      <tr><td>12</td><td><code>emailField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-send email button</td></tr>
+      <tr><td>13</td><td><code>webField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-open URL button</td></tr>
+
+      <!-- ADDRESS -->
+      <tr class="prop-group-header address"><td colspan="5">Address (3)</td></tr>
+      <tr><td>14</td><td><code>addressField</code></td><td>fieldTypes</td><td>input</td><td>Tappable address row &mdash; opens map when lat/lng set</td></tr>
+      <tr><td>15</td><td><code>latitudeField</code></td><td>fieldTypes</td><td>input</td><td>Latitude for map link on address</td></tr>
+      <tr><td>16</td><td><code>longitudeField</code></td><td>fieldTypes</td><td>input</td><td>Longitude for map link on address</td></tr>
+
+      <!-- DETAILS -->
+      <tr class="prop-group-header details"><td colspan="5">Details (3)</td></tr>
+      <tr><td>17</td><td><code>detailField1</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+      <tr><td>18</td><td><code>detailField2</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+      <tr><td>19</td><td><code>detailField3</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+
+      <!-- GRID -->
+      <tr class="prop-group-header grid"><td colspan="5">Grid (6)</td></tr>
+      <tr><td>20</td><td><code>gridField1</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>21</td><td><code>gridField2</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>22</td><td><code>gridField3</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>23</td><td><code>gridField4</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>24</td><td><code>gridField5</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>25</td><td><code>gridField6</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+
+      <!-- TAGS -->
+      <tr class="prop-group-header tags"><td colspan="5">Tags (3)</td></tr>
+      <tr><td>26</td><td><code>tagField1</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+      <tr><td>27</td><td><code>tagField2</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+      <tr><td>28</td><td><code>tagField3</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 6. RELATED FIELDS (@syntax)                                         -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">6</span> Related Fields (<code>@</code> syntax)</h2>
+
+  <p>
+    The <code>@fieldName</code> convention lets you pull data from a <strong>related entity</strong> without
+    creating additional lookups on the form. When InfoCard sees a property value starting with <code>@</code>,
+    it resolves the field through the <code>titleField</code> lookup.
+  </p>
+
+  <h3 style="font-size: 15px; margin-top: 20px;">1-hop: Direct lookup field</h3>
+  <p>The <code>titleField</code> is bound to a lookup column (e.g., <code>msdyn_workorder</code> on the Booking entity).
+  Any <code>@fieldName</code> fetches that column from the <em>looked-up</em> entity.</p>
+
+  <div class="related-diagram">
+    <div class="entity-box" style="border-color: var(--zone-header);">
+      <div class="entity-name">Booking</div>
+      <div class="entity-field"><code>titleField</code> = msdyn_workorder</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="entity-box" style="border-color: var(--brand);">
+      <div class="entity-name">Work Order</div>
+      <div class="entity-field"><code>@msdyn_serviceaccount</code></div>
+      <div class="entity-field"><code>@msdyn_address</code></div>
+      <div class="entity-field"><code>@telephone1</code></div>
+    </div>
+  </div>
+
+  <div class="code-block"><span class="cmt">// Example: Booking form, titleField bound to msdyn_workorder</span>
+subtitleField2 = <span class="str">@msdyn_serviceaccount</span>    <span class="cmt">// Fetches service account name from Work Order</span>
+addressField   = <span class="str">@msdyn_address</span>           <span class="cmt">// Fetches address from Work Order</span>
+phoneField1    = <span class="str">@telephone1</span>              <span class="cmt">// Fetches phone from Work Order</span></div>
+
+  <h3 style="font-size: 15px; margin-top: 20px;">2-hop: Through a second lookup</h3>
+  <p>If the resolved field on the Work Order is itself a lookup (e.g., <code>msdyn_serviceaccount</code> &rarr; Account),
+  InfoCard can follow that second hop to fetch a field from the Account entity.</p>
+
+  <div class="related-diagram">
+    <div class="entity-box" style="border-color: var(--zone-header);">
+      <div class="entity-name">Booking</div>
+      <div class="entity-field">msdyn_workorder &rarr;</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="entity-box" style="border-color: var(--brand);">
+      <div class="entity-name">Work Order</div>
+      <div class="entity-field">msdyn_serviceaccount &rarr;</div>
+    </div>
+    <div class="arrow">&rarr;</div>
+    <div class="entity-box" style="border-color: var(--zone-contact);">
+      <div class="entity-name">Account</div>
+      <div class="entity-field">telephone1, address1_composite</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="info-title">How it works</div>
+    When the title lookup resolves a Work Order, and the <code>@msdyn_serviceaccount</code> value is itself a lookup,
+    InfoCard issues a second WebAPI call to the Account entity to fetch additional fields like <code>telephone1</code>.
+    This is automatic &mdash; no extra configuration needed beyond setting the <code>@</code> property values.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 7. FIELD BINDING ($syntax)                                          -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">7</span> Field Binding (<code>$</code> syntax)</h2>
+
+  <p>
+    The <code>$columnName</code> syntax is used in the <strong>PCF dev harness</strong> for testing.
+    When a property value starts with <code>$</code>, the harness reads the value from the mock
+    <code>data.json</code> file using the column name after the prefix.
+  </p>
+
+  <div class="code-block"><span class="cmt">// In test-scenarios.json or harness config:</span>
+titleField   = <span class="str">$msdyn_name</span>        <span class="cmt">// Reads data.json["msdyn_name"]</span>
+phoneField1  = <span class="str">$telephone1</span>        <span class="cmt">// Reads data.json["telephone1"]</span>
+gridField1   = <span class="str">$msdyn_starttime</span>   <span class="cmt">// Reads data.json["msdyn_starttime"]</span></div>
+
+  <p>
+    This lets you test the control with realistic entity data without deploying to Dataverse.
+    The <code>$</code> prefix is <strong>harness-only</strong> &mdash; in production, properties are bound
+    to actual form columns through the form editor.
+  </p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- 8. TIPS & BEST PRACTICES                                            -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title"><span class="num">8</span> Tips &amp; Best Practices</h2>
+
+  <div class="card">
+    <h3 style="font-size: 15px; margin: 0 0 12px; color: var(--brand);">hideEmptyFields</h3>
+    <p style="margin: 0 0 8px; font-size: 14px;">
+      Enabled by default. When a slot has no value (null, empty string, or placeholder), the row is hidden entirely.
+      Disable this only if you want to show placeholder text for all configured slots.
+    </p>
+    <div class="tip-box" style="margin-bottom: 0;">
+      <div class="tip-title">Recommendation</div>
+      Keep <code>hideEmptyFields = true</code> for mobile scenarios. It prevents the card from showing
+      &ldquo;&mdash;&rdquo; placeholders that waste vertical space on small screens.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size: 15px; margin: 0 0 12px; color: var(--brand);">startExpanded</h3>
+    <p style="margin: 0 0 8px; font-size: 14px;">
+      Only applies to the <code>smart</code> layout. When <code>true</code> (default), the card shows
+      all sections on load. Set to <code>false</code> to start collapsed &mdash; users see only
+      header, contact chips, and tags, and can tap the chevron to expand.
+    </p>
+    <div class="tip-box" style="margin-bottom: 0;">
+      <div class="tip-title">Recommendation</div>
+      Use <code>startExpanded = false</code> when the card is placed alongside other controls on a busy form.
+      Technicians can expand when they need the detail, keeping the initial view compact.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size: 15px; margin: 0 0 12px; color: var(--brand);">Layout Selection Guide</h3>
+    <table class="prop-table" style="margin-top: 8px;">
+      <thead>
+        <tr><th>Layout</th><th>Best For</th><th>Collapsible</th><th>Density</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>smart</code></td>
+          <td>Mobile forms, embedded quick-views, space-constrained scenarios</td>
+          <td>Yes (chevron toggle)</td>
+          <td>Medium</td>
+        </tr>
+        <tr>
+          <td><code>contact</code></td>
+          <td>Full entity detail, contact-centric views, desktop forms</td>
+          <td>No (always expanded)</td>
+          <td>Low</td>
+        </tr>
+        <tr>
+          <td><code>compact</code></td>
+          <td>Dense data views, list-style forms, dashboards</td>
+          <td>No</td>
+          <td>High</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="font-size: 15px; margin: 0 0 12px; color: var(--brand);">General Tips</h3>
+    <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+      <li><strong>Always bump the version</strong> in <code>ControlManifest.Input.xml</code> before each <code>pac pcf push</code>.</li>
+      <li><strong>Use @fields sparingly</strong> &mdash; each related lookup costs a WebAPI call. Keep to 1-2 hops max.</li>
+      <li><strong>Title lookups</strong> are clickable by default &mdash; tapping opens the related record in a new form.</li>
+      <li><strong>Phone/email chips</strong> invoke native device actions (tel:, mailto:) on mobile.</li>
+      <li><strong>Address + lat/lng</strong> opens Google Maps. Ensure both coordinates are bound for the map link to appear.</li>
+      <li><strong>CSS is fully inline</strong> &mdash; no external stylesheets, no class name collisions with Dynamics 365 forms.</li>
+      <li><strong>Offline support</strong>: The card renders whatever data is available. Related @field fetches fail gracefully when offline.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────── -->
+<div style="text-align: center; padding: 24px 0; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border-light);">
+  InfoCard v3.0.0 &mdash; PCF Virtual Control &mdash; Contoso Namespace<br>
+  See also: <a href="entity-examples.html" style="color: var(--brand); text-decoration: none;">Entity Examples</a> &middot;
+  <a href="layout-comparison.html" style="color: var(--brand); text-decoration: none;">Layout Comparison</a>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
