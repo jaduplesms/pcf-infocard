@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Entities>
+    <Entity>
+      <Name LocalizedName="Bookable Resource Booking" OriginalName="">bookableresourcebooking</Name>
+      <ObjectTypeCode>11</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="bookableresourcebooking" />
+      </EntityInfo>
+      <FormXml>
+        <forms type="main">
+          <systemform>
+            <formid>{00000000-0000-0000-0000-000000000001}</formid>
+            <FormPresentation>2</FormPresentation>
+            <FormActivationState>1</FormActivationState>
+            <form>
+              <tabs>
+                <tab name="tab_general" id="{10000000-0000-0000-0000-000000000001}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true" solutionaction="Added">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <columns>
+                    <column width="100%">
+                      <sections>
+                        <section name="section_infocard" showlabel="false" showbar="false" locklevel="0" id="{20000000-0000-0000-0000-000000000001}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top" solutionaction="Added">
+                          <labels>
+                            <label description="InfoCard" languagecode="1033" />
+                          </labels>
+                          <rows>
+                            <row>
+                              <cell id="{30000000-0000-0000-0000-000000000001}" showlabel="false" locklevel="0">
+                                <labels>
+                                  <label description="Name" languagecode="1033" />
+                                </labels>
+                                <control id="name" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}">
+                                  <parameters>
+                                    <datafieldname>name</datafieldname>
+                                  </parameters>
+                                </control>
+                              </cell>
+                            </row>
+                          </rows>
+                        </section>
+                      </sections>
+                    </column>
+                  </columns>
+                </tab>
+              </tabs>
+              <controlDescriptions>
+                <controlDescription forControl="name">
+                  <customControl id="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}">
+                    <parameters>
+                      <datafieldname>name</datafieldname>
+                    </parameters>
+                  </customControl>
+
+                  <!-- InfoCard on Phone -->
+                  <customControl formFactor="0" name="cli_Contoso.InfoCard">
+                    <parameters>
+                      <layout type="Enum" static="true">smart</layout>
+                      <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+                      <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+                      <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+                      <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <titleField type="Lookup.Simple">msdyn_workorder</titleField>
+                      <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
+                      <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
+                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
+                      <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
+                      <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
+                      <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>
+                      <latitudeField type="FP">msdyn_latitude</latitudeField>
+                      <longitudeField type="FP">msdyn_longitude</longitudeField>
+                      <detailField1 type="SingleLine.Text" static="true">@msdyn_instructions</detailField1>
+                      <detailField2 type="SingleLine.Text" static="true">@msdyn_workordersummary</detailField2>
+                      <gridField1 type="DateAndTime.DateAndTime">starttime</gridField1>
+                      <gridField2 type="DateAndTime.DateAndTime">endtime</gridField2>
+                      <gridField3 type="Whole.None">duration</gridField3>
+                      <tagField1 type="Lookup.Simple">bookingstatus</tagField1>
+                      <tagField2 type="SingleLine.Text" static="true">@msdyn_primaryincidenttype</tagField2>
+                      <tagField3 type="SingleLine.Text" static="true">@msdyn_priority</tagField3>
+                    </parameters>
+                  </customControl>
+
+                  <!-- InfoCard on Tablet -->
+                  <customControl formFactor="2" name="cli_Contoso.InfoCard">
+                    <parameters>
+                      <layout type="Enum" static="true">smart</layout>
+                      <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+                      <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+                      <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+                      <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <titleField type="Lookup.Simple">msdyn_workorder</titleField>
+                      <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
+                      <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
+                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
+                      <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
+                      <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
+                      <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>
+                      <latitudeField type="FP">msdyn_latitude</latitudeField>
+                      <longitudeField type="FP">msdyn_longitude</longitudeField>
+                      <detailField1 type="SingleLine.Text" static="true">@msdyn_instructions</detailField1>
+                      <detailField2 type="SingleLine.Text" static="true">@msdyn_workordersummary</detailField2>
+                      <gridField1 type="DateAndTime.DateAndTime">starttime</gridField1>
+                      <gridField2 type="DateAndTime.DateAndTime">endtime</gridField2>
+                      <gridField3 type="Whole.None">duration</gridField3>
+                      <tagField1 type="Lookup.Simple">bookingstatus</tagField1>
+                      <tagField2 type="SingleLine.Text" static="true">@msdyn_primaryincidenttype</tagField2>
+                      <tagField3 type="SingleLine.Text" static="true">@msdyn_priority</tagField3>
+                    </parameters>
+                  </customControl>
+
+                  <!-- InfoCard on Desktop -->
+                  <customControl formFactor="1" name="cli_Contoso.InfoCard">
+                    <parameters>
+                      <layout type="Enum" static="true">contact</layout>
+                      <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+                      <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+                      <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+                      <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <titleField type="Lookup.Simple">msdyn_workorder</titleField>
+                      <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
+                      <subtitleField2 type="Lookup.Simple">bookingstatus</subtitleField2>
+                      <subtitleField3 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField3>
+                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
+                      <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
+                      <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
+                      <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>
+                      <latitudeField type="FP">msdyn_latitude</latitudeField>
+                      <longitudeField type="FP">msdyn_longitude</longitudeField>
+                      <detailField1 type="SingleLine.Text" static="true">@msdyn_instructions</detailField1>
+                      <detailField2 type="SingleLine.Text" static="true">@msdyn_workordersummary</detailField2>
+                      <gridField1 type="DateAndTime.DateAndTime">starttime</gridField1>
+                      <gridField2 type="DateAndTime.DateAndTime">endtime</gridField2>
+                      <gridField3 type="Whole.None">duration</gridField3>
+                      <gridField4 type="SingleLine.Text" static="true">@msdyn_workordertype</gridField4>
+                      <tagField1 type="Lookup.Simple">bookingstatus</tagField1>
+                      <tagField2 type="SingleLine.Text" static="true">@msdyn_primaryincidenttype</tagField2>
+                      <tagField3 type="SingleLine.Text" static="true">@msdyn_priority</tagField3>
+                    </parameters>
+                  </customControl>
+                </controlDescription>
+              </controlDescriptions>
+            </form>
+            <LocalizedNames>
+              <LocalizedName description="Booking and Work Order" languagecode="1033" />
+            </LocalizedNames>
+            <Descriptions>
+              <Description description="Mobile-optimized form with InfoCard showing booking details with related work order data." languagecode="1033" />
+            </Descriptions>
+          </systemform>
+        </forms>
+      </FormXml>
+    </Entity>
+  </Entities>
+  <Roles />
+  <Workflows />
+  <FieldSecurityProfiles />
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <SolutionPluginAssemblies />
+  <EntityDataProviders />
+  <Languages>
+    <Language>1033</Language>
+  </Languages>
+</ImportExportXml>

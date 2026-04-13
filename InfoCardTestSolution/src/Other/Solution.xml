@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>InfoCardTestSolution</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="InfoCard Test Solution" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Test solution for InfoCard v3 PCF control. Configures InfoCard on Booking and Work Order form with related field fetching." languagecode="1033" />
+    </Descriptions>
+    <Version>3.0.0</Version>
+    <Managed>2</Managed>
+    <Publisher>
+      <UniqueName>cli</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="CLI" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="CLI Publisher" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>cli</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>43626</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="66" schemaName="cli_Contoso.InfoCard" behavior="0" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>
