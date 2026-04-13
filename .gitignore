@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+obj/
+bin/
+
+# IDE
+.vs/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# Debug/temp
+*.log
+debug_*.py
+debug_*.png
+*.tmp
+
+# Claude Code
+.claude/
+
+# Solution zips (build artifacts)
+*.zip
+
+# Dataverse API exports (user-specific)
+EntityDefinitions_*.customization

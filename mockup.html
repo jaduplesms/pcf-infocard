@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoCard PCF — Design Mockup</title>
+<style>
+  /* Fluent UI v9 design token approximations */
+  :root {
+    --row-spacing: 25; /* default 25% */
+    --row-gap: calc(20px * var(--row-spacing) / 100); /* lineHeight ~20px * percentage */
+    --colorNeutralBackground1: #ffffff;
+    --colorNeutralBackground3: #f5f5f5;
+    --colorNeutralForeground1: #242424;
+    --colorNeutralForeground2: #424242;
+    --colorNeutralForeground3: #707070;
+    --colorNeutralStroke1: #d1d1d1;
+    --colorNeutralStroke2: #e0e0e0;
+    --colorBrandBackground: #0f6cbd;
+    --colorBrandForeground1: #0f6cbd;
+    --colorSubtleBackground: #f0f4f8;
+    --colorSubtleBackgroundHover: #e4ecf4;
+    --colorStatusSuccessForeground1: #0e7a0d;
+    --colorStatusSuccessBackground1: #e6f2e6;
+    --colorStatusDangerForeground1: #c4314b;
+    --colorStatusDangerBackground1: #fdf3f4;
+    --colorStatusWarningForeground1: #bc4b09;
+    --colorStatusWarningBackground1: #fff4e6;
+    --borderRadiusMedium: 8px;
+    --shadow4: 0 2px 4px rgba(0,0,0,0.06), 0 0 2px rgba(0,0,0,0.04);
+    --fontFamilyBase: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --fontSizeBase200: 12px;
+    --fontSizeBase300: 14px;
+    --fontSizeBase400: 16px;
+    --fontWeightSemibold: 600;
+    --spacingVerticalXS: 4px;
+    --spacingVerticalS: 8px;
+    --spacingVerticalM: 12px;
+    --spacingHorizontalS: 8px;
+    --spacingHorizontalM: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--fontFamilyBase);
+    background: var(--colorNeutralBackground3);
+    padding: 24px;
+    color: var(--colorNeutralForeground1);
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: var(--fontWeightSemibold);
+    margin-bottom: 8px;
+    color: var(--colorNeutralForeground1);
+  }
+
+  h2 {
+    font-size: 16px;
+    font-weight: var(--fontWeightSemibold);
+    margin: 32px 0 12px;
+    color: var(--colorNeutralForeground2);
+  }
+
+  .subtitle {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground3);
+    margin-bottom: 32px;
+  }
+
+  /* Mockup wrapper — simulates mobile viewport */
+  .phone-frame {
+    width: 375px;
+    background: var(--colorNeutralBackground3);
+    border: 1px solid var(--colorNeutralStroke1);
+    border-radius: 24px;
+    padding: 20px 16px;
+    margin: 0 auto 40px;
+    position: relative;
+  }
+
+  .phone-frame::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--colorNeutralStroke1);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .section-label {
+    font-size: var(--fontSizeBase300);
+    font-weight: var(--fontWeightSemibold);
+    color: var(--colorNeutralForeground2);
+    margin-bottom: var(--spacingVerticalS);
+    padding-left: 4px;
+  }
+
+  /* === InfoCard === */
+  .infocard {
+    background: var(--colorNeutralBackground1);
+    border: 1px solid var(--colorNeutralStroke2);
+    border-radius: var(--borderRadiusMedium);
+    box-shadow: var(--shadow4);
+    overflow: hidden;
+  }
+
+  .infocard-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacingHorizontalS);
+    padding: var(--spacingVerticalS) var(--spacingHorizontalM);
+    border-bottom: 1px solid var(--colorNeutralStroke2);
+    background: var(--colorSubtleBackground);
+  }
+
+  .infocard-header-title {
+    font-size: var(--fontSizeBase300);
+    font-weight: var(--fontWeightSemibold);
+    color: var(--colorNeutralForeground2);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex: 1;
+  }
+
+  /* When title is hidden, header only shows nav buttons */
+  .infocard-header.no-title {
+    justify-content: flex-end;
+    padding: 4px var(--spacingHorizontalM);
+    border-bottom: none;
+  }
+
+
+  .infocard-nav {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+  }
+
+  .infocard-nav-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--colorNeutralStroke2);
+    border-radius: 4px;
+    background: var(--colorNeutralBackground1);
+    color: var(--colorNeutralForeground2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    transition: background 0.1s, border-color 0.1s;
+  }
+
+  .infocard-nav-btn:hover {
+    background: var(--colorNeutralBackground3);
+    border-color: var(--colorNeutralStroke1);
+    color: var(--colorNeutralForeground1);
+  }
+
+  .infocard-nav-btn:active {
+    background: var(--colorNeutralStroke2);
+  }
+
+  .infocard-nav-btn[disabled] {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* === Back to top footer === */
+  .infocard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px var(--spacingHorizontalM);
+    border-top: 1px solid var(--colorNeutralStroke2);
+    cursor: pointer;
+    background: var(--colorSubtleBackground);
+    color: var(--colorBrandForeground1);
+    font-size: var(--fontSizeBase200);
+    font-weight: var(--fontWeightSemibold);
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .infocard-footer:hover {
+    background: var(--colorSubtleBackgroundHover);
+    color: var(--colorBrandBackground);
+  }
+
+  .infocard-footer-icon {
+    font-size: 10px;
+  }
+
+  .infocard-body {
+    padding: var(--spacingVerticalXS) 0;
+  }
+
+  /* === Row: Label Position = Left === */
+  .infocard-row-left {
+    display: flex;
+    align-items: baseline;
+    padding: var(--row-gap) var(--spacingHorizontalM);
+    gap: var(--spacingHorizontalS);
+  }
+
+  .infocard-row-left + .infocard-row-left {
+    /* No dividers — maximise compactness */
+  }
+
+  .infocard-row-left .field-label {
+    flex: 0 0 35%;
+    font-size: var(--fontSizeBase300);
+    color: var(--colorBrandForeground1);
+    text-align: left;
+    line-height: 1.4;
+  }
+
+  .infocard-row-left .field-value {
+    flex: 1;
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+  }
+
+  /* === Row: Label Position = Top === */
+  .infocard-row-top {
+    padding: var(--row-gap) var(--spacingHorizontalM);
+  }
+
+  .infocard-row-top + .infocard-row-top {
+    /* No dividers — maximise compactness */
+  }
+
+  .infocard-row-top .field-label {
+    font-size: var(--fontSizeBase200);
+    color: var(--colorNeutralForeground3);
+    line-height: 1.3;
+    margin-bottom: 1px;
+    text-align: left;
+  }
+
+  .infocard-row-top .field-value {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    font-weight: var(--fontWeightSemibold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  /* === Row: No Label (Hide Label = true) === */
+  .infocard-row-nolabel {
+    display: flex;
+    align-items: center;
+    padding: var(--row-gap) var(--spacingHorizontalM);
+    gap: 6px;
+  }
+
+  .infocard-row-nolabel + .infocard-row-left,
+  .infocard-row-left + .infocard-row-nolabel,
+  .infocard-row-nolabel + .infocard-row-nolabel,
+  .infocard-row-nolabel + .infocard-row-top,
+  .infocard-row-top + .infocard-row-nolabel {
+    /* No dividers — maximise compactness */
+  }
+
+  .infocard-row-nolabel .field-value {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* === Status badges === */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 12px;
+    font-size: var(--fontSizeBase200);
+    font-weight: var(--fontWeightSemibold);
+    line-height: 1.6;
+  }
+
+  .badge-success {
+    background: var(--colorStatusSuccessBackground1);
+    color: var(--colorStatusSuccessForeground1);
+  }
+
+  .badge-danger {
+    background: var(--colorStatusDangerBackground1);
+    color: var(--colorStatusDangerForeground1);
+  }
+
+  .badge-warning {
+    background: var(--colorStatusWarningBackground1);
+    color: var(--colorStatusWarningForeground1);
+  }
+
+  .badge-icon {
+    font-size: 11px;
+  }
+
+  /* === Option A: Dividers between pairs === */
+  .infocard-row-top-divider {
+    padding: var(--row-gap) var(--spacingHorizontalM);
+  }
+
+  .infocard-row-top-divider + .infocard-row-top-divider {
+    border-top: 1px solid var(--colorNeutralStroke2);
+  }
+
+  .infocard-row-top-divider:nth-child(even) {
+    background: var(--colorNeutralBackground3);
+  }
+
+  .infocard-row-top-divider .field-label {
+    font-size: var(--fontSizeBase200);
+    color: var(--colorNeutralForeground3);
+    line-height: 1.3;
+    margin-bottom: 1px;
+    text-align: left;
+  }
+
+  .infocard-row-top-divider .field-value {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    font-weight: var(--fontWeightSemibold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  /* === Option B: Alternating row backgrounds === */
+  .infocard-row-top-zebra {
+    padding: var(--row-gap) var(--spacingHorizontalM);
+  }
+
+  .infocard-row-top-zebra:nth-child(odd) {
+    background: var(--colorNeutralBackground1);
+  }
+
+  .infocard-row-top-zebra:nth-child(even) {
+    background: var(--colorNeutralBackground3);
+  }
+
+  .infocard-row-top-zebra .field-label {
+    font-size: var(--fontSizeBase200);
+    color: var(--colorNeutralForeground3);
+    line-height: 1.3;
+    margin-bottom: 1px;
+    text-align: left;
+  }
+
+  .infocard-row-top-zebra .field-value {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    font-weight: var(--fontWeightSemibold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  /* === Option C: Dividers + Alternating combined === */
+  .infocard-row-top-combo {
+    padding: var(--row-gap) var(--spacingHorizontalM);
+  }
+
+  .infocard-row-top-combo + .infocard-row-top-combo {
+    border-top: 1px solid var(--colorNeutralStroke2);
+  }
+
+  .infocard-row-top-combo:nth-child(odd) {
+    background: var(--colorNeutralBackground1);
+  }
+
+  .infocard-row-top-combo:nth-child(even) {
+    background: var(--colorNeutralBackground3);
+  }
+
+  .infocard-row-top-combo .field-label {
+    font-size: var(--fontSizeBase200);
+    color: var(--colorNeutralForeground3);
+    line-height: 1.3;
+    margin-bottom: 1px;
+    text-align: left;
+  }
+
+  .infocard-row-top-combo .field-value {
+    font-size: var(--fontSizeBase300);
+    color: var(--colorNeutralForeground1);
+    font-weight: var(--fontWeightSemibold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    text-align: left;
+  }
+
+  /* === Empty value placeholder === */
+  .empty-value {
+    color: var(--colorNeutralForeground3);
+  }
+
+  /* === Lookup link style === */
+  .lookup-value {
+    color: var(--colorBrandForeground1);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* === Comparison layout === */
+  .mockup-grid {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .mockup-column {
+    text-align: center;
+  }
+
+  .mockup-column h2 {
+    text-align: center;
+  }
+
+  /* Ensure card content stays left-aligned despite column centering */
+  .mockup-column .infocard {
+    text-align: left;
+  }
+
+  /* === Before/After comparison === */
+  .comparison {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 24px 0 48px;
+  }
+
+  .comparison-column {
+    text-align: center;
+  }
+
+  .comparison-column h3 {
+    font-size: 14px;
+    color: var(--colorNeutralForeground3);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  /* Simulated native form fields (before) */
+  .native-fields {
+    width: 375px;
+    background: var(--colorNeutralBackground1);
+    border: 1px solid var(--colorNeutralStroke1);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .native-field {
+    margin-bottom: 16px;
+  }
+
+  .native-field:last-child {
+    margin-bottom: 0;
+  }
+
+  .native-field-label {
+    font-size: 12px;
+    color: var(--colorNeutralForeground3);
+    margin-bottom: 4px;
+  }
+
+  .native-field-value {
+    font-size: 14px;
+    color: var(--colorNeutralForeground1);
+    padding: 8px 12px;
+    background: var(--colorNeutralBackground3);
+    border: 1px solid var(--colorNeutralStroke2);
+    border-radius: 4px;
+  }
+
+  /* Arrow */
+  .arrow {
+    display: flex;
+    align-items: center;
+    font-size: 28px;
+    color: var(--colorBrandBackground);
+    padding-top: 80px;
+  }
+
+  /* Annotation callouts */
+  .annotation {
+    font-size: 11px;
+    color: var(--colorBrandForeground1);
+    background: #e8f4fd;
+    border: 1px solid #b3d9f2;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+
+  /* Web (wider) variant */
+  .phone-frame.web-frame {
+    width: 540px;
+  }
+
+  /* Dark theme preview */
+  .dark-theme {
+    --colorNeutralBackground1: #292929;
+    --colorNeutralBackground3: #1f1f1f;
+    --colorNeutralForeground1: #e0e0e0;
+    --colorNeutralForeground2: #c0c0c0;
+    --colorNeutralForeground3: #999999;
+    --colorNeutralStroke1: #404040;
+    --colorNeutralStroke2: #383838;
+    --colorBrandBackground: #479ef5;
+    --colorBrandForeground1: #479ef5;
+    --colorSubtleBackground: #2a2f36;
+    --colorSubtleBackgroundHover: #323840;
+    --colorStatusSuccessForeground1: #54b054;
+    --colorStatusSuccessBackground1: #1e3a1e;
+    --colorStatusDangerForeground1: #e87979;
+    --colorStatusDangerBackground1: #3b1c1c;
+    --colorStatusWarningForeground1: #f0a04b;
+    --colorStatusWarningBackground1: #3b2a10;
+    --shadow4: 0 2px 4px rgba(0,0,0,0.2), 0 0 2px rgba(0,0,0,0.15);
+  }
+</style>
+</head>
+<body>
+
+<h1>InfoCard PCF Control — Visual Mockup</h1>
+<p class="subtitle">Fluent UI v9 design tokens &middot; Power Apps modern theming &middot; Mobile-first</p>
+
+<!-- Row Spacing Control -->
+<div style="background:var(--colorNeutralBackground1); border:1px solid var(--colorNeutralStroke1); border-radius:8px; padding:16px 20px; margin-bottom:32px; max-width:420px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+    <label for="spacingSlider" style="font-size:13px; font-weight:600; color:var(--colorNeutralForeground1);">Row Spacing</label>
+    <span id="spacingValue" style="font-size:13px; font-weight:600; color:var(--colorBrandForeground1);">25%</span>
+  </div>
+  <input type="range" id="spacingSlider" min="1" max="100" value="25"
+         style="width:100%; accent-color:var(--colorBrandBackground);">
+  <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--colorNeutralForeground3); margin-top:4px;">
+    <span>1% Ultra-dense</span>
+    <span>25% Compact</span>
+    <span>50% Balanced</span>
+    <span>100% Spacious</span>
+  </div>
+</div>
+<script>
+  const slider = document.getElementById('spacingSlider');
+  const label = document.getElementById('spacingValue');
+  function updateSpacing(val) {
+    document.documentElement.style.setProperty('--row-spacing', val);
+    document.documentElement.style.setProperty('--row-gap', (20 * val / 100) + 'px');
+    label.textContent = val + '%';
+  }
+  slider.addEventListener('input', function() { updateSpacing(this.value); });
+</script>
+
+<!-- ============================================================ -->
+<!-- BEFORE / AFTER COMPARISON -->
+<!-- ============================================================ -->
+<h2>Before vs. After</h2>
+<div class="comparison">
+
+  <!-- BEFORE: native fields -->
+  <div class="comparison-column">
+    <h3>Native Form Fields (Before)</h3>
+    <div class="native-fields">
+      <div class="native-field">
+        <div class="native-field-label">Status</div>
+        <div class="native-field-value">Completed</div>
+      </div>
+      <div class="native-field">
+        <div class="native-field-label">Priority</div>
+        <div class="native-field-value">High</div>
+      </div>
+      <div class="native-field">
+        <div class="native-field-label">Scheduled Time</div>
+        <div class="native-field-value">14:00 – 16:00</div>
+      </div>
+      <div class="native-field">
+        <div class="native-field-label">Customer</div>
+        <div class="native-field-value">Contoso Ltd.</div>
+      </div>
+      <div class="native-field">
+        <div class="native-field-label">Service Account</div>
+        <div class="native-field-value">Contoso Main Office</div>
+      </div>
+      <div class="native-field">
+        <div class="native-field-label">Work Order Type</div>
+        <div class="native-field-value">Reactive Maintenance</div>
+      </div>
+    </div>
+    <div class="annotation">~288px vertical space (6 fields)</div>
+  </div>
+
+  <div class="arrow">&#10132;</div>
+
+  <!-- AFTER: InfoCard -->
+  <div class="comparison-column">
+    <h3>InfoCard (After)</h3>
+    <div style="width:375px;">
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body">
+          <div class="infocard-row-left">
+            <div class="field-label">Status</div>
+            <div class="field-value">Completed</div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Priority</div>
+            <div class="field-value">High</div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Scheduled</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="annotation">~168px vertical space (6 fields) — 42% reduction</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LABEL POSITION VARIANTS -->
+<!-- ============================================================ -->
+<div class="mockup-grid">
+
+  <!-- VARIANT 1: Label Position = Left -->
+  <div class="mockup-column">
+    <h2>Label Position: Left</h2>
+    <div class="phone-frame">
+      <div class="section-label">Work Order Details</div>
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body">
+          <div class="infocard-row-left">
+            <div class="field-label">Status</div>
+            <div class="field-value">
+              Completed
+            </div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Priority</div>
+            <div class="field-value">
+              High
+            </div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Scheduled Time</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Agreement</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+          <div class="infocard-row-left">
+            <div class="field-label">Substatus</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+        </div>
+      <div class="infocard-footer" title="Back to top of card">
+        <span class="infocard-footer-icon">&#9650;</span> Back to top
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIANT 2: Label Position = Top (current) -->
+  <div class="mockup-column">
+    <h2>Top: Current</h2>
+    <div class="phone-frame">
+      <div class="section-label">Work Order Details</div>
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body">
+          <div class="infocard-row-top">
+            <div class="field-label">Status</div>
+            <div class="field-value">Completed</div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Priority</div>
+            <div class="field-value">High</div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Scheduled Time</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+          <div class="infocard-row-top">
+            <div class="field-label">Agreement</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+        </div>
+      <div class="infocard-footer" title="Back to top of card">
+        <span class="infocard-footer-icon">&#9650;</span> Back to top
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ============================================================ -->
+<!-- TOP LABEL POSITION — DESIGN OPTIONS COMPARISON -->
+<!-- ============================================================ -->
+<h2>Label Position: Top — Design Options</h2>
+<div class="mockup-grid" style="align-items:flex-start;">
+
+  <div class="mockup-column">
+    <h2>Option A: Dividers</h2>
+    <p style="font-size:12px; color:var(--colorNeutralForeground3); margin-bottom:12px; max-width:375px; text-align:center;">
+      Thin line between each label-value pair. Clean, familiar separation.
+    </p>
+    <div class="phone-frame">
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body" style="padding:0;">
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Status</div>
+            <div class="field-value">Completed</div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Priority</div>
+            <div class="field-value">High</div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Scheduled Time</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+          <div class="infocard-row-top-divider">
+            <div class="field-label">Agreement</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+        </div>
+      <div class="infocard-footer" title="Back to top of card">
+        <span class="infocard-footer-icon">&#9650;</span> Back to top
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup-column">
+    <h2>Option B: Alternating</h2>
+    <p style="font-size:12px; color:var(--colorNeutralForeground3); margin-bottom:12px; max-width:375px; text-align:center;">
+      Subtle alternating background bands. Groups pairs without adding lines.
+    </p>
+    <div class="phone-frame">
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body" style="padding:0;">
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Status</div>
+            <div class="field-value">Completed</div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Priority</div>
+            <div class="field-value">High</div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Scheduled Time</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+          <div class="infocard-row-top-zebra">
+            <div class="field-label">Agreement</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+        </div>
+      <div class="infocard-footer" title="Back to top of card">
+        <span class="infocard-footer-icon">&#9650;</span> Back to top
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup-column">
+    <h2>Option C: Both</h2>
+    <p style="font-size:12px; color:var(--colorNeutralForeground3); margin-bottom:12px; max-width:375px; text-align:center;">
+      Dividers + alternating background combined. Maximum clarity.
+    </p>
+    <div class="phone-frame">
+      <div class="infocard">
+        <div class="infocard-header">
+          <div class="infocard-header-title">Work Order Details</div>
+          <div class="infocard-nav">
+            <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+            <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+          </div>
+        </div>
+        <div class="infocard-body" style="padding:0;">
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Status</div>
+            <div class="field-value">Completed</div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Priority</div>
+            <div class="field-value">High</div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Scheduled Time</div>
+            <div class="field-value">14:00 – 16:00</div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Customer</div>
+            <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Service Account</div>
+            <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Work Order Type</div>
+            <div class="field-value">Reactive Maintenance</div>
+          </div>
+          <div class="infocard-row-top-combo">
+            <div class="field-label">Agreement</div>
+            <div class="field-value"><span class="empty-value">---</span></div>
+          </div>
+        </div>
+      <div class="infocard-footer" title="Back to top of card">
+        <span class="infocard-footer-icon">&#9650;</span> Back to top
+      </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- INTERACTIVE MULTI-SECTION DEMO -->
+<!-- ============================================================ -->
+<h2>Interactive Demo: 3 Sections, Navigation + Back to Top</h2>
+<p style="font-size:13px; color:var(--colorNeutralForeground3); margin-bottom:16px;">
+  Click the up/down chevrons to jump between sections. Click "Back to top" to scroll back to the card header. Uses Label Position: Top with dividers.
+</p>
+
+<div class="phone-frame" style="width:400px; height:600px; overflow-y:auto; scroll-behavior:smooth;" id="demoFrame">
+
+  <!-- Section 1: Work Order Details -->
+  <div class="section-label" id="section-0-label">WORK ORDER DETAILS</div>
+  <div class="infocard" id="section-0">
+    <div class="infocard-header">
+      <div class="infocard-header-title">Work Order Details</div>
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" onclick="jumpSection(0, 'up')" title="Previous section (wraps to bottom)">&#9650;</button>
+        <button class="infocard-nav-btn" onclick="jumpSection(0, 'down')" title="Next section">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body" style="padding:0;">
+      <div class="infocard-row-top-divider"><div class="field-label">Status</div><div class="field-value">Completed</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Substatus</div><div class="field-value">Closed - Posted</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Priority</div><div class="field-value">High</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Work Order Type</div><div class="field-value">Reactive Maintenance</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Service Territory</div><div class="field-value">North West Region</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Primary Incident Type</div><div class="field-value">HVAC - No Cooling</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Reported By</div><div class="field-value">Jane Smith</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Date Reported</div><div class="field-value">10 Mar 2026</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Instructions</div><div class="field-value">Check refrigerant levels first</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Agreement</div><div class="field-value"><span class="empty-value">---</span></div></div>
+    </div>
+    <div class="infocard-footer" onclick="scrollToCard(0)" title="Back to top of card">
+      <span class="infocard-footer-icon">&#9650;</span> Back to top
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <!-- Section 2: Schedule (showCardTitle = false, section label visible) -->
+  <div class="section-label" id="section-1-label">SCHEDULE</div>
+  <div class="infocard" id="section-1">
+    <div class="infocard-header no-title">
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" onclick="jumpSection(1, 'up')" title="Previous section">&#9650;</button>
+        <button class="infocard-nav-btn" onclick="jumpSection(1, 'down')" title="Next section">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body" style="padding:0;">
+      <div class="infocard-row-top-divider"><div class="field-label">Scheduled Start</div><div class="field-value">11 Mar 2026, 14:00</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Scheduled End</div><div class="field-value">11 Mar 2026, 16:00</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Estimated Duration</div><div class="field-value">2 hours</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Actual Arrival</div><div class="field-value">11 Mar 2026, 14:05</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Actual Completion</div><div class="field-value">11 Mar 2026, 15:40</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Assigned Resource</div><div class="field-value"><span class="lookup-value">John Doe</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Resource Crew</div><div class="field-value"><span class="empty-value">---</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Time Window Start</div><div class="field-value">13:00</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Time Window End</div><div class="field-value">17:00</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Travel Time</div><div class="field-value">25 minutes</div></div>
+    </div>
+    <div class="infocard-footer" onclick="scrollToCard(1)" title="Back to top of card">
+      <span class="infocard-footer-icon">&#9650;</span> Back to top
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <!-- Section 3: Customer -->
+  <div class="section-label" id="section-2-label">CUSTOMER INFORMATION</div>
+  <div class="infocard" id="section-2">
+    <div class="infocard-header">
+      <div class="infocard-header-title">Customer Information</div>
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" onclick="jumpSection(2, 'up')" title="Previous section">&#9650;</button>
+        <button class="infocard-nav-btn" onclick="jumpSection(2, 'down')" title="Next section (wraps to top)">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body" style="padding:0;">
+      <div class="infocard-row-top-divider"><div class="field-label">Customer</div><div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Service Account</div><div class="field-value"><span class="lookup-value">Contoso Main Office</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Primary Contact</div><div class="field-value"><span class="lookup-value">Jane Smith</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Phone</div><div class="field-value">01234 567890</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Email</div><div class="field-value">jane.smith@contoso.com</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Address</div><div class="field-value">42 High Street, London, EC1A 1BB</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Billing Account</div><div class="field-value"><span class="lookup-value">Contoso Group</span></div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">SLA</div><div class="field-value">Gold - 4hr Response</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Preferred Time</div><div class="field-value">Mornings</div></div>
+      <div class="infocard-row-top-divider"><div class="field-label">Access Notes</div><div class="field-value">Ring buzzer, ask for reception</div></div>
+    </div>
+    <div class="infocard-footer" onclick="scrollToCard(2)" title="Back to top of card">
+      <span class="infocard-footer-icon">&#9650;</span> Back to top
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+</div>
+
+<script>
+  var sectionCount = 3;
+
+  function jumpSection(currentIdx, direction) {
+    var targetIdx;
+    if (direction === 'down') {
+      targetIdx = (currentIdx + 1) % sectionCount;
+    } else {
+      targetIdx = (currentIdx - 1 + sectionCount) % sectionCount;
+    }
+    var targetLabel = document.getElementById('section-' + targetIdx + '-label');
+    if (targetLabel) {
+      targetLabel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function scrollToCard(sectionIdx) {
+    var card = document.getElementById('section-' + sectionIdx);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+</script>
+
+<!-- ============================================================ -->
+<!-- HIDE LABEL EXAMPLE -->
+<!-- ============================================================ -->
+<h2>Hide Label Example</h2>
+<p style="font-size:13px; color:var(--colorNeutralForeground3); margin-bottom:16px;">
+  When a field has "Hide Label = true", the value spans the full width.
+</p>
+<div style="width:375px; margin: 0 auto;">
+  <div class="infocard">
+    <div class="infocard-header">
+      <div class="infocard-header-title">Work Order Details</div>
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+        <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body">
+      <div class="infocard-row-left">
+        <div class="field-label">Status</div>
+        <div class="field-value">
+          Completed
+        </div>
+      </div>
+      <div class="infocard-row-nolabel">
+        <div class="field-value">
+          High
+          <span style="font-size:11px; color:var(--colorNeutralForeground3); margin-left:4px;">&larr; Hide Label = true</span>
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Scheduled Time</div>
+        <div class="field-value">14:00 – 16:00</div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Customer</div>
+        <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+      </div>
+    </div>
+    <div class="infocard-footer" title="Back to top of card">
+    <span class="infocard-footer-icon">&#9650;</span> Back to top
+  </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WEB / WIDER VIEWPORT -->
+<!-- ============================================================ -->
+<h2>Web Experience (Wider Viewport)</h2>
+<p style="font-size:13px; color:var(--colorNeutralForeground3); margin-bottom:16px;">
+  On desktop, the card stretches to the section width. Same compact layout, more breathing room.
+</p>
+<div style="width:540px; margin: 0 auto;">
+  <div class="infocard">
+    <div class="infocard-header">
+      <div class="infocard-header-title">Work Order Details</div>
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+        <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body">
+      <div class="infocard-row-left">
+        <div class="field-label">Status</div>
+        <div class="field-value">
+          Completed
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Priority</div>
+        <div class="field-value">
+          High
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Scheduled Time</div>
+        <div class="field-value">14:00 – 16:00</div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Customer</div>
+        <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Service Account</div>
+        <div class="field-value"><span class="lookup-value">Contoso Main Office</span></div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Work Order Type</div>
+        <div class="field-value">Reactive Maintenance</div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Substatus</div>
+        <div class="field-value">
+          Pending Review
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Agreement</div>
+        <div class="field-value"><span class="lookup-value">SLA-2024-0042</span></div>
+      </div>
+    </div>
+    <div class="infocard-footer" title="Back to top of card">
+    <span class="infocard-footer-icon">&#9650;</span> Back to top
+  </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DARK THEME -->
+<!-- ============================================================ -->
+<h2>Dark Theme (via Modern Theming Tokens)</h2>
+<p style="font-size:13px; color:var(--colorNeutralForeground3); margin-bottom:16px;">
+  Automatically adapts when the org uses a dark theme — same markup, different token values from <code>context.fluentDesignLanguage</code>.
+</p>
+<div class="dark-theme" style="background: #1f1f1f; border-radius: 12px; padding: 20px; width: 375px; margin: 0 auto;">
+  <div class="infocard">
+    <div class="infocard-header">
+      <div class="infocard-header-title">Work Order Details</div>
+      <div class="infocard-nav">
+        <button class="infocard-nav-btn" title="Previous section">&#9650;</button>
+        <button class="infocard-nav-btn" title="Next section">&#9660;</button>
+      </div>
+    </div>
+    <div class="infocard-body">
+      <div class="infocard-row-left">
+        <div class="field-label">Status</div>
+        <div class="field-value">
+          Completed
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Priority</div>
+        <div class="field-value">
+          High
+        </div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Scheduled Time</div>
+        <div class="field-value">14:00 – 16:00</div>
+      </div>
+      <div class="infocard-row-left">
+        <div class="field-label">Customer</div>
+        <div class="field-value"><span class="lookup-value">Contoso Ltd.</span></div>
+      </div>
+    </div>
+    <div class="infocard-footer" title="Back to top of card">
+    <span class="infocard-footer-icon">&#9650;</span> Back to top
+  </div>
+  </div>
+</div>
+
+<div style="height: 60px;"></div>
+</body>
+</html>

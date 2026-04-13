@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account InfoCard — Layout Options</title>
+<style>
+  :root {
+    --bg: #f5f5f5;
+    --card-bg: #ffffff;
+    --text-primary: #242424;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border: #e0e0e0;
+    --brand: #0f6cbd;
+    --brand-light: #e8f1fa;
+    --success: #0e7a0d;
+    --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    padding: 16px;
+  }
+
+  .phone-frame {
+    width: 375px;
+    margin: 0 auto 40px;
+    background: var(--bg);
+    border: 2px solid #ccc;
+    border-radius: 24px;
+    padding: 20px 12px;
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+    margin: -8px auto 12px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 32px 0 8px;
+    color: var(--text-primary);
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+
+  /* ── Comparison: Native MDA fields ── */
+  .native-section {
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+  .native-section-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 10px 0 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .native-field {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .native-field-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 3px;
+  }
+  .native-field-value {
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .native-field-value.empty {
+    color: var(--text-muted);
+  }
+  .native-field-value.link {
+    color: var(--brand);
+  }
+  .native-height-label {
+    text-align: center;
+    font-size: 11px;
+    color: #c4314b;
+    font-weight: 600;
+    margin-top: 8px;
+    padding: 4px;
+    background: #fdf3f4;
+    border-radius: 4px;
+  }
+
+  /* ── Card styles ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  /* ── OPTION A: Contact Bar ── */
+  .card-a .card-header {
+    padding: 12px 14px 0;
+  }
+  .card-a .account-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .card-a .account-number {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .card-a .contact-bar {
+    display: flex;
+    gap: 0;
+    padding: 8px 10px;
+    margin: 8px 0 0;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .contact-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--brand);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .contact-btn:hover {
+    background: var(--brand-light);
+  }
+  .contact-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .contact-btn.icon-only {
+    padding: 6px 8px;
+  }
+  .contact-bar .divider {
+    width: 1px;
+    background: #f0f0f0;
+    margin: 2px 2px;
+  }
+  .card-a .fields {
+    padding: 6px 14px 10px;
+  }
+  .card-a .field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+  }
+  .card-a .field-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+  .card-a .field-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    text-align: right;
+    flex: 1;
+    margin-left: 12px;
+  }
+
+  /* ── OPTION B: Inline Chips ── */
+  .card-b .card-header {
+    padding: 12px 14px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .card-b .account-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+  .card-b .account-number {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .card-b .quick-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 12px;
+    margin-top: 2px;
+  }
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--brand);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .icon-btn:hover {
+    background: var(--brand-light);
+  }
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .card-b .detail-rows {
+    padding: 0 14px 10px;
+  }
+  .card-b .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .card-b .detail-row svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .card-b .detail-text {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .card-b .detail-text.secondary {
+    color: var(--text-secondary);
+    font-size: 12px;
+  }
+  .card-b .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 4px 14px 10px;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #f0f0f0;
+    color: var(--text-secondary);
+  }
+  .tag.status {
+    background: #dff6dd;
+    color: #0e7a0d;
+  }
+
+  /* ── OPTION C: Two-Column Dense ── */
+  .card-c .card-top {
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .card-c .account-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-c .actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  .card-c .actions .icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .card-c .actions .icon-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .card-c .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    padding: 2px 0;
+  }
+  .card-c .grid-cell {
+    padding: 6px 14px;
+    border-bottom: 1px solid #f8f8f8;
+  }
+  .card-c .grid-cell:nth-child(odd) {
+    border-right: 1px solid #f8f8f8;
+  }
+  .card-c .grid-cell.full {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
+  .card-c .cell-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 1px;
+  }
+  .card-c .cell-value {
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .card-c .cell-value.link {
+    color: var(--brand);
+  }
+
+  .height-label {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .height-label.good {
+    color: #0e7a0d;
+    background: #e6f2e6;
+  }
+
+  .option-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+
+  .vs-divider {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 16px 0;
+    letter-spacing: 2px;
+  }
+
+  .notes {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 8px 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .notes strong { color: var(--text-primary); }
+  .notes ul { margin: 4px 0 0 16px; }
+
+  .section-gap { height: 32px; }
+</style>
+</head>
+<body>
+
+<!-- ================= BEFORE: NATIVE ================= -->
+<h1>Before: Native Account Form (Mobile)</h1>
+<p class="subtitle">Typical account summary section on Field Service Mobile. Every field takes a full row, empty fields still show, and contact details aren't actionable.</p>
+
+<div class="phone-frame">
+  <div class="native-section">
+    <div class="native-section-header">Account Summary</div>
+
+    <div class="native-field">
+      <div class="native-field-label">Account Name</div>
+      <div class="native-field-value">Contoso Ltd.</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Account Number</div>
+      <div class="native-field-value">ACC-001847</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Main Phone</div>
+      <div class="native-field-value">+1 (425) 555-0100</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Other Phone</div>
+      <div class="native-field-value empty">---</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Fax</div>
+      <div class="native-field-value empty">---</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Website</div>
+      <div class="native-field-value link">https://www.contoso.com</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Email</div>
+      <div class="native-field-value empty">---</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Industry</div>
+      <div class="native-field-value">Manufacturing</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">SIC Code</div>
+      <div class="native-field-value">3599</div>
+    </div>
+    <div class="native-field">
+      <div class="native-field-label">Address</div>
+      <div class="native-field-value">1 Microsoft Way, Redmond, WA 98052</div>
+    </div>
+
+    <div class="native-height-label">~440px — 10 fields, 3 empty</div>
+  </div>
+</div>
+
+<!-- ================= OPTION A ================= -->
+<h1>Option A: Contact Bar Card</h1>
+<p class="subtitle">Account name as header (no label). Phone/website/email as a tappable contact bar with labels. Remaining fields below in compact rows. Empty fields hidden entirely.</p>
+
+<div class="phone-frame">
+  <div style="padding: 0 4px;">
+    <div class="option-label">Account Summary</div>
+    <div class="card card-a">
+      <div class="card-header">
+        <div class="account-name">Contoso Ltd.</div>
+        <div class="account-number">ACC-001847</div>
+      </div>
+      <div class="contact-bar">
+        <a class="contact-btn" href="tel:+14255550100">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5.22 2.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06L7.56 7l5.44 5.44 1.22-1.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06l-1.5 1.5A3.25 3.25 0 0 1 13 17.5c-3.08-.24-5.9-1.76-8.07-3.93S1.74 8.08 1.5 5a3.25 3.25 0 0 1 1.22-3.28l1.5-1.5z"/></svg>
+          (425) 555-0100
+        </a>
+        <div class="divider"></div>
+        <a class="contact-btn icon-only" href="https://www.contoso.com" title="Website">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm-.5 1.04A6.98 6.98 0 0 0 7 4.5c-.3.5-.56 1.1-.77 1.75h2.77V3.04zm1 0v3.21h2.77A9.36 9.36 0 0 0 12.5 4.5a6.98 6.98 0 0 0-2-.46zM5.72 7.25A7.04 7.04 0 0 0 5 10c0 .95.13 1.87.37 2.75h2.88V7.25H5.72zm4.28 0v5.5h2.75V7.25H10zm3.75 0v5.5h2.53c.24-.88.37-1.8.37-2.75s-.13-1.87-.37-2.75h-2.53zM7 13.75H5.97a6.98 6.98 0 0 0 2.53 2.21v-2.21H7zm3.5 3.21a6.98 6.98 0 0 0 2-1.46h-2v1.46zm-1 0v-3.21H6.73c.21.65.47 1.25.77 1.75a6.98 6.98 0 0 0 2 1.46z"/></svg>
+        </a>
+      </div>
+      <div class="fields">
+        <div class="field-row">
+          <span class="field-label">Industry</span>
+          <span class="field-value">Manufacturing</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">SIC Code</span>
+          <span class="field-value">3599</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Address</span>
+          <span class="field-value">1 Microsoft Way, Redmond, WA 98052</span>
+        </div>
+      </div>
+    </div>
+    <div class="height-label good">~160px — 7 fields shown, 3 empty hidden, contact info actionable</div>
+
+    <div class="notes">
+      <strong>Design rationale:</strong>
+      <ul>
+        <li>Account name is the card header — no label needed</li>
+        <li>Account number as subtitle — always visible, low prominence</li>
+        <li>Phone shows number (tappable to call), website is icon-only (tappable to open)</li>
+        <li>Email/Fax/Other Phone hidden because they're empty</li>
+        <li>Remaining metadata fields in compact label:value rows</li>
+        <li>If email had a value, it would appear as a mail icon in the contact bar</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OPTION B ================= -->
+<h1>Option B: Icon Row + Tags</h1>
+<p class="subtitle">Action icons top-right. Key details as icon+text rows. Metadata as small tags at the bottom. Maximum density.</p>
+
+<div class="phone-frame">
+  <div style="padding: 0 4px;">
+    <div class="option-label">Account Summary</div>
+    <div class="card card-b">
+      <div class="card-header">
+        <div>
+          <div class="account-name">Contoso Ltd.</div>
+          <div class="account-number">ACC-001847</div>
+        </div>
+        <div class="quick-actions">
+          <a class="icon-btn" href="tel:+14255550100" title="Call (425) 555-0100">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5.22 2.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06L7.56 7l5.44 5.44 1.22-1.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06l-1.5 1.5A3.25 3.25 0 0 1 13 17.5c-3.08-.24-5.9-1.76-8.07-3.93S1.74 8.08 1.5 5a3.25 3.25 0 0 1 1.22-3.28l1.5-1.5z"/></svg>
+          </a>
+          <a class="icon-btn" href="https://www.contoso.com" title="Open website">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm-.5 1.04A6.98 6.98 0 0 0 7 4.5c-.3.5-.56 1.1-.77 1.75h2.77V3.04zm1 0v3.21h2.77A9.36 9.36 0 0 0 12.5 4.5a6.98 6.98 0 0 0-2-.46zM5.72 7.25A7.04 7.04 0 0 0 5 10c0 .95.13 1.87.37 2.75h2.88V7.25H5.72zm4.28 0v5.5h2.75V7.25H10zm3.75 0v5.5h2.53c.24-.88.37-1.8.37-2.75s-.13-1.87-.37-2.75h-2.53zM7 13.75H5.97a6.98 6.98 0 0 0 2.53 2.21v-2.21H7zm3.5 3.21a6.98 6.98 0 0 0 2-1.46h-2v1.46zm-1 0v-3.21H6.73c.21.65.47 1.25.77 1.75a6.98 6.98 0 0 0 2 1.46z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="detail-rows">
+        <div class="detail-row">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a7 7 0 0 0-7 7c0 5.25 7 9 7 9s7-3.75 7-9a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+          <span class="detail-text">1 Microsoft Way, Redmond, WA 98052</span>
+        </div>
+        <div class="detail-row">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5.22 2.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06L7.56 7l5.44 5.44 1.22-1.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06l-1.5 1.5A3.25 3.25 0 0 1 13 17.5c-3.08-.24-5.9-1.76-8.07-3.93S1.74 8.08 1.5 5a3.25 3.25 0 0 1 1.22-3.28l1.5-1.5z"/></svg>
+          <span class="detail-text">(425) 555-0100</span>
+        </div>
+      </div>
+      <div class="tag-row">
+        <span class="tag">Manufacturing</span>
+        <span class="tag">SIC: 3599</span>
+        <span class="tag status">Active</span>
+      </div>
+    </div>
+    <div class="height-label good">~130px — contact-card feel, tags for metadata</div>
+
+    <div class="notes">
+      <strong>Design rationale:</strong>
+      <ul>
+        <li>Feels like a native contact card — familiar UX for mobile users</li>
+        <li>Phone + website as icon buttons top-right (instant tap to call/open)</li>
+        <li>Address and phone as icon+text rows (Google Maps style)</li>
+        <li>Low-priority metadata (industry, SIC, status) as compact tags</li>
+        <li>Most compact option — everything visible at a glance</li>
+        <li>Phone appears in both the icon button AND the detail row (debatable — could remove one)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OPTION C ================= -->
+<h1>Option C: Two-Column Grid</h1>
+<p class="subtitle">Dense data grid with paired fields side-by-side. Action icons in the header. Good for accounts with more data fields.</p>
+
+<div class="phone-frame">
+  <div style="padding: 0 4px;">
+    <div class="option-label">Account Summary</div>
+    <div class="card card-c">
+      <div class="card-top">
+        <div class="account-name">Contoso Ltd.</div>
+        <div class="actions">
+          <a class="icon-btn" href="tel:+14255550100" title="Call">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5.22 2.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06L7.56 7l5.44 5.44 1.22-1.22a.75.75 0 0 1 1.06 0l2.5 2.5a.75.75 0 0 1 0 1.06l-1.5 1.5A3.25 3.25 0 0 1 13 17.5c-3.08-.24-5.9-1.76-8.07-3.93S1.74 8.08 1.5 5a3.25 3.25 0 0 1 1.22-3.28l1.5-1.5z"/></svg>
+          </a>
+          <a class="icon-btn" href="https://www.contoso.com" title="Website">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm-.5 1.04A6.98 6.98 0 0 0 7 4.5c-.3.5-.56 1.1-.77 1.75h2.77V3.04zm1 0v3.21h2.77A9.36 9.36 0 0 0 12.5 4.5a6.98 6.98 0 0 0-2-.46zM5.72 7.25A7.04 7.04 0 0 0 5 10c0 .95.13 1.87.37 2.75h2.88V7.25H5.72zm4.28 0v5.5h2.75V7.25H10zm3.75 0v5.5h2.53c.24-.88.37-1.8.37-2.75s-.13-1.87-.37-2.75h-2.53zM7 13.75H5.97a6.98 6.98 0 0 0 2.53 2.21v-2.21H7zm3.5 3.21a6.98 6.98 0 0 0 2-1.46h-2v1.46zm-1 0v-3.21H6.73c.21.65.47 1.25.77 1.75a6.98 6.98 0 0 0 2 1.46z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="grid-cell">
+          <div class="cell-label">Account #</div>
+          <div class="cell-value">ACC-001847</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Industry</div>
+          <div class="cell-value">Manufacturing</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">Phone</div>
+          <div class="cell-value link">(425) 555-0100</div>
+        </div>
+        <div class="grid-cell">
+          <div class="cell-label">SIC Code</div>
+          <div class="cell-value">3599</div>
+        </div>
+        <div class="grid-cell full">
+          <div class="cell-label">Address</div>
+          <div class="cell-value">1 Microsoft Way, Redmond, WA 98052</div>
+        </div>
+      </div>
+    </div>
+    <div class="height-label good">~155px — 2-col grid packs more data per row</div>
+
+    <div class="notes">
+      <strong>Design rationale:</strong>
+      <ul>
+        <li>Two-column grid doubles horizontal density</li>
+        <li>Pairs shorter fields (account # + industry, phone + SIC) side by side</li>
+        <li>Address spans full width since it's longer</li>
+        <li>Tiny uppercase labels above values — minimal space overhead</li>
+        <li>Scales well when there are 8-12+ fields (just add more grid cells)</li>
+        <li>Action icons in header, same as Option B</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMPARISON TABLE ================= -->
+<div style="max-width: 600px; margin: 40px auto;">
+  <h1 style="text-align:left;">Comparison</h1>
+  <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:12px;">
+    <thead>
+      <tr style="border-bottom:2px solid var(--border);">
+        <th style="text-align:left; padding:8px 4px;"></th>
+        <th style="text-align:left; padding:8px 4px;">Native</th>
+        <th style="text-align:left; padding:8px 4px;">A: Contact Bar</th>
+        <th style="text-align:left; padding:8px 4px;">B: Icon Row</th>
+        <th style="text-align:left; padding:8px 4px;">C: Grid</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:6px 4px; font-weight:600;">Height</td>
+        <td style="padding:6px 4px; color:#c4314b;">~440px</td>
+        <td style="padding:6px 4px; color:#0e7a0d;">~160px</td>
+        <td style="padding:6px 4px; color:#0e7a0d;">~130px</td>
+        <td style="padding:6px 4px; color:#0e7a0d;">~155px</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:6px 4px; font-weight:600;">Reduction</td>
+        <td style="padding:6px 4px;">—</td>
+        <td style="padding:6px 4px;">64%</td>
+        <td style="padding:6px 4px;">70%</td>
+        <td style="padding:6px 4px;">65%</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:6px 4px; font-weight:600;">Empty fields</td>
+        <td style="padding:6px 4px;">Shown</td>
+        <td style="padding:6px 4px;">Hidden</td>
+        <td style="padding:6px 4px;">Hidden</td>
+        <td style="padding:6px 4px;">Hidden</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:6px 4px; font-weight:600;">Tap to call</td>
+        <td style="padding:6px 4px;">No</td>
+        <td style="padding:6px 4px;">Yes</td>
+        <td style="padding:6px 4px;">Yes</td>
+        <td style="padding:6px 4px;">Yes</td>
+      </tr>
+      <tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:6px 4px; font-weight:600;">Best for</td>
+        <td style="padding:6px 4px;">—</td>
+        <td style="padding:6px 4px;">Balanced</td>
+        <td style="padding:6px 4px;">Minimal</td>
+        <td style="padding:6px 4px;">Data-heavy</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

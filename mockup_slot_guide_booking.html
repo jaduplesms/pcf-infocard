@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfoCard v2 — Booking Slot Mapping Guide</title>
+<style>
+  :root {
+    --bg: #f3f3f3;
+    --card-bg: #ffffff;
+    --text-primary: #242424;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border: #e0e0e0;
+    --border-light: #f0f0f0;
+    --brand: #0f6cbd;
+    --brand-light: #e8f1fa;
+    --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: #e4e4e4; color: var(--text-primary); padding: 16px; }
+  h1 { text-align: center; font-size: 20px; font-weight: 600; margin: 8px 0 6px; }
+  h2 { font-size: 16px; font-weight: 600; margin: 32px 0 12px; text-align: center; }
+  .page-sub { text-align: center; font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+  .annotated-wrap { display: flex; justify-content: center; gap: 0; margin: 0 auto 40px; max-width: 900px; }
+  .card-side { width: 375px; flex-shrink: 0; }
+  .annotations-side { width: 320px; flex-shrink: 0; padding-top: 4px; }
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin: 0 12px; }
+
+  .zone { position: relative; }
+  .z-header { border-left: 3px solid #0f6cbd; }
+  .z-actions { border-left: 3px solid #e36209; }
+  .z-details { border-left: 3px solid #0e7a0d; }
+  .z-grid { border-left: 3px solid #8b5cf6; }
+  .z-tags { border-left: 3px solid #d63384; }
+  .z-location { border-left: 3px solid #0891b2; }
+
+  .ann { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 12px; line-height: 1.5; padding: 6px 8px; border-radius: 6px; }
+  .ann strong { display: block; color: var(--text-primary); }
+  .ann .desc { color: var(--text-secondary); }
+  .ann code { font-family: 'Cascadia Code', Consolas, monospace; font-size: 11px; background: #f0f0f0; padding: 1px 4px; border-radius: 3px; color: var(--brand); }
+  .ann .zone-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+
+  .card .hdr { padding: 14px 14px 0; }
+  .card .name { font-size: 16px; font-weight: 600; color: var(--brand); cursor: pointer; }
+  .card .sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 4px; align-items: center; }
+  .card .sub .brand { color: var(--brand); cursor: pointer; }
+  .card .sub .dot-sep { width: 3px; height: 3px; background: var(--text-muted); border-radius: 50%; }
+  .card .kv-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--border-light); margin-top: 10px; }
+  .card .kv-grid.two-col { grid-template-columns: 1fr 1fr; }
+  .card .kv { padding: 6px 14px; }
+  .card .kv:not(:last-child) { border-right: 1px solid var(--border-light); }
+  .card .kv-l { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .card .kv-v { font-size: 12px; color: var(--text-primary); margin-top: 1px; }
+  .card .tag-strip { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 14px 10px; border-top: 1px solid var(--border-light); }
+  .card .tg { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #f0f0f0; color: var(--text-secondary); white-space: nowrap; }
+  .card .tg.br { background: var(--brand-light); color: var(--brand); }
+  .card .tg.status-green { background: #dff6dd; color: #0e7a0d; }
+
+  .mapping-table { max-width: 800px; margin: 16px auto; border-collapse: collapse; width: 100%; font-size: 13px; }
+  .mapping-table th { text-align: left; padding: 8px 12px; background: #f8f8f8; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+  .mapping-table td { padding: 6px 12px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+  .mapping-table code { font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; color: var(--brand); }
+  .mapping-table .zone-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .mapping-table .muted { color: var(--text-muted); font-size: 12px; font-style: italic; }
+  .mapping-table tr.section-row td { background: #f8f8f8; font-weight: 600; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; padding: 10px 12px 4px; }
+
+  .tip-box { max-width: 700px; margin: 20px auto; padding: 12px 16px; background: var(--brand-light); border-radius: 8px; border-left: 4px solid var(--brand); font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+  .tip-box strong { color: var(--brand); }
+
+  .future-box { max-width: 700px; margin: 20px auto; padding: 12px 16px; background: #fff4e6; border-radius: 8px; border-left: 4px solid #e36209; font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+  .future-box strong { color: #e36209; }
+
+  /* Phone frame */
+  .phone-frame { width: 375px; margin: 0 auto 16px; background: var(--bg); border: 2px solid #bbb; border-radius: 28px; padding: 20px 0; overflow: hidden; }
+  .phone-frame::before { content: ''; display: block; width: 60px; height: 4px; background: #ccc; border-radius: 2px; margin: -8px auto 8px; }
+  .phone-content { padding: 0 12px; }
+  .mda-header { display: flex; align-items: center; padding: 8px 4px 6px; gap: 12px; }
+  .mda-header .back { font-size: 20px; color: var(--text-primary); }
+  .mda-header .title { font-size: 17px; font-weight: 600; flex: 1; text-align: center; margin-right: 20px; }
+  .mda-tabs { display: flex; gap: 20px; padding: 0 4px; border-bottom: 2px solid var(--border-light); margin-bottom: 8px; }
+  .mda-tab { font-size: 14px; padding: 8px 0; color: var(--text-secondary); }
+  .mda-tab.active { color: var(--brand); border-bottom: 2px solid var(--brand); font-weight: 600; margin-bottom: -2px; }
+
+  /* Comparison layout */
+  .compare-wrap { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; max-width: 800px; margin: 0 auto; }
+  .compare-label { text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .compare-label.bad { color: #c4314b; }
+  .compare-label.good { color: #0e7a0d; }
+
+  .native-section { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .native-field { padding: 10px 14px; border-bottom: 1px solid #f5f5f5; }
+  .native-field:last-child { border-bottom: none; }
+  .native-field-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+  .native-field-value { font-size: 14px; color: var(--text-primary); }
+  .native-field-value.empty { color: var(--text-muted); }
+  .native-field-value.link { color: var(--brand); font-weight: 500; }
+  .height-marker { text-align: center; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-top: 8px; }
+  .height-marker.bad { background: #fdf3f4; color: #c4314b; }
+  .height-marker.good { background: #e6f2e6; color: #0e7a0d; }
+  .marker-row { text-align: center; }
+
+  /* Collapse chevron */
+  .collapse-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    opacity: 0.5;
+    cursor: pointer;
+  }
+  .collapse-chevron:hover { opacity: 0.8; }
+
+  /* Version badge */
+  .version-badge {
+    display: flex;
+    justify-content: flex-end;
+    padding: 2px 6px 4px;
+  }
+  .version-badge .info-icon {
+    opacity: 0.3;
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+  }
+  .version-badge .info-icon:hover { opacity: 0.6; }
+  .version-badge .info-icon::after {
+    content: 'InfoCard v2.2.0';
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: var(--text-primary);
+    color: var(--card-bg, #fff);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    margin-bottom: 2px;
+  }
+  .version-badge .info-icon:hover::after { display: block; }
+</style>
+</head>
+<body>
+
+<h1>InfoCard v2 — Bookable Resource Booking</h1>
+<p class="page-sub">Slot mapping guide for the "Booking and Work Order" form. Shows how booking fields map to card zones, plus a before/after comparison.</p>
+
+<!-- ═══════ BEFORE / AFTER ═══════ -->
+<h2>Before / After</h2>
+
+<div class="compare-wrap">
+  <div>
+    <div class="compare-label bad">Before: Native Fields</div>
+    <div class="phone-frame" style="width: 340px;">
+      <div class="phone-content">
+        <div class="native-section">
+          <div class="native-field">
+            <div class="native-field-label">Work Order</div>
+            <div class="native-field-value link">WO-00047</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Resource</div>
+            <div class="native-field-value link">John Smith</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Booking Status</div>
+            <div class="native-field-value link">Scheduled</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Start Time</div>
+            <div class="native-field-value">30/03/2026 09:00</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">End Time</div>
+            <div class="native-field-value">30/03/2026 11:00</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Duration</div>
+            <div class="native-field-value">120 min</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Latitude</div>
+            <div class="native-field-value">51.3148</div>
+          </div>
+          <div class="native-field">
+            <div class="native-field-label">Longitude</div>
+            <div class="native-field-value">-0.5069</div>
+          </div>
+        </div>
+        <div class="marker-row"><span class="height-marker bad">~400px — 8 fields</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="compare-label good">After: InfoCard (Smart)</div>
+    <div class="phone-frame" style="width: 340px;">
+      <div class="phone-content">
+        <div class="card">
+          <div class="hdr">
+            <div class="name">WO-00047</div>
+            <div class="sub">
+              <span class="brand">John Smith</span>
+              <span class="dot-sep"></span>
+              <span class="brand">Scheduled</span>
+            </div>
+          </div>
+          <div class="kv-grid">
+            <div class="kv"><div class="kv-l">Start</div><div class="kv-v">09:00</div></div>
+            <div class="kv"><div class="kv-l">End</div><div class="kv-v">11:00</div></div>
+            <div class="kv"><div class="kv-l">Duration</div><div class="kv-v">120 min</div></div>
+          </div>
+          <div class="tag-strip">
+            <span class="tg status-green">Scheduled</span>
+          </div>
+          <div class="version-badge"><span class="info-icon"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm-.75 4.75a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0zM9 9h2v5H9V9z"/></svg></span></div>
+        </div>
+        <div class="marker-row"><span class="height-marker good">~110px — same data, tappable WO + resource</span></div>
+      </div>
+    </div>
+</div>
+</div>
+
+
+<!-- ═══════ ANNOTATED CARD ═══════ -->
+<h2 style="margin-top: 48px;">Smart Card Layout — Annotated</h2>
+
+<div class="annotated-wrap">
+  <div class="annotations-side" style="text-align: right; padding-right: 8px;">
+    <div class="ann" style="margin-top: 4px;">
+      <div>
+        <strong><span class="zone-dot" style="background:#0f6cbd;"></span> Header Zone</strong>
+        <span class="desc"><code>titleField</code> → Work Order (tappable — opens WO)<br><code>subtitleField1</code> → Resource (tappable)<br><code>subtitleField2</code> → Booking Status</span>
+      </div>
+    </div>
+    <div class="ann" style="margin-top: 30px;">
+      <div>
+        <strong><span class="zone-dot" style="background:#8b5cf6;"></span> Grid Zone</strong>
+        <span class="desc"><code>gridField1</code> → Start Time<br><code>gridField2</code> → End Time<br><code>gridField3</code> → Duration</span>
+      </div>
+    </div>
+    <div class="ann" style="margin-top: 12px;">
+      <div>
+        <strong><span class="zone-dot" style="background:#d63384;"></span> Tags Zone</strong>
+        <span class="desc"><code>tagField1</code> → Booking Status (pill)</span>
+      </div>
+    </div>
+    <div class="ann" style="margin-top: 12px;">
+      <div>
+        <strong><span class="zone-dot" style="background:#0891b2;"></span> Location (hidden)</strong>
+        <span class="desc"><code>latitudeField</code> → msdyn_latitude<br><code>longitudeField</code> → msdyn_longitude<br>Enables tap-to-map on address detail rows</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-side">
+    <div class="card" style="width: 340px;">
+      <div class="zone z-header">
+        <div class="hdr" style="display:flex; align-items:flex-start; gap:4px;">
+          <div style="flex:1; min-width:0;">
+            <div class="name">WO-00047</div>
+            <div class="sub">
+              <span class="brand">John Smith</span>
+              <span class="dot-sep"></span>
+              <span class="brand">Scheduled</span>
+            </div>
+          </div>
+          <span class="collapse-chevron" title="Collapse/expand card body">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l4 4 4-4"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="zone z-grid">
+        <div class="kv-grid">
+          <div class="kv"><div class="kv-l">Start</div><div class="kv-v">30/03 09:00</div></div>
+          <div class="kv"><div class="kv-l">End</div><div class="kv-v">30/03 11:00</div></div>
+          <div class="kv"><div class="kv-l">Duration</div><div class="kv-v">120 min</div></div>
+        </div>
+      </div>
+      <div class="zone z-tags">
+        <div class="tag-strip">
+          <span class="tg status-green">Scheduled</span>
+        </div>
+      </div>
+      <div class="version-badge"><span class="info-icon"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm-.75 4.75a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0zM9 9h2v5H9V9z"/></svg></span></div>
+    </div>
+</div>
+</div>
+
+
+<!-- ═══════ MAPPING TABLE ═══════ -->
+<h2>Current Booking Mapping</h2>
+<p class="page-sub">Fields directly available on <code>bookableresourcebooking</code>. All bound as direct properties — no related entity fetch needed.</p>
+
+<table class="mapping-table">
+  <thead>
+    <tr>
+      <th>Slot</th>
+      <th>Bind to (Booking field)</th>
+      <th>Logical Name</th>
+      <th>What it shows</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="section-row"><td colspan="4"><span class="zone-dot" style="background:#0f6cbd;"></span> Header</td></tr>
+    <tr>
+      <td><code>titleField</code></td>
+      <td>Work Order</td>
+      <td><code>msdyn_workorder</code></td>
+      <td>WO number as header — tappable to open WO</td>
+    </tr>
+    <tr>
+      <td><code>subtitleField1</code></td>
+      <td>Resource</td>
+      <td><code>resource</code></td>
+      <td>Technician name — tappable to open resource</td>
+    </tr>
+    <tr>
+      <td><code>subtitleField2</code></td>
+      <td>Booking Status</td>
+      <td><code>bookingstatus</code></td>
+      <td>Status name in subtitle</td>
+    </tr>
+
+    <tr class="section-row"><td colspan="4"><span class="zone-dot" style="background:#0891b2;"></span> Location</td></tr>
+    <tr>
+      <td><code>latitudeField</code></td>
+      <td>Latitude</td>
+      <td><code>msdyn_latitude</code></td>
+      <td rowspan="2">Enables tap-to-open-map on address detail rows</td>
+    </tr>
+    <tr>
+      <td><code>longitudeField</code></td>
+      <td>Longitude</td>
+      <td><code>msdyn_longitude</code></td>
+    </tr>
+
+    <tr class="section-row"><td colspan="4"><span class="zone-dot" style="background:#8b5cf6;"></span> Grid</td></tr>
+    <tr>
+      <td><code>gridField1</code></td>
+      <td>Start Time</td>
+      <td><code>starttime</code></td>
+      <td>2-col cell: "START / 30/03 09:00"</td>
+    </tr>
+    <tr>
+      <td><code>gridField2</code></td>
+      <td>End Time</td>
+      <td><code>endtime</code></td>
+      <td>2-col cell: "END / 30/03 11:00"</td>
+    </tr>
+    <tr>
+      <td><code>gridField3</code></td>
+      <td>Duration</td>
+      <td><code>duration</code></td>
+      <td>2-col cell: "DURATION / 120 min"</td>
+    </tr>
+
+    <tr class="section-row"><td colspan="4"><span class="zone-dot" style="background:#d63384;"></span> Tags</td></tr>
+    <tr>
+      <td><code>tagField1</code></td>
+      <td>Booking Status</td>
+      <td><code>bookingstatus</code></td>
+      <td>Compact pill: "Scheduled"</td>
+    </tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════ FUTURE: RELATED FIELDS ═══════ -->
+<h2 style="margin-top: 48px;">Future: Related Entity Fields</h2>
+<p class="page-sub">Fields from the Work Order's Service Account (customer phone, address) require a <code>webAPI.retrieveRecord()</code> call. Confirmed working online and offline.</p>
+
+<div class="future-box">
+  <strong>Planned: <code>relatedFields</code> config property</strong><br>
+  A text config property where the developer specifies which lookup to follow and which fields to fetch. Example format:<br><br>
+  <code style="display:block; background:#fff; padding:8px; border-radius:4px; margin:4px 0; font-size:12px; line-height:1.8;">
+    msdyn_workorder.msdyn_serviceaccount → subtitle3<br>
+    msdyn_workorder.msdyn_primaryincidenttype → tag2<br>
+    msdyn_workorder.address → detail1
+  </code>
+  <br>
+  The control reads the lookup ID from the bound field, calls <code>webAPI.retrieveRecord()</code> to fetch the specified columns, and injects the results into the target slots. Works offline when the related entity is in the Mobile Offline Profile.
+</div>
+
+<table class="mapping-table" style="margin-top: 20px;">
+  <thead>
+    <tr>
+      <th>Slot</th>
+      <th>Source</th>
+      <th>Fetch path</th>
+      <th>What it shows</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="section-row"><td colspan="4">Potential related fields (via webAPI)</td></tr>
+    <tr>
+      <td><code>subtitleField3</code></td>
+      <td>Service Account</td>
+      <td><code>msdyn_workorder → msdyn_serviceaccount</code></td>
+      <td>"Contoso Ltd." in subtitle</td>
+    </tr>
+    <tr>
+      <td><code>phoneField1</code></td>
+      <td>Customer Phone</td>
+      <td><code>msdyn_workorder → msdyn_serviceaccount → telephone1</code></td>
+      <td>Tappable phone icon</td>
+    </tr>
+    <tr>
+      <td><code>detailField1</code></td>
+      <td>Work Order Address</td>
+      <td><code>msdyn_workorder → msdyn_address1</code></td>
+      <td>Tappable address with pin (uses lat/lng for map)</td>
+    </tr>
+    <tr>
+      <td><code>tag2</code></td>
+      <td>Incident Type</td>
+      <td><code>msdyn_workorder → msdyn_primaryincidenttype</code></td>
+      <td>"Reactive Maintenance" pill</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="tip-box" style="margin-top: 24px;">
+  <strong>With related fields, the booking card could look like:</strong><br><br>
+  <div class="card" style="width: 340px; margin: 8px 0;">
+    <div class="hdr">
+      <div class="name" style="font-size:16px; font-weight:600; color:var(--brand);">WO-00047</div>
+      <div class="sub">
+        <span class="brand">John Smith</span>
+        <span class="dot-sep"></span>
+        <span class="brand">Contoso Ltd.</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:0; margin:10px 0 0; border-top:1px solid var(--border-light); border-bottom:1px solid var(--border-light); padding:0 6px;">
+      <a href="#" style="display:flex; align-items:center; gap:6px; padding:8px 10px; border-radius:6px; font-size:13px; color:var(--brand); text-decoration:none; white-space:nowrap;">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M6.37 3.28a1.25 1.25 0 0 1 1.76 0l2.12 2.12a1.25 1.25 0 0 1 0 1.76L9.13 8.28l2.59 2.59 1.12-1.12a1.25 1.25 0 0 1 1.76 0l2.12 2.12a1.25 1.25 0 0 1 0 1.76l-1.06 1.06a3.5 3.5 0 0 1-3.56.86c-2.4-.8-4.64-2.28-6.36-4a14.2 14.2 0 0 1-4-6.36 3.5 3.5 0 0 1 .86-3.56l1.06-1.06z"/></svg>
+        07700 678944
+      </a>
+    </div>
+    <div style="padding:6px 14px 4px;">
+      <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="#8a8a8a"><path d="M10 2a7 7 0 0 0-7 7c0 5.25 7 9 7 9s7-3.75 7-9a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+        <span style="font-size:13px; color:var(--brand); text-decoration:underline;">191 Common Lane, Pyrford KT14 7HT</span>
+      </div>
+    </div>
+    <div class="kv-grid">
+      <div class="kv"><div class="kv-l">Start</div><div class="kv-v">09:00</div></div>
+      <div class="kv"><div class="kv-l">End</div><div class="kv-v">11:00</div></div>
+      <div class="kv"><div class="kv-l">Duration</div><div class="kv-v">120 min</div></div>
+    </div>
+    <div class="tag-strip">
+      <span class="tg status-green">Scheduled</span>
+      <span class="tg">Reactive Maintenance</span>
+    </div>
+  </div>
+  Customer phone, address (tappable to map), and incident type — all fetched from the related Work Order via <code>webAPI.retrieveRecord()</code>.
+</div>
+
+</body>
+</html>

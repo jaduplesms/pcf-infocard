@@ -1,0 +1,554 @@
+{
+  "bookableresourcebooking": {
+    "displayName": "Bookable Resource Booking",
+    "columns": {
+      "bookableresourcebookingid": {
+        "displayName": "Bookable Resource Booking",
+        "type": "Uniqueidentifier"
+      },
+      "bookingstatus": {
+        "displayName": "Booking Status",
+        "type": "Lookup"
+      },
+      "bookingtype": {
+        "displayName": "Booking Type",
+        "type": "Picklist"
+      },
+      "createdby": {
+        "displayName": "Created By",
+        "type": "Lookup"
+      },
+      "createdon": {
+        "displayName": "Created On",
+        "type": "DateTime"
+      },
+      "createdonbehalfby": {
+        "displayName": "Created By (Delegate)",
+        "type": "Lookup"
+      },
+      "duration": {
+        "displayName": "Duration",
+        "type": "Integer"
+      },
+      "endtime": {
+        "displayName": "End Time",
+        "type": "DateTime"
+      },
+      "exchangerate": {
+        "displayName": "ExchangeRate",
+        "type": "Decimal"
+      },
+      "header": {
+        "displayName": "Header",
+        "type": "Lookup"
+      },
+      "importsequencenumber": {
+        "displayName": "Import Sequence Number",
+        "type": "Integer"
+      },
+      "jdp_part": {
+        "displayName": "Part",
+        "type": "Lookup"
+      },
+      "modifiedby": {
+        "displayName": "Modified By",
+        "type": "Lookup"
+      },
+      "modifiedon": {
+        "displayName": "Modified On",
+        "type": "DateTime"
+      },
+      "modifiedonbehalfby": {
+        "displayName": "Modified By (Delegate)",
+        "type": "Lookup"
+      },
+      "msdyn_acceptcascadecrewchanges": {
+        "displayName": "Accept Cascade Crew Changes",
+        "type": "Boolean"
+      },
+      "msdyn_actualarrivaltime": {
+        "displayName": "Actual Arrival Time",
+        "type": "DateTime"
+      },
+      "msdyn_actualtravelduration": {
+        "displayName": "Actual Travel Duration",
+        "type": "Integer"
+      },
+      "msdyn_agreementbookingdate": {
+        "displayName": "Agreement Booking Date",
+        "type": "Lookup"
+      },
+      "msdyn_allowoverlapping": {
+        "displayName": "Allow Overlapping",
+        "type": "Boolean"
+      },
+      "msdyn_appointmentbookingid": {
+        "displayName": "Appointment Booking",
+        "type": "Lookup"
+      },
+      "msdyn_basetravelduration": {
+        "displayName": "Base Travel Duration",
+        "type": "Integer"
+      },
+      "msdyn_bookingmethod": {
+        "displayName": "Booking Method",
+        "type": "Picklist"
+      },
+      "msdyn_bookingsetupmetadataid": {
+        "displayName": "Booking Setup Metadata",
+        "type": "Lookup"
+      },
+      "msdyn_cascadecrewchanges": {
+        "displayName": "Cascade Crew Changes",
+        "type": "Boolean"
+      },
+      "msdyn_crew": {
+        "displayName": "Crew",
+        "type": "Lookup"
+      },
+      "msdyn_crewmembertype": {
+        "displayName": "Crew Member Type",
+        "type": "Picklist"
+      },
+      "msdyn_effort": {
+        "displayName": "Capacity",
+        "type": "Decimal"
+      },
+      "msdyn_estimatedarrivaltime": {
+        "displayName": "Estimated Arrival Time",
+        "type": "DateTime"
+      },
+      "msdyn_estimatedtravelduration": {
+        "displayName": "Estimated Travel Duration",
+        "type": "Integer"
+      },
+      "msdyn_globalobjectid": {
+        "displayName": "GlobalObjectId",
+        "type": "String"
+      },
+      "msdyn_internalflags": {
+        "displayName": "Internal Flags",
+        "type": "Memo"
+      },
+      "msdyn_latitude": {
+        "displayName": "Latitude",
+        "type": "Double"
+      },
+      "msdyn_longitude": {
+        "displayName": "Longitude",
+        "type": "Double"
+      },
+      "msdyn_milestraveled": {
+        "displayName": "Miles Traveled",
+        "type": "Double"
+      },
+      "msdyn_offlinetimestamp": {
+        "displayName": "Offline Timestamp",
+        "type": "DateTime"
+      },
+      "msdyn_preventtimestampcreation": {
+        "displayName": "Prevent Timestamp Creation",
+        "type": "Boolean"
+      },
+      "msdyn_projectid": {
+        "displayName": "Project",
+        "type": "Lookup"
+      },
+      "msdyn_projectteamid": {
+        "displayName": "Project Team Member",
+        "type": "Lookup"
+      },
+      "msdyn_quickNoteAction": {
+        "displayName": "Quick note actions",
+        "type": "Picklist"
+      },
+      "msdyn_requirementgroupid": {
+        "displayName": "Requirement Group",
+        "type": "Lookup"
+      },
+      "msdyn_requirementgroupset": {
+        "displayName": "Requirement Group Set",
+        "type": "String"
+      },
+      "msdyn_resourcecategoryid": {
+        "displayName": "Resource Category",
+        "type": "Lookup"
+      },
+      "msdyn_resourcegroup": {
+        "displayName": "Resource Group",
+        "type": "Lookup"
+      },
+      "msdyn_resourcerequirement": {
+        "displayName": "Resource Requirement",
+        "type": "Lookup"
+      },
+      "msdyn_serviceappointment": {
+        "displayName": "Service Activity",
+        "type": "Lookup"
+      },
+      "msdyn_signature": {
+        "displayName": "Signature",
+        "type": "Memo"
+      },
+      "msdyn_slottext": {
+        "displayName": "Slot Text",
+        "type": "Memo"
+      },
+      "msdyn_timegroupdetailselected": {
+        "displayName": "Time Group Detail Selected",
+        "type": "Lookup"
+      },
+      "msdyn_totalbillableduration": {
+        "displayName": "Total Billable Duration",
+        "type": "Integer"
+      },
+      "msdyn_totalbreakduration": {
+        "displayName": "Total Break Duration",
+        "type": "Integer"
+      },
+      "msdyn_totalcost": {
+        "displayName": "Total Cost",
+        "type": "Money"
+      },
+      "msdyn_totalcost_base": {
+        "displayName": "Total Cost (Base)",
+        "type": "Money"
+      },
+      "msdyn_totaldurationinprogress": {
+        "displayName": "Total Duration In Progress",
+        "type": "Integer"
+      },
+      "msdyn_traveltimecalculationtype": {
+        "displayName": "Travel Time Calculation",
+        "type": "Picklist"
+      },
+      "msdyn_traveltimerescheduling": {
+        "displayName": "Travel Time Rescheduling (Deprecated)",
+        "type": "Boolean"
+      },
+      "msdyn_tzaendtime": {
+        "displayName": "End Date Time Zone Independent",
+        "type": "DateTime"
+      },
+      "msdyn_tzastarttime": {
+        "displayName": "Start Date Time Zone Independent",
+        "type": "DateTime"
+      },
+      "msdyn_ursinternalflags": {
+        "displayName": "Internal Flags",
+        "type": "Memo"
+      },
+      "msdyn_worklocation": {
+        "displayName": "Work Location",
+        "type": "Picklist"
+      },
+      "msdyn_workorder": {
+        "displayName": "Work Order",
+        "type": "Lookup"
+      },
+      "name": {
+        "displayName": "Name",
+        "type": "String"
+      },
+      "overriddencreatedon": {
+        "displayName": "Record Created On",
+        "type": "DateTime"
+      },
+      "ownerid": {
+        "displayName": "Owner",
+        "type": "Owner"
+      },
+      "owningbusinessunit": {
+        "displayName": "Owning Business Unit",
+        "type": "Lookup"
+      },
+      "owningteam": {
+        "displayName": "Owning Team",
+        "type": "Lookup"
+      },
+      "owninguser": {
+        "displayName": "Owning User",
+        "type": "Lookup"
+      },
+      "processid": {
+        "displayName": "Process Id",
+        "type": "Uniqueidentifier"
+      },
+      "resource": {
+        "displayName": "Resource",
+        "type": "Lookup"
+      },
+      "stageid": {
+        "displayName": "(Deprecated) Stage Id",
+        "type": "Uniqueidentifier"
+      },
+      "starttime": {
+        "displayName": "Start Time",
+        "type": "DateTime"
+      },
+      "statecode": {
+        "displayName": "Status",
+        "type": "State"
+      },
+      "statuscode": {
+        "displayName": "Status Reason",
+        "type": "Status"
+      },
+      "timezoneruleversionnumber": {
+        "displayName": "Time Zone Rule Version Number",
+        "type": "Integer"
+      },
+      "transactioncurrencyid": {
+        "displayName": "Currency",
+        "type": "Lookup"
+      },
+      "traversedpath": {
+        "displayName": "(Deprecated) Traversed Path",
+        "type": "String"
+      },
+      "ukf_appointmentid": {
+        "displayName": "Appointment ID",
+        "type": "String"
+      },
+      "ukf_calendarbookingdescription": {
+        "displayName": "Calendar Booking Description",
+        "type": "String"
+      },
+      "ukf_calendarbookingstatus": {
+        "displayName": "Calendar Booking Status",
+        "type": "Picklist"
+      },
+      "ukf_cancellationreasons": {
+        "displayName": "Cancellation Reasons",
+        "type": "Picklist"
+      },
+      "ukf_customstatuscode": {
+        "displayName": "Custom Status Code",
+        "type": "Picklist"
+      },
+      "ukf_followupdate": {
+        "displayName": "Follow Up Date",
+        "type": "DateTime"
+      },
+      "ukf_lockcount": {
+        "displayName": "Lock Count",
+        "type": "Integer"
+      },
+      "ukf_lockwindow": {
+        "displayName": "Lock Window",
+        "type": "DateTime"
+      },
+      "ukf_lunchid": {
+        "displayName": "Lunch",
+        "type": "Lookup"
+      },
+      "ukf_nonproductiveeventid": {
+        "displayName": "Non-Productive Event",
+        "type": "Lookup"
+      },
+      "ukf_outofhoursindicator": {
+        "displayName": "Out of Hours Indicator",
+        "type": "Boolean"
+      },
+      "ukf_partcollectionid": {
+        "displayName": "Part Collection",
+        "type": "Lookup"
+      },
+      "ukf_previousbookingdate": {
+        "displayName": "Previous Booking Date",
+        "type": "DateTime"
+      },
+      "ukf_resourcepayrollnumber": {
+        "displayName": "Resource Payroll Number",
+        "type": "String"
+      },
+      "utcconversiontimezonecode": {
+        "displayName": "UTC Conversion Time Zone Code",
+        "type": "Integer"
+      },
+      "versionnumber": {
+        "displayName": "Version Number",
+        "type": "BigInt"
+      }
+    }
+  },
+  "msdyn_workorder": {
+    "displayName": "Work Order",
+    "columns": {
+      "msdyn_workorderid": {
+        "displayName": "Work Order ID",
+        "type": "Uniqueidentifier"
+      },
+      "msdyn_name": {
+        "displayName": "Work Order Number",
+        "type": "SingleLine.Text"
+      },
+      "msdyn_description": {
+        "displayName": "Description",
+        "type": "Multiple"
+      },
+      "_msdyn_serviceaccount_value": {
+        "displayName": "Service Account",
+        "type": "Lookup.Simple"
+      },
+      "_msdyn_billingaccount_value": {
+        "displayName": "Billing Account",
+        "type": "Lookup.Simple"
+      },
+      "_msdyn_primaryincidenttype_value": {
+        "displayName": "Primary Incident Type",
+        "type": "Lookup.Simple"
+      },
+      "_msdyn_priority_value": {
+        "displayName": "Priority",
+        "type": "Lookup.Simple"
+      },
+      "msdyn_workordertype": {
+        "displayName": "Work Order Type",
+        "type": "SingleLine.Text"
+      },
+      "msdyn_address1": {
+        "displayName": "Address 1",
+        "type": "SingleLine.Text"
+      },
+      "msdyn_city": {
+        "displayName": "City",
+        "type": "SingleLine.Text"
+      },
+      "msdyn_postalcode": {
+        "displayName": "Postal Code",
+        "type": "SingleLine.Text"
+      },
+      "msdyn_latitude": {
+        "displayName": "Latitude",
+        "type": "FP"
+      },
+      "msdyn_longitude": {
+        "displayName": "Longitude",
+        "type": "FP"
+      },
+      "msdyn_instructions": {
+        "displayName": "Instructions",
+        "type": "Multiple"
+      },
+      "telephone1": {
+        "displayName": "Phone",
+        "type": "SingleLine.Phone"
+      },
+      "prioritycode": {
+        "displayName": "Priority",
+        "type": "OptionSet"
+      },
+      "statuscode": {
+        "displayName": "Status Reason",
+        "type": "OptionSet"
+      }
+    }
+  },
+  "account": {
+    "displayName": "Account",
+    "columns": {
+      "accountid": {
+        "displayName": "Account ID",
+        "type": "Uniqueidentifier"
+      },
+      "name": {
+        "displayName": "Account Name",
+        "type": "SingleLine.Text"
+      },
+      "telephone1": {
+        "displayName": "Main Phone",
+        "type": "SingleLine.Phone"
+      },
+      "telephone2": {
+        "displayName": "Other Phone",
+        "type": "SingleLine.Phone"
+      },
+      "emailaddress1": {
+        "displayName": "Email",
+        "type": "SingleLine.Email"
+      },
+      "websiteurl": {
+        "displayName": "Website",
+        "type": "SingleLine.URL"
+      },
+      "address1_line1": {
+        "displayName": "Street 1",
+        "type": "SingleLine.Text"
+      },
+      "address1_city": {
+        "displayName": "City",
+        "type": "SingleLine.Text"
+      },
+      "address1_postalcode": {
+        "displayName": "Postal Code",
+        "type": "SingleLine.Text"
+      },
+      "address1_country": {
+        "displayName": "Country",
+        "type": "SingleLine.Text"
+      },
+      "address1_latitude": {
+        "displayName": "Latitude",
+        "type": "FP"
+      },
+      "address1_longitude": {
+        "displayName": "Longitude",
+        "type": "FP"
+      },
+      "revenue": {
+        "displayName": "Annual Revenue",
+        "type": "Currency"
+      },
+      "numberofemployees": {
+        "displayName": "Number of Employees",
+        "type": "Whole.None"
+      },
+      "industrycode": {
+        "displayName": "Industry",
+        "type": "OptionSet"
+      },
+      "statuscode": {
+        "displayName": "Status Reason",
+        "type": "OptionSet"
+      }
+    }
+  },
+  "contact": {
+    "displayName": "Contact",
+    "columns": {
+      "contactid": {
+        "displayName": "Contact ID",
+        "type": "Uniqueidentifier"
+      },
+      "fullname": {
+        "displayName": "Full Name",
+        "type": "SingleLine.Text"
+      },
+      "firstname": {
+        "displayName": "First Name",
+        "type": "SingleLine.Text"
+      },
+      "lastname": {
+        "displayName": "Last Name",
+        "type": "SingleLine.Text"
+      },
+      "jobtitle": {
+        "displayName": "Job Title",
+        "type": "SingleLine.Text"
+      },
+      "mobilephone": {
+        "displayName": "Mobile Phone",
+        "type": "SingleLine.Phone"
+      },
+      "telephone1": {
+        "displayName": "Business Phone",
+        "type": "SingleLine.Phone"
+      },
+      "emailaddress1": {
+        "displayName": "Email",
+        "type": "SingleLine.Email"
+      }
+    }
+  }
+}

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <control namespace="Contoso" constructor="InfoCard" version="3.0.0"
+           display-name-key="InfoCard"
+           description-key="Compact read-only info card with slot-based layout. Bind to table columns or use @fieldName for related entity data."
+           control-type="virtual">
+
+    <external-service-usage enabled="false">
+    </external-service-usage>
+
+    <feature-usage>
+      <uses-feature name="WebAPI" required="false" />
+      <uses-feature name="Utility" required="false" />
+    </feature-usage>
+
+    <type-group name="fieldTypes">
+      <type>SingleLine.Text</type>
+      <type>SingleLine.Email</type>
+      <type>SingleLine.Phone</type>
+      <type>SingleLine.URL</type>
+      <type>SingleLine.TextArea</type>
+      <type>Multiple</type>
+      <type>Whole.None</type>
+      <type>Currency</type>
+      <type>FP</type>
+      <type>Decimal</type>
+      <type>DateAndTime.DateOnly</type>
+      <type>DateAndTime.DateAndTime</type>
+      <type>OptionSet</type>
+      <type>MultiSelectOptionSet</type>
+      <type>TwoOptions</type>
+      <type>Lookup.Simple</type>
+    </type-group>
+
+    <!-- ═══ CONFIG (4 properties) ═══ -->
+    <property name="layout" display-name-key="Layout Mode"
+              description-key="Card layout: smart (collapsible), contact (full), or compact (dense grid)"
+              of-type="Enum" usage="input" required="false">
+      <value name="smart"   display-name-key="Smart Card">smart</value>
+      <value name="contact" display-name-key="Contact Card">contact</value>
+      <value name="compact" display-name-key="Compact Form">compact</value>
+    </property>
+    <property name="hideEmptyFields" display-name-key="Hide Empty Fields"
+              description-key="Hide fields with no value (default: true)"
+              of-type="TwoOptions" usage="input" required="false" />
+    <property name="showCardBorder" display-name-key="Show Card Border"
+              description-key="Show card border and shadow (default: true)"
+              of-type="TwoOptions" usage="input" required="false" />
+    <property name="showVersionInfo" display-name-key="Show Version Info"
+              description-key="Show version badge in bottom-right corner"
+              of-type="TwoOptions" usage="input" required="false" />
+
+    <!-- ═══ HEADER (4 properties) ═══ -->
+    <property name="titleField" display-name-key="Title"
+              description-key="Card header — anchor field. Related fields (@fieldName) fetch from this lookup's entity."
+              of-type-group="fieldTypes" usage="bound" required="true" />
+    <property name="subtitleField1" display-name-key="Subtitle 1"
+              description-key="Shown under title, dot-separated. Use @fieldName for related data."
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="subtitleField2" display-name-key="Subtitle 2"
+              description-key="Shown under title, dot-separated"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="subtitleField3" display-name-key="Subtitle 3"
+              description-key="Shown under title, dot-separated"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <!-- ═══ CONTACT (4 properties) ═══ -->
+    <property name="phoneField1" display-name-key="Phone 1"
+              description-key="Tap-to-call phone button"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="phoneField2" display-name-key="Phone 2"
+              description-key="Secondary phone button"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="emailField" display-name-key="Email"
+              description-key="Tap-to-send email button"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="webField" display-name-key="Website"
+              description-key="Tap-to-open URL button"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <!-- ═══ ADDRESS (3 properties) ═══ -->
+    <property name="addressField" display-name-key="Address"
+              description-key="Tappable address row — opens map when lat/lng are set"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="latitudeField" display-name-key="Latitude"
+              description-key="Latitude for map link on address"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="longitudeField" display-name-key="Longitude"
+              description-key="Longitude for map link on address"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <!-- ═══ DETAILS (3 properties) ═══ -->
+    <property name="detailField1" display-name-key="Detail 1"
+              description-key="Icon + text info row"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="detailField2" display-name-key="Detail 2"
+              description-key="Icon + text info row"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="detailField3" display-name-key="Detail 3"
+              description-key="Icon + text info row"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <!-- ═══ GRID (6 properties) ═══ -->
+    <property name="gridField1" display-name-key="Grid 1"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="gridField2" display-name-key="Grid 2"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="gridField3" display-name-key="Grid 3"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="gridField4" display-name-key="Grid 4"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="gridField5" display-name-key="Grid 5"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="gridField6" display-name-key="Grid 6"
+              description-key="Key:value field in 2-column grid"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <!-- ═══ TAGS (3 properties) ═══ -->
+    <property name="tagField1" display-name-key="Tag 1"
+              description-key="Compact chip/pill badge"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="tagField2" display-name-key="Tag 2"
+              description-key="Compact chip/pill badge"
+              of-type-group="fieldTypes" usage="input" required="false" />
+    <property name="tagField3" display-name-key="Tag 3"
+              description-key="Compact chip/pill badge"
+              of-type-group="fieldTypes" usage="input" required="false" />
+
+    <resources>
+      <code path="index.ts" order="1"/>
+      <platform-library name="React" version="16.8.6" />
+      <platform-library name="Fluent" version="9.46.2" />
+    </resources>
+
+  </control>
+</manifest>
