@@ -8,7 +8,7 @@ interface RelatedFieldMapping {
     targetSlot: string;
 }
 
-const CONTROL_VERSION = "2.4.7";
+const CONTROL_VERSION = "3.2.3";
 
 // Slot group definitions — order matters for rendering
 const SUBTITLE_KEYS = ["subtitleField1", "subtitleField2", "subtitleField3"] as const;
@@ -39,9 +39,18 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const hideEmpty = context.parameters.hideEmptyFields?.raw !== false; // default true
         const showBorder = context.parameters.showCardBorder?.raw !== false; // default true
         const showVersion = context.parameters.showVersionInfo?.raw === true; // default false
+        const showTitle = context.parameters.showTitle?.raw !== false; // default true
         const startExpanded = context.parameters.startExpanded?.raw !== false; // default true
         const relatedMappings = this.detectRelatedFields(context);
         const theme = this.resolveTheme(context);
+
+        // Design-time detection: titleField is configured (valid type) but has no record data
+        const titleParam = context.parameters.titleField;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const titleType = (titleParam as Record<string, any>)?.type;
+        const designTime = titleParam != null
+            && titleType !== "Unknown"
+            && (titleParam.raw === null || titleParam.raw === undefined);
 
         const onOpenRecord = (entityType: string, id: string) => {
             context.navigation.openForm({
@@ -60,7 +69,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             hideEmpty,
             showBorder,
             showVersion,
+            showTitle,
             startExpanded,
+            designTime,
             theme,
             version: CONTROL_VERSION,
             relatedMappings,
@@ -122,13 +133,15 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     ): SlotField | null {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const param = (context.parameters as Record<string, any>)[key];
-        if (!param || param.type === "Unknown") return null;
+        if (!param) return null;
+
+        // Skip unconfigured properties (no type and no data)
+        if (!param.type && (param.raw === null || param.raw === undefined)) return null;
+        if (param.type === "Unknown") return null;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attrs = (param as Record<string, any>).attributes;
-        if (!attrs?.LogicalName) return null;
-
-        const label = attrs.DisplayName ?? attrs.LogicalName;
+        const label = attrs?.DisplayName ?? attrs?.LogicalName ?? this.formatPropertyKey(key);
         const raw = param.raw;
         const formatted = param.formatted;
 
@@ -145,12 +158,18 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             displayValue = "---";
         } else if (formatted) {
             displayValue = formatted;
+        } else if (raw instanceof Date) {
+            // Date objects (DateTime fields when formatted is null)
+            displayValue = raw.toLocaleDateString(undefined, {
+                year: "numeric", month: "short", day: "numeric",
+                hour: "2-digit", minute: "2-digit",
+            });
         } else if (typeof raw === "object" && Array.isArray(raw) && raw.length > 0) {
             // Lookup
             displayValue = raw[0].name ?? String(raw[0].id ?? "---");
         } else if (typeof raw === "object" && !Array.isArray(raw)) {
-            // Edge case: single lookup object
-            displayValue = (raw as { name?: string }).name ?? "---";
+            // Single lookup object (not Date, not Array)
+            displayValue = (raw as { name?: string }).name ?? String(raw);
         } else {
             displayValue = String(raw);
         }
@@ -160,7 +179,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         }
 
         // Format duration fields (stored as minutes in Dataverse)
-        if (!isEmpty && this.isDurationField(attrs, raw, formatted)) {
+        if (!isEmpty && attrs && this.isDurationField(attrs, raw, formatted)) {
             displayValue = this.formatDuration(Number(raw));
         }
 
@@ -194,7 +213,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
      *   @msdyn_serviceaccount → fetch msdyn_serviceaccount from the title lookup entity
      *   @telephone1 → fetch telephone1 from the title lookup entity
      *
-     * The source is always titleField (the anchor/bound field).
+     * The source is always titleField (the bound field).
      */
     private detectRelatedFields(context: ComponentFramework.Context<IInputs>): RelatedFieldMapping[] {
         const mappings: RelatedFieldMapping[] = [];
@@ -427,6 +446,19 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         if (mins > 0) parts.push(`${mins}m`);
 
         return parts.length > 0 ? parts.join(" ") : "0m";
+    }
+
+    // ────────────────────────────────────────
+    // Helpers
+    // ────────────────────────────────────────
+
+    /** Convert property key like "gridField1" to "Grid 1" */
+    private formatPropertyKey(key: string): string {
+        return key
+            .replace(/Field(\d*)$/, " $1")
+            .replace(/([a-z])([A-Z])/g, "$1 $2")
+            .replace(/^\w/, c => c.toUpperCase())
+            .trim();
     }
 
     // ────────────────────────────────────────

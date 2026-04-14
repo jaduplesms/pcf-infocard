@@ -77,7 +77,9 @@ export interface InfoCardProps {
     hideEmpty: boolean;
     showBorder: boolean;
     showVersion: boolean;
+    showTitle: boolean;
     startExpanded: boolean;
+    designTime?: boolean;
     theme: InfoCardTheme;
     version: string;
     relatedMappings: RelatedFieldMapping[];
@@ -287,36 +289,40 @@ interface HeaderProps {
     data: InfoCardData;
     theme: InfoCardTheme;
     hideEmpty: boolean;
+    showTitle?: boolean;
+    designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, onOpenRecord }) => {
+const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
     const title = data.title;
-    if (!title || title.isEmpty) return null;
+    if (!title || (!designTime && title.isEmpty)) return null;
 
     const isLookup = !!(title.lookupEntityType && title.lookupId);
     const subtitles = deduplicateSubtitles(
-        filterEmpty(data.subtitles, hideEmpty),
+        filterEmpty(data.subtitles, designTime ? false : hideEmpty),
         theme.textMuted,
     );
 
     return (
         <div style={{ marginBottom: 8 }}>
-            <div
-                style={{
-                    fontSize: 16,
-                    fontWeight: 600,
-                    color: isLookup ? theme.brand : theme.textPrimary,
-                    cursor: isLookup ? "pointer" : "default",
-                    lineHeight: "22px",
-                }}
-                onClick={isLookup && onOpenRecord ? () => onOpenRecord(title.lookupEntityType!, title.lookupId!) : undefined}
-                title={title.label}
-            >
-                {title.value}
-            </div>
+            {showTitle && (
+                <div
+                    style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: isLookup ? theme.brand : theme.textPrimary,
+                        cursor: isLookup ? "pointer" : "default",
+                        lineHeight: "22px",
+                    }}
+                    onClick={isLookup && onOpenRecord ? () => onOpenRecord(title.lookupEntityType!, title.lookupId!) : undefined}
+                    title={title.label}
+                >
+                    {title.value}
+                </div>
+            )}
             {subtitles.length > 0 && (
-                <div style={{ fontSize: 13, color: theme.textSecondary, lineHeight: "18px", marginTop: 2 }}>
+                <div style={{ fontSize: 13, color: theme.textSecondary, lineHeight: "18px", marginTop: showTitle ? 2 : 0 }}>
                     {subtitles.map((sub, i) => {
                         const isSubLookup = !!(sub.lookupEntityType && sub.lookupId);
                         return (
@@ -676,16 +682,19 @@ interface LayoutProps {
     data: InfoCardData;
     theme: InfoCardTheme;
     hideEmpty: boolean;
+    showTitle?: boolean;
     startExpanded?: boolean;
+    designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, startExpanded = true, onOpenRecord }) => {
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, startExpanded = true, designTime, onOpenRecord }) => {
     const [collapsed, setCollapsed] = React.useState(!startExpanded);
 
-    const details = filterEmpty(data.details, hideEmpty);
-    const gridFields = filterEmpty(data.gridFields, hideEmpty);
-    const tags = filterEmpty(data.tags, hideEmpty);
+    const effectiveHideEmpty = designTime ? false : hideEmpty;
+    const details = filterEmpty(data.details, effectiveHideEmpty);
+    const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
+    const tags = filterEmpty(data.tags, effectiveHideEmpty);
 
     const hasBody = details.length > 0 || gridFields.length > 0;
     const hasCollapsible = hasBody;
@@ -696,7 +705,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, startE
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
                 </div>
                 {hasCollapsible && (
                     <div
@@ -715,7 +724,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, startE
             </div>
 
             {/* Contact section — ALWAYS visible */}
-            <ContactRows data={data} theme={theme} hideEmpty={hideEmpty} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} />
 
             {/* Collapsible body */}
             {!collapsed && hasBody && (
@@ -756,10 +765,11 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, startE
 // Contact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOpenRecord }) => {
-    const details = filterEmpty(data.details, hideEmpty);
-    const gridFields = filterEmpty(data.gridFields, hideEmpty);
-    const tags = filterEmpty(data.tags, hideEmpty);
+const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
+    const effectiveHideEmpty = designTime ? false : hideEmpty;
+    const details = filterEmpty(data.details, effectiveHideEmpty);
+    const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
+    const tags = filterEmpty(data.tags, effectiveHideEmpty);
 
     return (
         <div>
@@ -767,12 +777,12 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOp
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
                 </div>
             </div>
 
             {/* Contact section */}
-            <ContactRows data={data} theme={theme} hideEmpty={hideEmpty} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} />
 
             {/* Detail rows */}
             {details.length > 0 && (
@@ -780,7 +790,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOp
                     <DetailRows
                         details={data.details}
                         theme={theme}
-                        hideEmpty={hideEmpty}
+                        hideEmpty={effectiveHideEmpty}
                         latitude={data.latitude}
                         longitude={data.longitude}
                     />
@@ -808,14 +818,15 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOp
 // Compact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOpenRecord }) => {
-    const phones = filterEmpty(data.phones, hideEmpty);
-    const email = data.email && !data.email.isEmpty ? data.email : null;
-    const web = data.web && !data.web.isEmpty ? data.web : null;
-    const address = data.address && !data.address.isEmpty ? data.address : null;
-    const details = filterEmpty(data.details, hideEmpty);
-    const gridFields = filterEmpty(data.gridFields, hideEmpty);
-    const tags = filterEmpty(data.tags, hideEmpty);
+const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
+    const effectiveHideEmpty = designTime ? false : hideEmpty;
+    const phones = filterEmpty(data.phones, effectiveHideEmpty);
+    const email = data.email && (designTime || !data.email.isEmpty) ? data.email : null;
+    const web = data.web && (designTime || !data.web.isEmpty) ? data.web : null;
+    const address = data.address && (designTime || !data.address.isEmpty) ? data.address : null;
+    const details = filterEmpty(data.details, effectiveHideEmpty);
+    const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
+    const tags = filterEmpty(data.tags, effectiveHideEmpty);
 
     const hasContact = phones.length > 0 || email || web || address;
     const hasDetails = gridFields.length > 0;
@@ -846,7 +857,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, onOp
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
                 </div>
             </div>
 
@@ -993,7 +1004,10 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         : data;
 
     // Check if we have a valid title to display
-    const hasTitle = displayData.title && !displayData.title.isEmpty;
+    // In design-time mode, title is configured but has no record data — show layout anyway
+    const hasTitle = props.designTime
+        ? displayData.title != null
+        : displayData.title && !displayData.title.isEmpty;
 
     // Card wrapper styles
     const cardStyle: React.CSSProperties = {
@@ -1041,7 +1055,9 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         data: displayData,
         theme,
         hideEmpty,
+        showTitle: props.showTitle,
         startExpanded: props.startExpanded,
+        designTime: props.designTime,
         onOpenRecord,
     };
 
