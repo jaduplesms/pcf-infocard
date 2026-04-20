@@ -14,6 +14,7 @@
 
 import { execSync } from "child_process";
 import * as fs from "fs";
+import * as os from "os";
 
 // ────────────────────────────────────────
 // Types
@@ -85,6 +86,19 @@ function fetchFormXml(formId: string): { formxml: string; name: string; entityNa
     return { formxml: dataLine.trim(), name: formName, entityName };
 }
 
+/** Split form XML into individual controlDescription blocks using string split (not regex) */
+function splitControlDescriptions(formXml: string): string[] {
+    const blocks: string[] = [];
+    const parts = formXml.split("<controlDescription");
+    for (const part of parts.slice(1)) { // skip everything before first <controlDescription
+        const endIdx = part.indexOf("</controlDescription>");
+        if (endIdx >= 0) {
+            blocks.push("<controlDescription" + part.substring(0, endIdx + "</controlDescription>".length));
+        }
+    }
+    return blocks;
+}
+
 function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig | null {
     // Form XML from pac may be single-line, attributes in any order
     const controlRegex = /<customControl name="cli_Contoso\.InfoCard" formFactor="(\d)"><parameters>(.*?)<\/parameters>/g;
@@ -94,11 +108,13 @@ function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig 
     const formFactors: Record<string, Record<string, ParameterBinding>> = {};
     let fieldName = "";
 
-    // Find the controlDescription that contains our control
-    const descRegex = /<controlDescription[^>]*>\s*<customControl[^>]*>\s*<parameters>\s*<datafieldname>([^<]+)<\/datafieldname>/g;
-    const descMatch = descRegex.exec(formXml);
-    if (descMatch) {
-        fieldName = descMatch[1];
+    // Find the controlDescription block that contains our InfoCard control
+    for (const block of splitControlDescriptions(formXml)) {
+        if (block.includes("cli_Contoso.InfoCard")) {
+            const fnMatch = block.match(/<datafieldname>([^<]+)<\/datafieldname>/);
+            if (fnMatch) fieldName = fnMatch[1];
+            break;
+        }
     }
 
     let match;
@@ -138,17 +154,36 @@ function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig 
     };
 }
 
+/** Build inline XML for one customControl element (no newlines — matches Dataverse format) */
 function buildControlXml(params: Record<string, ParameterBinding>, formFactor: number): string {
-    const lines: string[] = [];
-    lines.push(`                  <customControl formFactor="${formFactor}" name="cli_Contoso.InfoCard">`);
-    lines.push("                    <parameters>");
-    for (const [name, binding] of Object.entries(params)) {
+    const paramParts = Object.entries(params).map(([name, binding]) => {
         const staticAttr = binding.static ? ` static="true"` : "";
-        lines.push(`                      <${name} type="${binding.type}"${staticAttr}>${binding.value}</${name}>`);
+        return `<${name} type="${binding.type}"${staticAttr}>${binding.value}</${name}>`;
+    });
+    return `<customControl name="cli_Contoso.InfoCard" formFactor="${formFactor}"><parameters>${paramParts.join("")}</parameters></customControl>`;
+}
+
+/** Build a full controlDescription block with all three form factors */
+function buildControlDescriptionXml(config: InfoCardConfig, fieldName: string): string {
+    const defaultCtrl = `<customControl id="{270BD3DB-D9AF-4782-9025-509E298DEC0A}"><parameters><datafieldname>${fieldName}</datafieldname></parameters></customControl>`;
+    const factors: string[] = [defaultCtrl];
+    const factorMap: Record<string, number> = { phone: 0, tablet: 2, desktop: 1 };
+
+    for (const [factorName, factorNum] of Object.entries(factorMap)) {
+        const params = config.formFactors[factorName as keyof typeof config.formFactors];
+        if (params) {
+            factors.push(buildControlXml(params, factorNum));
+        }
     }
-    lines.push("                    </parameters>");
-    lines.push("                  </customControl>");
-    return lines.join("\n");
+
+    return `<controlDescription forControl="{${generateGuid()}}">` + factors.join("") + `</controlDescription>`;
+}
+
+function generateGuid(): string {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+    });
 }
 
 // ────────────────────────────────────────
@@ -214,6 +249,163 @@ function cmdListForms(entityName: string): void {
 }
 
 // ────────────────────────────────────────
+function cmdApply(formId: string, configFile: string, fieldName?: string): void {
+    const config: InfoCardConfig = JSON.parse(fs.readFileSync(configFile, "utf-8"));
+    const targetField = fieldName ?? config.extractedFrom.fieldName;
+
+    if (!targetField) {
+        console.error("No field name specified. Use --field <fieldName> or ensure config has extractedFrom.fieldName");
+        process.exit(1);
+    }
+
+    console.log(`Applying InfoCard config to form ${formId}, field: ${targetField}`);
+
+    // 1. Fetch current form XML
+    const fetchXml = `<fetch count='1' no-lock='true'><entity name='systemform'><attribute name='formxml'/><filter><condition attribute='formid' operator='eq' value='${formId}'/></filter></entity></fetch>`;
+    let raw: string;
+    try {
+        raw = pacFetch(fetchXml);
+    } catch (err) {
+        console.error("Failed to fetch form. Ensure pac CLI is authenticated.", err);
+        process.exit(1);
+    }
+
+    const formLine = raw.split("\n").find(l => l.includes("<form"));
+    if (!formLine) { console.error("No form XML found"); process.exit(1); }
+    let formXml = formLine.trim();
+
+    // 2. Check if InfoCard is already on this form
+    const allDescs = splitControlDescriptions(formXml);
+    const blocksToRemove: string[] = [];
+    for (const desc of allDescs) {
+        if (desc.includes(`<datafieldname>${targetField}</datafieldname>`) && desc.includes("cli_Contoso.InfoCard")) {
+            blocksToRemove.push(desc);
+        }
+    }
+
+    const newControlDesc = buildControlDescriptionXml(config, targetField);
+    const phoneParams = config.formFactors.phone ? Object.keys(config.formFactors.phone).length : 0;
+    console.log(`New controlDescription: ${newControlDesc.length} chars, ${phoneParams} phone params`);
+    console.log(`Found ${blocksToRemove.length} existing InfoCard block(s) to replace`);
+
+    if (blocksToRemove.length > 0) {
+        // Remove ALL existing blocks, then insert the new one in place of the first
+        const firstBlock = blocksToRemove[0];
+        formXml = formXml.replace(firstBlock, newControlDesc);
+        for (let i = 1; i < blocksToRemove.length; i++) {
+            formXml = formXml.replace(blocksToRemove[i], "");
+        }
+        console.log("Replaced existing InfoCard control configuration.");
+    } else {
+        // Insert new controlDescription — find </controlDescriptions> or create the section
+        if (formXml.includes("</controlDescriptions>")) {
+            formXml = formXml.replace("</controlDescriptions>", newControlDesc + "</controlDescriptions>");
+            console.log("Added InfoCard control to existing controlDescriptions section.");
+        } else {
+            // No controlDescriptions section — add before </form>
+            formXml = formXml.replace("</form>", `<controlDescriptions>${newControlDesc}</controlDescriptions></form>`);
+            console.log("Created controlDescriptions section with InfoCard control.");
+        }
+    }
+
+    // 3. Write updated form XML back to Dataverse
+    console.log("Updating form in Dataverse...");
+    const escapedXml = formXml.replace(/'/g, "''");
+
+    try {
+        // Use pac org fetch to update via FetchXML isn't possible — use a temp file + pac solution approach
+        // Instead, write to a temp file and use pac CLI to import
+        const tempDir = os.tmpdir();
+        const tempXmlFile = `${tempDir}/infocard_form_update.xml`;
+        fs.writeFileSync(tempXmlFile, formXml, "utf-8");
+
+        // Use the Dataverse WebAPI via pac to update the systemform record
+        // pac doesn't have a direct update command, so we'll use the org update approach
+        execSync(
+            `pac org fetch --xml "<fetch count='1'><entity name='systemform'><attribute name='formid'/><filter><condition attribute='formid' operator='eq' value='${formId}'/></filter></entity></fetch>"`,
+            { encoding: "utf-8", timeout: 15000 },
+        );
+
+        // Write the form XML via a PowerShell/curl WebAPI call
+        const tokenResult = execSync("pac auth token", { encoding: "utf-8", timeout: 15000 });
+        const token = tokenResult.split("\n").filter(l => l.trim() && !l.includes("Connected")).pop()?.trim();
+
+        if (!token) {
+            console.error("Could not get auth token. Falling back to file export.");
+            const outputPath = `${tempDir}/infocard_updated_form.xml`;
+            fs.writeFileSync(outputPath, formXml, "utf-8");
+            console.log(`\nUpdated form XML saved to: ${outputPath}`);
+            console.log("To apply manually:");
+            console.log("1. Import this XML into the systemform record via WebAPI");
+            console.log("2. Run: pac solution publish");
+            return;
+        }
+
+        // Get the org URL from pac org who
+        const orgWho = execSync("pac org who", { encoding: "utf-8", timeout: 15000 });
+        const orgUrlMatch = orgWho.match(/Org URL:\s*(https?:\/\/[^\s/]+)/i);
+        const orgUrl = orgUrlMatch?.[1];
+
+        if (!orgUrl) {
+            console.error("Could not determine org URL.");
+            process.exit(1);
+        }
+
+        // Update via PowerShell Invoke-RestMethod using pac auth token with Dataverse audience
+        const jsonBody = JSON.stringify({ formxml: formXml });
+        const bodyFile = `${tempDir}/infocard_patch_body.json`;
+        fs.writeFileSync(bodyFile, jsonBody, "utf-8");
+
+        // Get token scoped to Dataverse using pac auth token --resource
+        const psScript = `
+$body = Get-Content -Path '${bodyFile.replace(/'/g, "''")}' -Raw -Encoding UTF8
+$tokenRaw = pac auth token --resource '${orgUrl}/' 2>&1 | Select-Object -Last 1
+$headers = @{
+    'Authorization' = "Bearer $tokenRaw"
+    'Content-Type' = 'application/json; charset=utf-8'
+    'OData-MaxVersion' = '4.0'
+    'OData-Version' = '4.0'
+}
+try {
+    Invoke-RestMethod -Uri '${orgUrl}/api/data/v9.2/systemforms(${formId})' -Method Patch -Headers $headers -Body ([System.Text.Encoding]::UTF8.GetBytes($body))
+    Write-Host 'PATCH_OK'
+} catch {
+    Write-Host "PATCH_FAIL: $_"
+}
+`;
+        const psFile = `${tempDir}/infocard_patch.ps1`;
+        fs.writeFileSync(psFile, psScript, "utf-8");
+
+        const result = execSync(`powershell -ExecutionPolicy Bypass -File "${psFile}"`, {
+            encoding: "utf-8",
+            timeout: 60000,
+        });
+        if (result.includes("PATCH_OK")) {
+            console.log("Form updated successfully.");
+        } else {
+            console.error("PATCH failed:", result.trim());
+            const recoveryPath = `${tempDir}/infocard_recovery_form.xml`;
+            fs.writeFileSync(recoveryPath, formXml, "utf-8");
+            console.log(`Recovery: updated form XML saved to ${recoveryPath}`);
+            process.exit(1);
+        }
+
+        // 4. Publish
+        console.log("Publishing customizations...");
+        execSync("pac solution publish", { encoding: "utf-8", timeout: 120000 });
+        console.log("Published.");
+
+        console.log(`\nInfoCard control applied to form ${formId}, field: ${targetField}`);
+
+    } catch (err) {
+        console.error("Failed to update form:", err);
+        // Save the XML for manual recovery
+        const recoveryPath = `${os.tmpdir()}/infocard_recovery_form.xml`;
+        fs.writeFileSync(recoveryPath, formXml, "utf-8");
+        console.log(`\nRecovery: updated form XML saved to ${recoveryPath}`);
+    }
+}
+
 // CLI entry point
 // ────────────────────────────────────────
 
@@ -238,9 +430,17 @@ switch (command) {
         cmdListForms(entity);
         break;
 
-    case "apply":
-        console.log("Apply command — coming soon. Will update form XML with config from JSON file.");
+    case "apply": {
+        const applyFormId = getArg("form");
+        const applyConfig = getArg("config");
+        const applyField = getArg("field");
+        if (!applyFormId || !applyConfig) {
+            console.error("Usage: apply --form <formId> --config <config.json> [--field <fieldName>]");
+            process.exit(1);
+        }
+        cmdApply(applyFormId, applyConfig, applyField);
         break;
+    }
 
     case "to-harness": {
         const configFile = getArg("config");
