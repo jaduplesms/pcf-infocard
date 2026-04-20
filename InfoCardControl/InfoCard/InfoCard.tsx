@@ -182,12 +182,6 @@ const BuildingIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }
     </svg>
 );
 
-const WrenchIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10.5 1.5a4 4 0 00-3.8 5.2L2.4 11c-.5.5-.5 1.4 0 1.9l.7.7c.5.5 1.4.5 1.9 0l4.3-4.3A4 4 0 0010.5 1.5zm0 1.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z" fill={color} />
-    </svg>
-);
-
 const ClipboardIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 1a1 1 0 00-1 1H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1h-1a1 1 0 00-1-1H6zm0 1h4v1H6V2zM5 6h6v1H5V6zm0 2.5h6v1H5v-1zm0 2.5h4v1H5v-1z" fill={color} />
@@ -251,7 +245,7 @@ function guessDetailIcon(field: SlotField, color: string): React.ReactElement | 
     return null;
 }
 
-function deduplicateSubtitles(subtitles: SlotField[], mutedColor: string): SlotField[] {
+function deduplicateSubtitles(subtitles: SlotField[]): SlotField[] {
     const seen = new Set<string>();
     const result: SlotField[] = [];
     for (const s of subtitles) {
@@ -304,8 +298,6 @@ function mergeRelatedFields(
             merged.email = fetched;
         } else if (target === "webField") {
             merged.web = fetched;
-        } else if (target === "image") {
-            merged.imageUrl = fetched.value;
         } else if (target.startsWith("subtitleField")) {
             const idx = parseInt(target.replace("subtitleField", ""), 10) - 1;
             while (merged.subtitles.length <= idx) {
@@ -358,7 +350,6 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
     const isLookup = !!(title.lookupEntityType && title.lookupId);
     const subtitles = deduplicateSubtitles(
         filterEmpty(data.subtitles, designTime ? false : hideEmpty),
-        theme.textMuted,
     );
 
     return (
@@ -438,17 +429,6 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
         fontSize: 13,
         color: theme.textSecondary,
         lineHeight: "18px",
-    };
-
-    const iconWrapStyle: React.CSSProperties = {
-        flexShrink: 0,
-        marginTop: 2,
-    };
-
-    const linkStyle: React.CSSProperties = {
-        color: theme.brand,
-        textDecoration: "none",
-        cursor: "pointer",
     };
 
     const chipStyle: React.CSSProperties = {

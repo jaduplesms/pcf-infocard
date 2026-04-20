@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Contoso" constructor="InfoCard" version="3.9.7"
+  <control namespace="Contoso" constructor="InfoCard" version="3.9.8"
            display-name-key="InfoCard"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">

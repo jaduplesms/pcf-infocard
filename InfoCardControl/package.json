@@ -14,7 +14,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "@fluentui/react": "8.29.0",
     "react": "16.8.6",
     "react-dom": "16.8.6"
   },

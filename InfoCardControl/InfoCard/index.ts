@@ -3,7 +3,7 @@ import { InfoCardComponent, InfoCardData, InfoCardTheme, SlotField, LayoutMode, 
 import type { RelatedFieldMapping, BindingDiagnostic } from "./InfoCard";
 import * as React from "react";
 
-const CONTROL_VERSION = "3.9.7";
+const CONTROL_VERSION = "3.9.8";
 
 // Slot group definitions — order matters for rendering
 const SUBTITLE_KEYS = ["subtitleField1", "subtitleField2", "subtitleField3"] as const;
@@ -38,33 +38,25 @@ interface ColumnMeta {
 
 export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutputs> {
     private context: ComponentFramework.Context<IInputs>;
-    private _notifyOutputChanged: (() => void) | null = null;
 
-    // Stable reference for the React component to avoid stale closure in useEffect
+    // Stable references for React useEffect callbacks
     private readonly boundFetchRelatedData = (entityType: string, id: string, columns: string[]) => {
         const isCurrentRecord = entityType === this._formEntityName && id === this._formRecordId;
         return this.fetchRelatedFields(this.context, entityType, id, columns, isCurrentRecord);
     };
-    // Stable callback for resolving bound field labels/values/colors via record fetch
     private readonly boundResolveRecordFields = () => {
         return this.resolveRecordFieldsAsync(this.context);
     };
 
-    // Form entity context (detected from context.mode.contextInfo)
+    // Form entity context
     private _formEntityName: string | null = null;
     private _formRecordId: string | null = null;
 
     // Entity metadata cache for bound field labels + option set resolution
-    // Keyed by column logical name → display name + options
     private _columnMetadata: Record<string, ColumnMeta> = {};
-    private _paramExplorationDone = false;
-    private _recordFetchStarted = false;
-    private _recordResolved = false;
-    // Mapping: slot key → column logical name (populated by readSlot or record matching)
     private _slotToColumn: Record<string, string> = {};
-    // Formatted values resolved from WebAPI record (slotKey → display string)
     private _resolvedValues: Record<string, string> = {};
-    // Colors resolved from lookup entity records (slotKey → hex color)
+    // Colors resolved from lookup entity records
     private _resolvedColors: Record<string, string> = {};
 
     constructor() { }
@@ -74,7 +66,6 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         notifyOutputChanged: () => void,
     ): void {
         this.context = context;
-        this._notifyOutputChanged = notifyOutputChanged;
         console.log(`[InfoCard] v${CONTROL_VERSION} initialized`);
     }
 
@@ -90,14 +81,6 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         if (!this._formRecordId && modeAny.contextInfo?.entityId) {
             this._formRecordId = this.formatGuid(String(modeAny.contextInfo.entityId));
             console.log("[InfoCard] Form record ID:", this._formRecordId);
-        }
-
-        // Explore param structure once to diagnose label resolution
-        if (!this._paramExplorationDone) {
-            this._paramExplorationDone = true;
-            this.exploreParamStructure(context);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            console.log("[InfoCard] isControlDisabled:", (context.mode as any).isControlDisabled);
         }
 
         const data = this.collectData(context);
@@ -248,24 +231,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
         // 2. From param.attributes.DisplayName (various formats)
         if (!displayName) {
-            const rawDN = attrs?.DisplayName ?? attrs?.displayName;
-            if (typeof rawDN === "string" && rawDN.length > 0) {
-                displayName = rawDN;
-            } else if (rawDN && typeof rawDN === "object") {
-                // Localized label object: {UserLocalizedLabel: {Label: "..."}}
-                displayName = rawDN.UserLocalizedLabel?.Label
-                    ?? rawDN.userLocalizedLabel?.label
-                    ?? rawDN.LocalizedLabels?.[0]?.Label
-                    ?? rawDN.localizedLabels?.[0]?.label
-                    ?? null;
-                // Last resort: coerce if it's a reasonable string
-                if (!displayName) {
-                    const str = String(rawDN);
-                    if (str !== "[object Object]" && str.length > 0 && str.length < 100) {
-                        displayName = str;
-                    }
-                }
-            }
+            displayName = this.extractDisplayNameFromMeta(attrs?.DisplayName ?? attrs?.displayName);
         }
 
         // 3. Param-level display name (some PCF hosts)
@@ -346,30 +312,15 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         }
 
         // Extract lookup entity/id for navigation and related field fetches
-        let lookupEntityType: string | undefined;
-        let lookupId: string | undefined;
-        if (typeof raw === "object" && Array.isArray(raw) && raw.length > 0 && raw[0].id) {
-            // Array format: [{id, name, entityType}]
-            lookupEntityType = raw[0].entityType ?? raw[0].etn;
-            lookupId = raw[0].id;
-        } else if (typeof raw === "object" && raw !== null && !Array.isArray(raw) && !(raw instanceof Date)) {
-            // Single EntityReference: {Id: {_rawGuid, _formattedGuid}, LogicalName, Name}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const obj = raw as Record<string, any>;
-            const rawGuid = obj.Id?._formattedGuid ?? obj.Id?._rawGuid ?? obj.id;
-            if (rawGuid) {
-                lookupEntityType = obj.LogicalName ?? obj.entityType;
-                lookupId = this.formatGuid(String(rawGuid));
-            }
-        }
+        const lookupRef = this.extractLookupRef(raw);
+        let lookupEntityType = lookupRef?.entityType;
+        const lookupId = lookupRef?.id;
 
-        // Fallback: PCF may omit entityType in the lookup reference — resolve from field metadata
+        // Fallback: PCF may omit entityType — resolve from field metadata Targets
         if (lookupId && !lookupEntityType && attrs?.Targets) {
             const targets = Array.isArray(attrs.Targets) ? attrs.Targets
                 : typeof attrs.Targets.getAll === "function" ? attrs.Targets.getAll() : [];
-            if (targets.length > 0) {
-                lookupEntityType = targets[0];
-            }
+            if (targets.length > 0) lookupEntityType = targets[0];
         }
 
         // Resolve color: OptionSet from metadata cache, or lookup from resolved colors
@@ -408,6 +359,50 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         "versionnumber", "timezoneruleversionnumber", "utcconversiontimezonecode",
         "importsequencenumber", "overriddencreatedon", "exchangerate",
     ]);
+
+    /** Entities that store a color field on their record */
+    private static readonly COLOR_FIELDS: Record<string, string> = {
+        bookingstatus: "msdyn_statuscolor",
+        msdyn_bookingstatus: "msdyn_statuscolor",
+        msdyn_priority: "msdyn_prioritycolor",
+    };
+
+    /** Extract lookup entity type + ID from various PCF raw value formats */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private extractLookupRef(raw: any): { entityType?: string; id?: string } | null {
+        if (Array.isArray(raw) && raw.length > 0 && raw[0].id) {
+            return { entityType: raw[0].entityType ?? raw[0].etn, id: raw[0].id };
+        }
+        if (typeof raw === "object" && raw !== null && !Array.isArray(raw) && !(raw instanceof Date)) {
+            const rawGuid = raw.Id?._formattedGuid ?? raw.Id?._rawGuid ?? raw.id;
+            if (rawGuid) {
+                return {
+                    entityType: raw.LogicalName ?? raw.entityType,
+                    id: this.formatGuid(String(rawGuid)),
+                };
+            }
+        }
+        return null;
+    }
+
+    /** Fetch a color field from a lookup entity record, normalizing hex format */
+    private async fetchLookupColor(
+        context: ComponentFramework.Context<IInputs>,
+        entityType: string, id: string,
+    ): Promise<string | undefined> {
+        const colorField = InfoCard.COLOR_FIELDS[entityType];
+        if (!colorField) return undefined;
+        try {
+            const rec = await context.webAPI.retrieveRecord(entityType, id, `?$select=${colorField}`);
+            let color = rec[colorField];
+            if (color && typeof color === "string" && !color.startsWith("#")) color = `#${color}`;
+            if (color && typeof color === "string"
+                && color.toLowerCase() !== "#ffffff" && color.toLowerCase() !== "#000000") {
+                return color;
+            }
+        } catch { /* color fetch is optional */ }
+        return undefined;
+    }
 
     private async resolveRecordFieldsAsync(
         context: ComponentFramework.Context<IInputs>,
@@ -493,52 +488,16 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             }
 
             // Resolve colors for lookup-based tag fields
-            // Entities like bookingstatus store color on the record itself
-            const colorFields: Record<string, string> = {
-                bookingstatus: "msdyn_statuscolor",
-                msdyn_bookingstatus: "msdyn_statuscolor",
-                msdyn_priority: "msdyn_prioritycolor",
-            };
             for (const key of TAG_KEYS) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const param = (context.parameters as Record<string, any>)[key];
                 if (!param) continue;
                 const raw = param.raw;
                 if (!raw || (typeof raw === "string" && raw.startsWith("@"))) continue;
-
-                // Extract lookup entity + ID from various runtime formats
-                let etn: string | undefined;
-                let eid: string | undefined;
-                if (Array.isArray(raw) && raw.length > 0 && raw[0].id) {
-                    etn = raw[0].entityType ?? raw[0].etn;
-                    eid = raw[0].id;
-                } else if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const obj = raw as Record<string, any>;
-                    etn = obj.LogicalName ?? obj.entityType;
-                    eid = obj.Id?._formattedGuid ?? obj.Id?._rawGuid ?? obj.id;
-                    if (eid) eid = this.formatGuid(String(eid));
-                }
-
-                console.log(`[InfoCard] Tag color check ${key}: etn=${etn}, eid=${eid?.substring(0, 8)}`);
-
-                const colorField = etn ? colorFields[etn] : undefined;
-                if (colorField && eid) {
-                    try {
-                        const colorRec = await context.webAPI.retrieveRecord(etn!, eid, `?$select=${colorField}`);
-                        let color = colorRec[colorField];
-                        // Normalize: add # prefix if missing
-                        if (color && typeof color === "string" && !color.startsWith("#")) {
-                            color = `#${color}`;
-                        }
-                        console.log(`[InfoCard] Tag color for ${key} (${etn}): ${color}`);
-                        if (color && typeof color === "string"
-                            && color.toLowerCase() !== "#ffffff" && color.toLowerCase() !== "#000000") {
-                            this._resolvedColors[key] = color;
-                        }
-                    } catch (err) {
-                        console.log(`[InfoCard] Tag color fetch failed for ${key}:`, err);
-                    }
+                const ref = this.extractLookupRef(raw);
+                if (ref?.entityType && ref?.id) {
+                    const color = await this.fetchLookupColor(context, ref.entityType, ref.id);
+                    if (color) this._resolvedColors[key] = color;
                 }
             }
 
@@ -629,46 +588,6 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
      *
      * The @. prefix navigates from the current record instead of the title entity.
      */
-    /**
-     * Debug: dump all accessible properties on bound param objects to diagnose
-     * why DisplayName/LogicalName are unavailable in the runtime.
-     * Only runs once, gated by showVersionInfo.
-     */
-    private exploreParamStructure(context: ComponentFramework.Context<IInputs>): void {
-        const sampleKeys = ["gridField1", "tagField1", "titleField"];
-        for (const key of sampleKeys) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const param = (context.parameters as Record<string, any>)[key];
-            if (!param || param.type === "Unknown") continue;
-
-            const paramKeys: string[] = [];
-            for (const k in param) paramKeys.push(k);
-            const ownKeys = Object.getOwnPropertyNames(param);
-
-            const attrKeys: string[] = [];
-            const attrOwnKeys: string[] = [];
-            if (param.attributes) {
-                for (const k in param.attributes) attrKeys.push(k);
-                for (const k of Object.getOwnPropertyNames(param.attributes)) attrOwnKeys.push(k);
-            }
-
-            console.log(`[InfoCard] PARAM EXPLORE ${key}:`, {
-                type: param.type,
-                rawType: typeof param.raw,
-                formatted: param.formatted,
-                "for..in": paramKeys.join(","),
-                ownPropertyNames: ownKeys.join(","),
-                hasAttributes: !!param.attributes,
-                "attrs.for..in": attrKeys.join(","),
-                "attrs.ownPropertyNames": attrOwnKeys.join(","),
-                DisplayName: param.attributes?.DisplayName,
-                LogicalName: param.attributes?.LogicalName,
-                displayName: param.attributes?.displayName,
-                logicalName: param.attributes?.logicalName,
-            });
-        }
-    }
-
     private detectRelatedFields(context: ComponentFramework.Context<IInputs>): RelatedFieldMapping[] {
         const mappings: RelatedFieldMapping[] = [];
         const scanKeys = ALL_SLOT_KEYS.filter(k => k !== "titleField");
@@ -1030,25 +949,11 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             }
 
             // ── 7. Resolve colors for lookup results from known color entities ──
-            const colorFields: Record<string, string> = {
-                bookingstatus: "msdyn_statuscolor",
-                msdyn_bookingstatus: "msdyn_statuscolor",
-                msdyn_priority: "msdyn_prioritycolor",
-            };
             for (const key of Object.keys(results)) {
                 const val = results[key];
                 if (!val.lookupId || !val.lookupEntityType) continue;
-                const colorField = colorFields[val.lookupEntityType];
-                if (!colorField) continue;
-                try {
-                    const colorRec = await context.webAPI.retrieveRecord(val.lookupEntityType!, val.lookupId!, `?$select=${colorField}`);
-                    let color = colorRec[colorField];
-                    if (color && typeof color === "string" && !color.startsWith("#")) color = `#${color}`;
-                    if (color && typeof color === "string"
-                        && color.toLowerCase() !== "#ffffff" && color.toLowerCase() !== "#000000") {
-                        results[key] = { ...val, color };
-                    }
-                } catch { /* color fetch is optional */ }
+                const color = await this.fetchLookupColor(context, val.lookupEntityType, val.lookupId);
+                if (color) results[key] = { ...val, color };
             }
 
             const resultSummary = Object.entries(results).map(([k, v]) => `${k}="${v.value}" (${v.label})`).join(", ");
@@ -1057,12 +962,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             return results;
         } catch (err) {
             console.error("[InfoCard] fetchRelatedFields ERROR:", err);
-            return {
-                "__debug_error": {
-                    value: String(err).substring(0, 150),
-                    label: "error",
-                },
-            };
+            return {};
         }
     }
 
