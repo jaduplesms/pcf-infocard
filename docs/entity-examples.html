@@ -267,7 +267,7 @@
       <thead><tr><th>Property</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td class="prop-name">layout</td><td><code>smart</code></td></tr>
-        <tr><td class="prop-name">titleField</td><td><code>msdyn_workorder</code> (lookup &rarr; WO name)</td></tr>
+        <tr><td class="prop-name">value <span style="font-size:10px;color:#888;">(bound)</span></td><td><code>msdyn_workorder</code> (lookup &rarr; WO name)</td></tr>
         <tr><td class="prop-name">subtitleField1</td><td><code>resource</code></td></tr>
         <tr><td class="prop-name">subtitleField2</td><td><span class="at-val">@msdyn_serviceaccount</span></td></tr>
         <tr><td class="prop-name">phoneField1</td><td><span class="at-val">@telephone1</span> (from WO &rarr; service account)</td></tr>
@@ -346,7 +346,7 @@
       <thead><tr><th>Property</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td class="prop-name">layout</td><td><code>smart</code></td></tr>
-        <tr><td class="prop-name">titleField</td><td><code>name</code></td></tr>
+        <tr><td class="prop-name">value <span style="font-size:10px;color:#888;">(bound)</span></td><td><code>name</code></td></tr>
         <tr><td class="prop-name">subtitleField1</td><td><code>primarycontactid</code> (lookup &rarr; contact name)</td></tr>
         <tr><td class="prop-name">subtitleField2</td><td><code>territoryid</code></td></tr>
         <tr><td class="prop-name">phoneField1</td><td><code>telephone1</code></td></tr>
@@ -430,7 +430,7 @@
       <thead><tr><th>Property</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td class="prop-name">layout</td><td><code>contact</code></td></tr>
-        <tr><td class="prop-name">titleField</td><td><code>msdyn_name</code></td></tr>
+        <tr><td class="prop-name">value <span style="font-size:10px;color:#888;">(bound)</span></td><td><code>msdyn_name</code></td></tr>
         <tr><td class="prop-name">subtitleField1</td><td><code>msdyn_serviceaccount</code> (lookup &rarr; account name)</td></tr>
         <tr><td class="prop-name">subtitleField2</td><td><code>msdyn_workordertype</code></td></tr>
         <tr><td class="prop-name">phoneField1</td><td><span class="at-val">@telephone1</span> (from service account)</td></tr>
@@ -508,7 +508,7 @@
       <thead><tr><th>Property</th><th>Value</th></tr></thead>
       <tbody>
         <tr><td class="prop-name">layout</td><td><code>compact</code></td></tr>
-        <tr><td class="prop-name">titleField</td><td><code>msdyn_name</code></td></tr>
+        <tr><td class="prop-name">value <span style="font-size:10px;color:#888;">(bound)</span></td><td><code>msdyn_name</code></td></tr>
         <tr><td class="prop-name">subtitleField1</td><td><code>msdyn_product</code> (lookup &rarr; product name)</td></tr>
         <tr><td class="prop-name">subtitleField2</td><td><code>msdyn_account</code> (lookup &rarr; account name)</td></tr>
         <tr><td class="prop-name">detailField1</td><td><code>msdyn_deviceid</code></td></tr>
@@ -527,7 +527,7 @@
 <div style="margin-top: 32px; padding: 16px 20px; background: var(--brand-light); border-radius: var(--radius); font-size: 13px;">
   <strong style="color: var(--brand);">Configuration Notes</strong>
   <ul style="margin: 8px 0 0; padding-left: 20px; color: var(--text-secondary);">
-    <li>Values prefixed with <code style="color: #e65100;">@</code> are <strong>related field lookups</strong> &mdash; data is fetched at runtime via WebAPI from the entity referenced by the <code>titleField</code> lookup.</li>
+    <li>Values prefixed with <code style="color: #e65100;">@</code> are <strong>related field lookups</strong> &mdash; data is fetched at runtime via WebAPI from the entity referenced by the bound <code>value</code> lookup.</li>
     <li>All other values are <strong>direct column bindings</strong> on the form entity itself.</li>
     <li>Lookup columns (e.g., <code>primarycontactid</code>, <code>msdyn_serviceaccount</code>) automatically display the lookup display name.</li>
     <li>OptionSet/Choice columns (e.g., <code>statecode</code>, <code>industrycode</code>) display the label text, not the numeric value.</li>

@@ -424,7 +424,7 @@
 
   <ol class="steps">
     <li>Open the form editor for your target entity (e.g., Bookable Resource Booking).</li>
-    <li>Add or select a <strong>text field</strong> on the form. This will become the <code>titleField</code> (bound property). It must be named <code>value</code> internally &mdash; PCF enforces this for model-driven forms.</li>
+    <li>Add or select a field on the form. This becomes the <strong>bound property</strong> (<code>value</code>) and is displayed as the card title. Bind to a <strong>lookup</strong> (e.g., <code>msdyn_workorder</code>) to enable related field fetching, or a <strong>text field</strong> (e.g., <code>name</code>) if you only need direct column bindings.</li>
     <li>Open the field's <strong>Properties</strong> panel &rarr; <strong>Controls</strong> tab &rarr; <strong>Add Control</strong> &rarr; search for <strong>InfoCard</strong>.</li>
     <li>Configure the <strong>Layout Mode</strong> (smart/contact/compact) and bind each slot property to the appropriate column or <code>@fieldName</code> value.</li>
     <li>Enable the control for <strong>Phone</strong> and/or <strong>Tablet</strong> form factors.</li>
@@ -432,9 +432,11 @@
   </ol>
 
   <div class="info-box">
-    <div class="info-title">Bound Property Constraint</div>
-    The single bound property (<code>titleField</code>) <em>must</em> map to a real column on the form entity.
-    This is how the control anchors itself to the record. All other properties are <code>input</code> (static or expression).
+    <div class="info-title">Bound Property</div>
+    The <code>value</code> property is the only bound property. It serves as both the <strong>card title</strong> and the
+    <strong>anchor for related field fetching</strong>. When bound to a lookup column, <code>@fieldName</code> properties
+    will fetch data from the looked-up entity. When bound to a text column, the title displays the text value and
+    related fetching is not available &mdash; bind other slots directly to columns instead.
   </div>
 </div>
 
@@ -467,7 +469,7 @@
             Sarah Chen<span style="margin: 0 6px; color: var(--text-muted);">&middot;</span>Contoso Ltd
           </div>
         </div>
-        <div class="zone-prop"><code>titleField</code> &rarr; Work Order lookup (title text)</div>
+        <div class="zone-prop"><code>value</code> (bound) &rarr; Work Order lookup (card title)</div>
         <div class="zone-prop"><code>subtitleField1</code> &rarr; Resource</div>
         <div class="zone-prop"><code>subtitleField2</code> &rarr; <code>@msdyn_serviceaccount</code> (from WO)</div>
         <div class="zone-prop"><code>subtitleField3</code> &rarr; (unused)</div>
@@ -548,53 +550,54 @@
     </thead>
     <tbody>
       <!-- CONFIG -->
-      <tr class="prop-group-header config"><td colspan="5">Configuration (5)</td></tr>
+      <tr class="prop-group-header config"><td colspan="5">Configuration (6)</td></tr>
       <tr><td>1</td><td><code>layout</code></td><td>Enum</td><td>input</td><td>Card layout: <code>smart</code>, <code>contact</code>, or <code>compact</code></td></tr>
       <tr><td>2</td><td><code>hideEmptyFields</code></td><td>TwoOptions</td><td>input</td><td>Hide fields with no value (default: true)</td></tr>
       <tr><td>3</td><td><code>showCardBorder</code></td><td>TwoOptions</td><td>input</td><td>Show card border and shadow (default: true)</td></tr>
       <tr><td>4</td><td><code>showVersionInfo</code></td><td>TwoOptions</td><td>input</td><td>Show version badge in bottom-right corner</td></tr>
       <tr><td>5</td><td><code>startExpanded</code></td><td>TwoOptions</td><td>input</td><td>Smart layout starts expanded (default: true)</td></tr>
+      <tr><td>6</td><td><code>showTitle</code></td><td>TwoOptions</td><td>input</td><td>Show the title in the card header (default: true)</td></tr>
 
       <!-- HEADER -->
-      <tr class="prop-group-header header"><td colspan="5">Header (4)</td></tr>
-      <tr><td>6</td><td><code>titleField</code></td><td>fieldTypes</td><td><strong>bound</strong></td><td>Card title &mdash; anchor field. Related @fields resolve from this lookup.</td></tr>
-      <tr><td>7</td><td><code>subtitleField1</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 1 (dot-separated)</td></tr>
-      <tr><td>8</td><td><code>subtitleField2</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 2</td></tr>
-      <tr><td>9</td><td><code>subtitleField3</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 3</td></tr>
+      <tr class="prop-group-header header"><td colspan="5">Header (1 bound + 3 subtitles)</td></tr>
+      <tr><td>7</td><td><code>value</code></td><td>fieldTypes</td><td><strong>bound</strong></td><td>Card title. When bound to a lookup, enables <code>@</code> related field fetching.</td></tr>
+      <tr><td>8</td><td><code>subtitleField1</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 1 (dot-separated)</td></tr>
+      <tr><td>9</td><td><code>subtitleField2</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 2</td></tr>
+      <tr><td>10</td><td><code>subtitleField3</code></td><td>fieldTypes</td><td>input</td><td>Subtitle line 3</td></tr>
 
       <!-- CONTACT -->
       <tr class="prop-group-header contact"><td colspan="5">Contact (4)</td></tr>
-      <tr><td>10</td><td><code>phoneField1</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-call phone button (landline icon)</td></tr>
-      <tr><td>11</td><td><code>phoneField2</code></td><td>fieldTypes</td><td>input</td><td>Secondary phone (mobile icon)</td></tr>
-      <tr><td>12</td><td><code>emailField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-send email button</td></tr>
-      <tr><td>13</td><td><code>webField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-open URL button</td></tr>
+      <tr><td>11</td><td><code>phoneField1</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-call phone button (landline icon)</td></tr>
+      <tr><td>12</td><td><code>phoneField2</code></td><td>fieldTypes</td><td>input</td><td>Secondary phone (mobile icon)</td></tr>
+      <tr><td>13</td><td><code>emailField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-send email button</td></tr>
+      <tr><td>14</td><td><code>webField</code></td><td>fieldTypes</td><td>input</td><td>Tap-to-open URL button</td></tr>
 
       <!-- ADDRESS -->
       <tr class="prop-group-header address"><td colspan="5">Address (3)</td></tr>
-      <tr><td>14</td><td><code>addressField</code></td><td>fieldTypes</td><td>input</td><td>Tappable address row &mdash; opens map when lat/lng set</td></tr>
-      <tr><td>15</td><td><code>latitudeField</code></td><td>fieldTypes</td><td>input</td><td>Latitude for map link on address</td></tr>
-      <tr><td>16</td><td><code>longitudeField</code></td><td>fieldTypes</td><td>input</td><td>Longitude for map link on address</td></tr>
+      <tr><td>15</td><td><code>addressField</code></td><td>fieldTypes</td><td>input</td><td>Tappable address row &mdash; opens map when lat/lng set</td></tr>
+      <tr><td>16</td><td><code>latitudeField</code></td><td>fieldTypes</td><td>input</td><td>Latitude for map link on address</td></tr>
+      <tr><td>17</td><td><code>longitudeField</code></td><td>fieldTypes</td><td>input</td><td>Longitude for map link on address</td></tr>
 
       <!-- DETAILS -->
       <tr class="prop-group-header details"><td colspan="5">Details (3)</td></tr>
-      <tr><td>17</td><td><code>detailField1</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
-      <tr><td>18</td><td><code>detailField2</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
-      <tr><td>19</td><td><code>detailField3</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+      <tr><td>18</td><td><code>detailField1</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+      <tr><td>19</td><td><code>detailField2</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
+      <tr><td>20</td><td><code>detailField3</code></td><td>fieldTypes</td><td>input</td><td>Icon + text info row</td></tr>
 
       <!-- GRID -->
       <tr class="prop-group-header grid"><td colspan="5">Grid (6)</td></tr>
-      <tr><td>20</td><td><code>gridField1</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
-      <tr><td>21</td><td><code>gridField2</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
-      <tr><td>22</td><td><code>gridField3</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
-      <tr><td>23</td><td><code>gridField4</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
-      <tr><td>24</td><td><code>gridField5</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
-      <tr><td>25</td><td><code>gridField6</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>21</td><td><code>gridField1</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>22</td><td><code>gridField2</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>23</td><td><code>gridField3</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>24</td><td><code>gridField4</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>25</td><td><code>gridField5</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
+      <tr><td>26</td><td><code>gridField6</code></td><td>fieldTypes</td><td>input</td><td>Key:value field in 2-column grid</td></tr>
 
       <!-- TAGS -->
       <tr class="prop-group-header tags"><td colspan="5">Tags (3)</td></tr>
-      <tr><td>26</td><td><code>tagField1</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
-      <tr><td>27</td><td><code>tagField2</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
-      <tr><td>28</td><td><code>tagField3</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+      <tr><td>27</td><td><code>tagField1</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+      <tr><td>28</td><td><code>tagField2</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
+      <tr><td>29</td><td><code>tagField3</code></td><td>fieldTypes</td><td>input</td><td>Compact chip/pill badge</td></tr>
     </tbody>
   </table>
 </div>
@@ -608,17 +611,17 @@
   <p>
     The <code>@fieldName</code> convention lets you pull data from a <strong>related entity</strong> without
     creating additional lookups on the form. When InfoCard sees a property value starting with <code>@</code>,
-    it resolves the field through the <code>titleField</code> lookup.
+    it resolves the field through the bound <code>value</code> property's lookup.
   </p>
 
   <h3 style="font-size: 15px; margin-top: 20px;">1-hop: Direct lookup field</h3>
-  <p>The <code>titleField</code> is bound to a lookup column (e.g., <code>msdyn_workorder</code> on the Booking entity).
+  <p>The <code>value</code> property is bound to a lookup column (e.g., <code>msdyn_workorder</code> on the Booking entity).
   Any <code>@fieldName</code> fetches that column from the <em>looked-up</em> entity.</p>
 
   <div class="related-diagram">
     <div class="entity-box" style="border-color: var(--zone-header);">
       <div class="entity-name">Booking</div>
-      <div class="entity-field"><code>titleField</code> = msdyn_workorder</div>
+      <div class="entity-field"><code>value</code> (bound) = msdyn_workorder</div>
     </div>
     <div class="arrow">&rarr;</div>
     <div class="entity-box" style="border-color: var(--brand);">
@@ -629,7 +632,7 @@
     </div>
   </div>
 
-  <div class="code-block"><span class="cmt">// Example: Booking form, titleField bound to msdyn_workorder</span>
+  <div class="code-block"><span class="cmt">// Example: Booking form, value bound to msdyn_workorder (lookup)</span>
 subtitleField2 = <span class="str">@msdyn_serviceaccount</span>    <span class="cmt">// Fetches service account name from Work Order</span>
 addressField   = <span class="str">@msdyn_address</span>           <span class="cmt">// Fetches address from Work Order</span>
 phoneField1    = <span class="str">@telephone1</span>              <span class="cmt">// Fetches phone from Work Order</span></div>
@@ -657,7 +660,7 @@ phoneField1    = <span class="str">@telephone1</span>              <span class="
 
   <div class="info-box">
     <div class="info-title">How it works</div>
-    When the title lookup resolves a Work Order, and the <code>@msdyn_serviceaccount</code> value is itself a lookup,
+    When the bound lookup resolves a Work Order, and the <code>@msdyn_serviceaccount</code> value is itself a lookup,
     InfoCard issues a second WebAPI call to the Account entity to fetch additional fields like <code>telephone1</code>.
     This is automatic &mdash; no extra configuration needed beyond setting the <code>@</code> property values.
   </div>
@@ -676,7 +679,7 @@ phoneField1    = <span class="str">@telephone1</span>              <span class="
   </p>
 
   <div class="code-block"><span class="cmt">// In test-scenarios.json or harness config:</span>
-titleField   = <span class="str">$msdyn_name</span>        <span class="cmt">// Reads data.json["msdyn_name"]</span>
+value        = <span class="str">$msdyn_name</span>        <span class="cmt">// Reads data.json["msdyn_name"] as title</span>
 phoneField1  = <span class="str">$telephone1</span>        <span class="cmt">// Reads data.json["telephone1"]</span>
 gridField1   = <span class="str">$msdyn_starttime</span>   <span class="cmt">// Reads data.json["msdyn_starttime"]</span></div>
 
@@ -765,7 +768,7 @@ gridField1   = <span class="str">$msdyn_starttime</span>   <span class="cmt">// 
 
 <!-- ── Footer ─────────────────────────────────────────── -->
 <div style="text-align: center; padding: 24px 0; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border-light);">
-  InfoCard v3.0.0 &mdash; PCF Virtual Control &mdash; Contoso Namespace<br>
+  InfoCard v3.1.0 &mdash; PCF Virtual Control &mdash; Contoso Namespace<br>
   See also: <a href="entity-examples.html" style="color: var(--brand); text-decoration: none;">Entity Examples</a> &middot;
   <a href="layout-comparison.html" style="color: var(--brand); text-decoration: none;">Layout Comparison</a>
 </div>

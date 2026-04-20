@@ -20,6 +20,8 @@ export interface SlotField {
     isEmpty: boolean;
     lookupEntityType?: string;
     lookupId?: string;
+    /** OptionSet color from Dataverse metadata (hex, e.g. "#d13438") */
+    optionColor?: string;
 }
 
 export interface InfoCardData {
@@ -71,6 +73,14 @@ export interface RelatedFieldMapping {
     targetSlot: string;
 }
 
+export interface BindingDiagnostic {
+    slotKey: string;
+    slotLabel: string;
+    bindingType: "bound" | "title-related" | "current-related" | "unconfigured";
+    rawExpression: string;
+    warning?: string;
+}
+
 export interface InfoCardProps {
     data: InfoCardData;
     layout: LayoutMode;
@@ -83,8 +93,14 @@ export interface InfoCardProps {
     theme: InfoCardTheme;
     version: string;
     relatedMappings: RelatedFieldMapping[];
-    fetchRelatedData?: (entityType: string, id: string, columns: string[]) => Promise<Record<string, { value: string; label: string; lookupId?: string; lookupEntityType?: string }>>;
+    currentRecordMappings?: RelatedFieldMapping[];
+    currentRecordEntityType?: string;
+    currentRecordId?: string;
+    fetchRelatedData?: (entityType: string, id: string, columns: string[]) => Promise<Record<string, { value: string; label: string; lookupId?: string; lookupEntityType?: string; color?: string }>>;
+    /** Resolves labels, formatted values, and colors for bound fields via record fetch + metadata */
+    resolveRecordFields?: () => Promise<Record<string, { label: string; value: string; color?: string }>>;
     onOpenRecord?: (entityType: string, id: string) => void;
+    bindingDiagnostics?: BindingDiagnostic[];
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -116,7 +132,9 @@ const EmailIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) =
 
 const WebIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.5 2.3C5.6 3.5 5 5.1 4.8 7H2.1a6 6 0 014.4-4.7zM2.1 9h2.7c0.2 1.9 0.8 3.5 1.7 4.7A6 6 0 012.1 9zm4.7 4.7c-1.1-1.1-1.8-2.8-2-4.7h6.4c-0.2 1.9-0.9 3.6-2 4.7-0.4 0.2-0.8 0.3-1.2 0.3s-0.8-0.1-1.2-0.3zM11.2 7c-0.2-1.9-0.9-3.5-2-4.7 0.4-0.2 0.8-0.3 1.2-0.3 2.4 0 4.4 1.5 5.2 3.6A6 6 0 0013.9 7h-2.7zm-6.4 0c0.2-1.9 0.9-3.6 2-4.7C7.2 2.1 7.6 2 8 2s0.8 0.1 1.2 0.3c1.1 1.1 1.8 2.8 2 4.7H4.8zm4.7 2h2.6a6 6 0 01-4.4 4.7c1-1.2 1.6-2.8 1.8-4.7z" fill={color} />
+        <circle cx="8" cy="8" r="6.5" stroke={color} strokeWidth="1.2" fill="none" />
+        <ellipse cx="8" cy="8" rx="3" ry="6.5" stroke={color} strokeWidth="1" fill="none" />
+        <line x1="1.5" y1="8" x2="14.5" y2="8" stroke={color} strokeWidth="1" />
     </svg>
 );
 
@@ -145,8 +163,9 @@ const GearIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) =>
 );
 
 const PersonIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8 2a3 3 0 100 6 3 3 0 000-6zM3 12c0-2.2 2.2-4 5-4s5 1.8 5 4v1H3v-1z" fill={color} />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color} xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="4.5" r="2.5" />
+        <path d="M3 14.5c0-2.8 2.2-5 5-5s5 2.2 5 5H3z" />
     </svg>
 );
 
@@ -155,6 +174,44 @@ const ChevronDown: React.FC<IconProps> = ({ size = 12, color = "currentColor" })
         <path d="M2.5 4.5L6 8l3.5-3.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
+
+// Entity-specific icons for subtitle lookups
+const BuildingIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 2a1 1 0 011-1h8a1 1 0 011 1v12h1v1H2v-1h1V2zm2 1v1h2V3H5zm4 0v1h2V3H9zM5 5.5v1h2v-1H5zm4 0v1h2v-1H9zM5 8v1h2V8H5zm4 0v1h2V8H9zM5 10.5v1h2v-1H5zm4 0v1h2v-1H9z" fill={color} />
+    </svg>
+);
+
+const WrenchIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10.5 1.5a4 4 0 00-3.8 5.2L2.4 11c-.5.5-.5 1.4 0 1.9l.7.7c.5.5 1.4.5 1.9 0l4.3-4.3A4 4 0 0010.5 1.5zm0 1.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5z" fill={color} />
+    </svg>
+);
+
+const ClipboardIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1a1 1 0 00-1 1H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V3a1 1 0 00-1-1h-1a1 1 0 00-1-1H6zm0 1h4v1H6V2zM5 6h6v1H5V6zm0 2.5h6v1H5v-1zm0 2.5h4v1H5v-1z" fill={color} />
+    </svg>
+);
+
+const TicketIcon: React.FC<IconProps> = ({ size = 14, color = "currentColor" }) => (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v3.5a1.5 1.5 0 100 3V13a1 1 0 01-1 1H3a1 1 0 01-1-1V9.5a1.5 1.5 0 100-3V3zm3 2v1h6V5H5zm0 3v1h4V8H5z" fill={color} />
+    </svg>
+);
+
+/** Map known Dataverse entity types to icons. Returns null for unknown entities. */
+function entityIcon(entityType: string | undefined, size: number, color: string): React.ReactElement | null {
+    if (!entityType) return null;
+    const et = entityType.toLowerCase();
+    if (et === "account") return <BuildingIcon size={size} color={color} />;
+    if (et === "contact") return <PersonIcon size={size} color={color} />;
+    if (et === "bookableresource") return <PersonIcon size={size} color={color} />;
+    if (et === "msdyn_workorder") return <ClipboardIcon size={size} color={color} />;
+    if (et === "incident") return <TicketIcon size={size} color={color} />;
+    if (et === "systemuser") return <PersonIcon size={size} color={color} />;
+    return null;
+}
 
 // ════════════════════════════════════════════════════════════════════
 // Helpers
@@ -325,16 +382,17 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                 <div style={{ fontSize: 13, color: theme.textSecondary, lineHeight: "18px", marginTop: showTitle ? 2 : 0 }}>
                     {subtitles.map((sub, i) => {
                         const isSubLookup = !!(sub.lookupEntityType && sub.lookupId);
+                        const icon = entityIcon(sub.lookupEntityType, 12, theme.textSecondary);
                         return (
                             <React.Fragment key={i}>
                                 {i > 0 && (
                                     <span style={{ margin: "0 6px", color: theme.textMuted }}>{"\u00b7"}</span>
                                 )}
+                                {icon && <span style={{ marginRight: 3, verticalAlign: "middle", display: "inline-flex" }}>{icon}</span>}
                                 <span
                                     style={{
                                         color: isSubLookup ? theme.brand : theme.textSecondary,
                                         cursor: isSubLookup ? "pointer" : "default",
-                                        textDecoration: isSubLookup ? "none" : "none",
                                     }}
                                     onClick={
                                         isSubLookup && onOpenRecord
@@ -401,9 +459,9 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
         fontSize: 13,
         color: theme.textPrimary,
         textDecoration: "none",
-        whiteSpace: "nowrap",
         borderRadius: 6,
         cursor: "pointer",
+        minWidth: 0,
     };
 
     return (
@@ -583,25 +641,32 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
 
     return (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {filtered.map((tag, i) => (
-                <span
-                    key={i}
-                    style={{
-                        display: "inline-block",
-                        padding: "2px 8px",
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: theme.brand,
-                        background: theme.brandLight,
-                        borderRadius: "10px",
-                        lineHeight: "16px",
-                        whiteSpace: "nowrap",
-                    }}
-                    title={tag.label}
-                >
-                    {tag.value}
-                </span>
-            ))}
+            {filtered.map((tag, i) => {
+                // Use OptionSet color if available, otherwise default brand blue
+                const hasColor = !!tag.optionColor;
+                const textColor = hasColor ? tag.optionColor! : theme.brand;
+                // Lighten the option color for background (10% opacity)
+                const bgColor = hasColor ? `${tag.optionColor}1a` : theme.brandLight;
+                return (
+                    <span
+                        key={i}
+                        style={{
+                            display: "inline-block",
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            fontWeight: 500,
+                            color: textColor,
+                            background: bgColor,
+                            borderRadius: "10px",
+                            lineHeight: "16px",
+                            whiteSpace: "nowrap",
+                        }}
+                        title={tag.label}
+                    >
+                        {tag.value}
+                    </span>
+                );
+            })}
         </div>
     );
 };
@@ -942,6 +1007,94 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 };
 
 // ════════════════════════════════════════════════════════════════════
+// Design-Time Binding Panel
+// ════════════════════════════════════════════════════════════════════
+
+const DesignTimeBindingPanel: React.FC<{ diagnostics: BindingDiagnostic[]; theme: InfoCardTheme }> = ({ diagnostics, theme }) => {
+    const typeColors: Record<string, string> = {
+        "bound": "#107c10",
+        "title-related": theme.brand,
+        "current-related": "#8764b8",
+        "unconfigured": theme.textMuted,
+    };
+    const typeLabels: Record<string, string> = {
+        "bound": "Column",
+        "title-related": "@ Title",
+        "current-related": "@. Record",
+        "unconfigured": "---",
+    };
+
+    return (
+        <div style={{
+            marginTop: 10, padding: "8px 10px",
+            background: theme.brandLight, borderRadius: theme.radius,
+            border: `1px solid ${theme.border}`, fontSize: 11,
+        }}>
+            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6, color: theme.textPrimary }}>
+                Slot Bindings
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                    <tr style={{ color: theme.textSecondary, textAlign: "left", borderBottom: `1px solid ${theme.border}` }}>
+                        <th style={{ padding: "2px 4px", fontWeight: 500 }}>Slot</th>
+                        <th style={{ padding: "2px 4px", fontWeight: 500 }}>Source</th>
+                        <th style={{ padding: "2px 4px", fontWeight: 500 }}>Binding</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {diagnostics.map((d) => (
+                        <tr key={d.slotKey} style={{
+                            borderBottom: `1px solid ${theme.borderLight}`,
+                            background: d.warning ? "#fff4ce" : "transparent",
+                        }}>
+                            <td style={{ padding: "3px 4px", color: theme.textPrimary }}>{d.slotLabel}</td>
+                            <td style={{
+                                padding: "3px 4px",
+                                color: typeColors[d.bindingType] ?? theme.textMuted,
+                                fontWeight: 500,
+                            }}>
+                                {typeLabels[d.bindingType] ?? d.bindingType}
+                            </td>
+                            <td style={{ padding: "3px 4px", fontFamily: "monospace", fontSize: 10, color: theme.textSecondary }}>
+                                {d.rawExpression}
+                                {d.warning && (
+                                    <div style={{ color: "#d83b01", fontFamily: theme.fontFamily, marginTop: 1 }}>
+                                        {d.warning}
+                                    </div>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+// ════════════════════════════════════════════════════════════════════
+// Helper: convert fetch results to SlotField records
+// ════════════════════════════════════════════════════════════════════
+
+function toSlotFields(
+    results: Record<string, { value: string; label: string; lookupId?: string; lookupEntityType?: string; color?: string }>,
+): Record<string, SlotField> {
+    const fields: Record<string, SlotField> = {};
+    for (const [key, val] of Object.entries(results)) {
+        if (key.startsWith("__")) continue;
+        fields[key] = {
+            label: val.label,
+            value: val.value,
+            rawValue: val.value,
+            isEmpty: !val.value || val.value === "---",
+            lookupEntityType: val.lookupEntityType,
+            lookupId: val.lookupId,
+            optionColor: val.color,
+        };
+    }
+    return fields;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // Main Component
 // ════════════════════════════════════════════════════════════════════
 
@@ -955,42 +1108,44 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         theme,
         version,
         relatedMappings,
+        currentRecordMappings,
+        currentRecordEntityType,
+        currentRecordId,
         fetchRelatedData,
         onOpenRecord,
+        bindingDiagnostics,
     } = props;
 
     const [relatedFields, setRelatedFields] = React.useState<Record<string, SlotField>>({});
+    const [currentRecordFields, setCurrentRecordFields] = React.useState<Record<string, SlotField>>({});
+    // Overrides for bound field labels, values, and colors (from record fetch + metadata)
+    const [recordOverrides, setRecordOverrides] = React.useState<Record<string, { label: string; value: string; color?: string }>>({});
 
-    // Fetch related data when mappings or source lookup change
+    // Resolve bound field labels/values/colors via record fetch
+    React.useEffect(() => {
+        if (!props.resolveRecordFields) return;
+        props.resolveRecordFields().then(setRecordOverrides).catch(() => { /* optional */ });
+    }, [props.resolveRecordFields]);
+
+    // Fetch title-entity related data
     React.useEffect(() => {
         if (relatedMappings.length === 0 || !fetchRelatedData) return;
 
         const sourceField = data.title;
-        if (!sourceField || !sourceField.lookupEntityType || !sourceField.lookupId) return;
+        if (!sourceField || !sourceField.lookupEntityType || !sourceField.lookupId) {
+            if (relatedMappings.length > 0 && sourceField) {
+                console.warn("[InfoCard] Title mappings exist but title has no lookup data.");
+            }
+            return;
+        }
 
         const columns = relatedMappings.map(m => m.fetchField);
-        const entityType = sourceField.lookupEntityType;
-        const entityId = sourceField.lookupId;
-
-        fetchRelatedData(entityType, entityId, columns)
+        fetchRelatedData(sourceField.lookupEntityType, sourceField.lookupId, columns)
             .then((results) => {
-                // Convert to SlotField records
-                const fields: Record<string, SlotField> = {};
-                for (const [key, val] of Object.entries(results)) {
-                    if (key.startsWith("__")) continue; // skip debug keys
-                    fields[key] = {
-                        label: val.label,
-                        value: val.value,
-                        rawValue: val.value,
-                        isEmpty: !val.value || val.value === "---",
-                        lookupEntityType: val.lookupEntityType,
-                        lookupId: val.lookupId,
-                    };
-                }
-                setRelatedFields(fields);
+                setRelatedFields(toSlotFields(results));
             })
-            .catch(() => {
-                // Silently handle errors
+            .catch((err) => {
+                console.error("[InfoCard] Title-entity fetch failed:", err);
             });
     }, [
         data.title?.lookupId,
@@ -998,19 +1153,75 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         relatedMappings.map(m => m.fetchField).join(","),
     ]);
 
-    // Merge related fields into display data
-    const displayData = relatedMappings.length > 0 && Object.keys(relatedFields).length > 0
-        ? mergeRelatedFields(data, relatedFields, relatedMappings)
+    // Fetch current-record related data (@. syntax)
+    React.useEffect(() => {
+        if (!currentRecordMappings || currentRecordMappings.length === 0 || !fetchRelatedData) return;
+        if (!currentRecordEntityType || !currentRecordId) {
+            console.warn("[InfoCard] @. mappings exist but no current record context available.");
+            return;
+        }
+
+        const columns = currentRecordMappings.map(m => m.fetchField);
+        fetchRelatedData(currentRecordEntityType, currentRecordId, columns)
+            .then((results) => {
+                setCurrentRecordFields(toSlotFields(results));
+            })
+            .catch((err) => {
+                console.error("[InfoCard] Current-record fetch failed:", err);
+            });
+    }, [
+        currentRecordEntityType,
+        currentRecordId,
+        currentRecordMappings?.length,
+        currentRecordMappings?.map(m => m.fetchField).join(","),
+    ]);
+
+    // Merge all related fields into display data
+    const allMappings = [...relatedMappings, ...(currentRecordMappings ?? [])];
+    const allRelatedFields = { ...relatedFields, ...currentRecordFields };
+    let displayData = allMappings.length > 0 && Object.keys(allRelatedFields).length > 0
+        ? mergeRelatedFields(data, allRelatedFields, allMappings)
         : data;
 
+    // Apply record-fetch overrides (labels, formatted values, colors) for bound fields
+    if (Object.keys(recordOverrides).length > 0) {
+        displayData = {
+            ...displayData,
+            gridFields: displayData.gridFields.map((f, i) => {
+                const key = `gridField${i + 1}`;
+                const ov = recordOverrides[key];
+                if (!ov) return f;
+                return {
+                    ...f,
+                    label: ov.label || f.label,
+                    ...(ov.value ? { value: ov.value, isEmpty: false } : {}),
+                    optionColor: ov.color ?? f.optionColor,
+                };
+            }),
+            tags: displayData.tags.map((f, i) => {
+                const key = `tagField${i + 1}`;
+                const ov = recordOverrides[key];
+                if (!ov) return f;
+                return {
+                    ...f,
+                    ...(ov.label ? { label: ov.label } : {}),
+                    optionColor: ov.color ?? f.optionColor,
+                };
+            }),
+        };
+    }
+
     // Check if we have a valid title to display
-    // In design-time mode, title is configured but has no record data — show layout anyway
     const hasTitle = props.designTime
         ? displayData.title != null
         : displayData.title && !displayData.title.isEmpty;
 
     // Card wrapper styles
     const cardStyle: React.CSSProperties = {
+        width: "100%",
+        boxSizing: "border-box" as const,
+        overflow: "hidden",
+        wordBreak: "break-word" as const,
         background: theme.cardBg,
         fontFamily: theme.fontFamily,
         padding: "12px 14px",
@@ -1027,7 +1238,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
             }),
     };
 
-    // No data state
+    // No data state — but show diagnostics at design time
     if (!hasTitle) {
         return (
             <div style={cardStyle}>
@@ -1045,6 +1256,9 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                     <PersonIcon size={16} color={theme.textMuted} />
                     <span>No fields bound</span>
                 </div>
+                {bindingDiagnostics && bindingDiagnostics.length > 0 && (
+                    <DesignTimeBindingPanel diagnostics={bindingDiagnostics} theme={theme} />
+                )}
                 {showVersion && <VersionBadge version={version} theme={theme} />}
             </div>
         );
@@ -1066,6 +1280,9 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
             {layout === "smart" && <SmartCardLayout {...layoutProps} />}
             {layout === "contact" && <ContactCardLayout {...layoutProps} />}
             {layout === "compact" && <CompactCardLayout {...layoutProps} />}
+            {bindingDiagnostics && bindingDiagnostics.length > 0 && (
+                <DesignTimeBindingPanel diagnostics={bindingDiagnostics} theme={theme} />
+            )}
             {showVersion && <VersionBadge version={version} theme={theme} />}
         </div>
     );

@@ -11,6 +11,9 @@
     <Name>InfoCardControl</Name>
     <ProjectGuid>4401919e-b5cf-4170-a8e0-3dde2abc5c54</ProjectGuid>
     <OutputPath>$(MSBuildThisFileDirectory)out\controls</OutputPath>
+    <!-- pac pcf push defaults to development (logs preserved).
+         Solution builds (dotnet build -c Release) use production (logs stripped by Terser). -->
+    <PcfBuildMode Condition="'$(Configuration)' == 'Release'">production</PcfBuildMode>
   </PropertyGroup>
 
   <PropertyGroup>

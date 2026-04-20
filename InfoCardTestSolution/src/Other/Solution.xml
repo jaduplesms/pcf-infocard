@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ImportExportXml version="9.2.26034.167" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SolutionManifest>
-    <UniqueName>InfoCardTestSolution</UniqueName>
+    <UniqueName>MobileInfoCardTest</UniqueName>
     <LocalizedNames>
-      <LocalizedName description="InfoCard Test Solution" languagecode="1033" />
+      <LocalizedName description="Mobile Info Card Test" languagecode="1033" />
     </LocalizedNames>
     <Descriptions>
-      <Description description="Test solution for InfoCard v3 PCF control. Configures InfoCard on Booking and Work Order form with related field fetching." languagecode="1033" />
+      <Description description="Test solution for InfoCard v3 PCF control on Booking and Work Order form." languagecode="1033" />
     </Descriptions>
-    <Version>3.0.0</Version>
-    <Managed>2</Managed>
+    <Version>3.0.2</Version>
+    <Managed>0</Managed>
     <Publisher>
-      <UniqueName>cli</UniqueName>
+      <UniqueName>Jdp</UniqueName>
       <LocalizedNames>
-        <LocalizedName description="CLI" languagecode="1033" />
+        <LocalizedName description="Jdp" languagecode="1033" />
       </LocalizedNames>
       <Descriptions>
-        <Description description="CLI Publisher" languagecode="1033" />
+        <Description description="" languagecode="1033" />
       </Descriptions>
       <EMailAddress xsi:nil="true"></EMailAddress>
       <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
-      <CustomizationPrefix>cli</CustomizationPrefix>
-      <CustomizationOptionValuePrefix>43626</CustomizationOptionValuePrefix>
+      <CustomizationPrefix>jdp</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>73935</CustomizationOptionValuePrefix>
       <Addresses>
         <Address>
           <AddressNumber>1</AddressNumber>
@@ -31,7 +31,6 @@
     </Publisher>
     <RootComponents>
       <RootComponent type="1" schemaName="bookableresourcebooking" behavior="2" />
-      <RootComponent type="66" schemaName="cli_Contoso.InfoCard" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>

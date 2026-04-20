@@ -10,7 +10,7 @@
       <FormXml>
         <forms type="main">
           <systemform>
-            <formid>{00000000-0000-0000-0000-000000000001}</formid>
+            <formid>{c0ace4ca-f0f1-42a7-aacb-618cb8e6751a}</formid>
             <FormPresentation>2</FormPresentation>
             <FormActivationState>1</FormActivationState>
             <form>
@@ -62,6 +62,7 @@
                       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
                       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
                       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <showTitle type="TwoOptions" static="true">false</showTitle>
                       <titleField type="Lookup.Simple">msdyn_workorder</titleField>
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
@@ -90,6 +91,7 @@
                       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
                       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
                       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <showTitle type="TwoOptions" static="true">false</showTitle>
                       <titleField type="Lookup.Simple">msdyn_workorder</titleField>
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
@@ -118,6 +120,7 @@
                       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
                       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
                       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+                      <showTitle type="TwoOptions" static="true">false</showTitle>
                       <titleField type="Lookup.Simple">msdyn_workorder</titleField>
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="Lookup.Simple">bookingstatus</subtitleField2>

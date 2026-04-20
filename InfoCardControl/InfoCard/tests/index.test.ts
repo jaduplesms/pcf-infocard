@@ -2,7 +2,7 @@
  * Unit tests for the InfoCard PCF lifecycle class (index.ts).
  *
  * Covers: init, updateView, collectData, readSlot, readSlotGroup,
- *         resolveLayout, resolveTheme, parseRelatedConfig,
+ *         resolveLayout, resolveTheme, detectRelatedFields,
  *         isDurationField, formatDuration, getOutputs, destroy.
  */
 
@@ -35,11 +35,15 @@ function makeSlotParam(override?: SlotParamOverride) {
   if (!override) {
     return { raw: null, type: "Unknown", formatted: undefined, attributes: undefined };
   }
+  // Unknown type = unconfigured property in PCF — don't inject default attributes
+  const defaultAttrs = override.type === "Unknown"
+    ? undefined
+    : { LogicalName: "field", DisplayName: "Field" };
   return {
     raw: override.raw ?? null,
     type: override.type ?? "SingleLine.Text",
     formatted: override.formatted,
-    attributes: override.attributes ?? { LogicalName: "field", DisplayName: "Field" },
+    attributes: override.attributes ?? defaultAttrs,
   };
 }
 
@@ -51,7 +55,7 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
     "subtitleField1", "subtitleField2", "subtitleField3",
     "phoneField1", "phoneField2",
     "emailField", "webField",
-    "latitudeField", "longitudeField",
+    "addressField", "latitudeField", "longitudeField",
     "detailField1", "detailField2", "detailField3", "detailField4", "detailField5",
     "gridField1", "gridField2", "gridField3", "gridField4", "gridField5",
     "gridField6", "gridField7", "gridField8", "gridField9", "gridField10",
@@ -63,6 +67,8 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
     hideEmptyFields: { raw: overrides.hideEmptyFields ?? true },
     showCardBorder: { raw: overrides.showCardBorder ?? true },
     showVersionInfo: { raw: overrides.showVersionInfo ?? false },
+    showTitle: { raw: true },
+    startExpanded: { raw: true },
     relatedConfig: { raw: overrides.relatedConfig ?? null },
   };
 
@@ -414,11 +420,24 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(result).toBeNull();
     });
 
-    it("returns null when attributes have no LogicalName", () => {
+    it("returns null when attributes have no metadata and no type", () => {
+      // Empty attributes + no type = improperly configured field
+      const ctx = createMockContext();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const params = ctx.parameters as Record<string, any>;
+      params.titleField = { raw: null, type: undefined, formatted: undefined, attributes: {} };
+      control.init(ctx, notifyOutputChanged);
+      const readSlot = getReadSlot(control);
+      const result = readSlot(ctx, "titleField");
+      expect(result).toBeNull();
+    });
+
+    it("returns field when attributes are empty but type is present (static input)", () => {
+      // Static inputs (static="true" in form XML) have attributes={} but valid type
       const ctx = createMockContext({
         slots: {
           titleField: {
-            raw: "test",
+            raw: "@msdyn_serviceaccount",
             attributes: {},
           },
         },
@@ -426,7 +445,8 @@ describe("InfoCard PCF Lifecycle", () => {
       control.init(ctx, notifyOutputChanged);
       const readSlot = getReadSlot(control);
       const result = readSlot(ctx, "titleField");
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.isEmpty).toBe(true);
     });
 
     it("marks empty for null raw value", () => {
@@ -514,6 +534,27 @@ describe("InfoCard PCF Lifecycle", () => {
       const result = readSlot(ctx, "subtitleField1");
 
       expect(result!.lookupEntityType).toBe("bookableresource");
+    });
+
+    it("falls back to Targets attribute for lookup entity type", () => {
+      const ctx = createMockContext({
+        slots: {
+          subtitleField1: {
+            raw: [{ id: "abc-123", name: "WO-00001" }],
+            attributes: {
+              LogicalName: "msdyn_workorder",
+              DisplayName: "Work Order",
+              Targets: ["msdyn_workorder"],
+            },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const readSlot = getReadSlot(control);
+      const result = readSlot(ctx, "subtitleField1");
+
+      expect(result!.lookupEntityType).toBe("msdyn_workorder");
+      expect(result!.lookupId).toBe("abc-123");
     });
 
     it("handles single lookup object (not array)", () => {
@@ -620,7 +661,8 @@ describe("InfoCard PCF Lifecycle", () => {
           },
         },
       });
-      expect(readSlot(ctx2, "titleField")!.label).toBe("logname");
+      // With no DisplayName, formatLogicalName is used: "logname" → "Logname"
+      expect(readSlot(ctx2, "titleField")!.label).toBe("Logname");
     });
   });
 
@@ -823,16 +865,23 @@ describe("InfoCard PCF Lifecycle", () => {
     });
   });
 
-  // ── parseRelatedConfig ────────────────
+  // ── detectRelatedFields (@syntax) ────
 
-  describe("parseRelatedConfig()", () => {
-    it("parses sourceSlot:field>target format", () => {
+  describe("detectRelatedFields()", () => {
+    it("detects @-prefixed slot values as related field references", () => {
       const ctx = createMockContext({
-        relatedConfig: "titleField:msdyn_serviceaccount>subtitleField2,msdyn_priority>tagField3",
         slots: {
           titleField: {
             raw: "Title",
             attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          subtitleField2: {
+            raw: "@msdyn_serviceaccount",
+            attributes: { LogicalName: "sub2", DisplayName: "Sub 2" },
+          },
+          tagField3: {
+            raw: "@msdyn_priority",
+            attributes: { LogicalName: "tag3", DisplayName: "Tag 3" },
           },
         },
       });
@@ -852,9 +901,8 @@ describe("InfoCard PCF Lifecycle", () => {
       });
     });
 
-    it("returns empty array for null config", () => {
+    it("returns empty array when no slots have @-prefixed values", () => {
       const ctx = createMockContext({
-        relatedConfig: null,
         slots: {
           titleField: {
             raw: "Title",
@@ -867,13 +915,16 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(element.props.relatedMappings).toEqual([]);
     });
 
-    it("returns empty array for empty string", () => {
+    it("ignores slots whose raw is not a string", () => {
       const ctx = createMockContext({
-        relatedConfig: "",
         slots: {
           titleField: {
             raw: "Title",
             attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          subtitleField1: {
+            raw: 42,
+            attributes: { LogicalName: "count", DisplayName: "Count" },
           },
         },
       });
@@ -882,13 +933,16 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(element.props.relatedMappings).toEqual([]);
     });
 
-    it("returns empty array when no colon separator", () => {
+    it("ignores strings not starting with @", () => {
       const ctx = createMockContext({
-        relatedConfig: "invalid-no-colon",
         slots: {
           titleField: {
             raw: "Title",
             attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          detailField1: {
+            raw: "some_regular_value",
+            attributes: { LogicalName: "detail1", DisplayName: "Detail" },
           },
         },
       });
@@ -897,20 +951,103 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(element.props.relatedMappings).toEqual([]);
     });
 
-    it("skips entries without > separator", () => {
+    it("ignores bare @ with empty field name", () => {
       const ctx = createMockContext({
-        relatedConfig: "titleField:badentry,good_field>tagField1",
         slots: {
           titleField: {
             raw: "Title",
             attributes: { LogicalName: "name", DisplayName: "Name" },
           },
+          phoneField1: {
+            raw: "@",
+            attributes: { LogicalName: "phone1", DisplayName: "Phone" },
+          },
         },
       });
       control.init(ctx, notifyOutputChanged);
       const element = control.updateView(ctx);
+      expect(element.props.relatedMappings).toEqual([]);
+    });
+
+    it("detects @. prefix as current-record mappings", () => {
+      const ctx = createMockContext({
+        slots: {
+          titleField: {
+            raw: "Title",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          gridField5: {
+            raw: "@.resource.resourcetype",
+            attributes: {},
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      // @. mappings go to currentRecordMappings, not relatedMappings
+      expect(element.props.relatedMappings).toEqual([]);
+      expect(element.props.currentRecordMappings).toHaveLength(1);
+      expect(element.props.currentRecordMappings[0]).toEqual({
+        sourceSlot: "__currentRecord__",
+        fetchField: "resource.resourcetype",
+        targetSlot: "gridField5",
+      });
+    });
+
+    it("splits @ and @. mappings to separate props", () => {
+      const ctx = createMockContext({
+        slots: {
+          titleField: {
+            raw: "Title",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          subtitleField2: {
+            raw: "@msdyn_serviceaccount",
+            attributes: {},
+          },
+          gridField5: {
+            raw: "@.resource.resourcetype",
+            attributes: {},
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
       expect(element.props.relatedMappings).toHaveLength(1);
-      expect(element.props.relatedMappings[0].fetchField).toBe("good_field");
+      expect(element.props.relatedMappings[0].sourceSlot).toBe("titleField");
+      expect(element.props.currentRecordMappings).toHaveLength(1);
+      expect(element.props.currentRecordMappings[0].sourceSlot).toBe("__currentRecord__");
+    });
+  });
+
+  // ── formatLogicalName ─────────────────
+
+  describe("formatLogicalName()", () => {
+    function getFormatLogicalName(ctrl: InfoCard) {
+      return asAny(ctrl).formatLogicalName.bind(ctrl) as (name: string) => string;
+    }
+
+    it("strips msdyn_ prefix and formats", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const fmt = getFormatLogicalName(control);
+      expect(fmt("msdyn_workordertype")).toBe("Workordertype");
+    });
+
+    it("handles underscores as spaces", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const fmt = getFormatLogicalName(control);
+      expect(fmt("booking_type")).toBe("Booking Type");
+    });
+
+    it("handles simple names", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const fmt = getFormatLogicalName(control);
+      expect(fmt("starttime")).toBe("Starttime");
     });
   });
 
