@@ -9,6 +9,7 @@
 import { InfoCard } from "../index";
 import { IInputs } from "../generated/ManifestTypes";
 import { defaultTheme } from "../InfoCard";
+import * as testData from "../data.json";
 
 // ────────────────────────────────────────
 // Mock context helper
@@ -28,17 +29,34 @@ interface ContextOverrides {
   showVersionInfo?: boolean;
   relatedConfig?: string | null;
   fluentDesignLanguage?: Record<string, unknown>;
+  contextInfo?: { entityTypeName: string; entityId: string };
   slots?: Record<string, SlotParamOverride>;
+  /** Custom WebAPI mock — overrides the default empty retrieveRecord */
+  webAPIMock?: jest.Mock;
+  /** Custom metadata mock — overrides the default empty getEntityMetadata */
+  metadataMock?: jest.Mock;
 }
 
-function makeSlotParam(override?: SlotParamOverride) {
+/**
+ * Simulates the PCF runtime param object.
+ *
+ * IMPORTANT: In the real Dynamics 365 runtime, only `usage="bound"` properties
+ * (titleField) get attributes with DisplayName/LogicalName. All `usage="input"`
+ * properties (grids, tags, details, subtitles, etc.) get attributes={}.
+ * The `bound` parameter controls this behavior.
+ */
+function makeSlotParam(override?: SlotParamOverride, bound = false) {
   if (!override) {
     return { raw: null, type: "Unknown", formatted: undefined, attributes: undefined };
   }
-  // Unknown type = unconfigured property in PCF — don't inject default attributes
-  const defaultAttrs = override.type === "Unknown"
-    ? undefined
-    : { LogicalName: "field", DisplayName: "Field" };
+  if (override.type === "Unknown") {
+    return { raw: override.raw ?? null, type: "Unknown", formatted: undefined, attributes: undefined };
+  }
+  // Bound properties get full attributes from the platform.
+  // Input properties get empty attributes (like the real runtime).
+  const defaultAttrs = bound
+    ? { LogicalName: "field", DisplayName: "Field" }
+    : {};
   return {
     raw: override.raw ?? null,
     type: override.type ?? "SingleLine.Text",
@@ -73,18 +91,26 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
   };
 
   for (const key of allSlotKeys) {
-    parameters[key] = makeSlotParam(slots[key]);
+    // Only titleField is usage="bound" — gets attributes from the platform
+    const isBound = key === "titleField";
+    parameters[key] = makeSlotParam(slots[key], isBound);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const modeObj: Record<string, any> = {
+    isControlDisabled: false,
+    allocatedWidth: 350,
+    allocatedHeight: 500,
+    isVisible: true,
+    label: "InfoCard",
+  };
+  if (overrides.contextInfo) {
+    modeObj.contextInfo = overrides.contextInfo;
   }
 
   const ctx: Record<string, unknown> = {
     parameters,
-    mode: {
-      isControlDisabled: false,
-      allocatedWidth: 350,
-      allocatedHeight: 500,
-      isVisible: true,
-      label: "InfoCard",
-    } as ComponentFramework.Mode,
+    mode: modeObj as ComponentFramework.Mode,
     client: {} as ComponentFramework.Client,
     device: {} as ComponentFramework.Device,
     factory: {} as ComponentFramework.Factory,
@@ -95,14 +121,12 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
     resources: {} as ComponentFramework.Resources,
     userSettings: {} as ComponentFramework.UserSettings,
     utils: {
-      getEntityMetadata: jest.fn().mockResolvedValue({
-        Attributes: {
-          getAll: () => [],
-        },
+      getEntityMetadata: overrides.metadataMock ?? jest.fn().mockResolvedValue({
+        Attributes: { getAll: () => [] },
       }),
     } as unknown as ComponentFramework.Utility,
     webAPI: {
-      retrieveRecord: jest.fn().mockResolvedValue({}),
+      retrieveRecord: overrides.webAPIMock ?? jest.fn().mockResolvedValue({}),
     } as unknown as ComponentFramework.WebApi,
     accessibility: undefined,
     events: undefined,
@@ -117,6 +141,46 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
 
   return ctx as unknown as ComponentFramework.Context<IInputs>;
 }
+
+/** Create a realistic WebAPI record with getFormattedValue method */
+function makeWebAPIRecord(data: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...data,
+    getFormattedValue(col: string) {
+      return (data as Record<string, unknown>)[`${col}@OData.Community.Display.V1.FormattedValue`] ?? null;
+    },
+  };
+}
+
+/** Create a realistic entity metadata response */
+function makeMetadataResponse(attributes: Array<{
+  LogicalName: string;
+  DisplayName: string;
+  options?: Array<{ Value: number; Label: string; Color?: string }>;
+}>) {
+  return {
+    Attributes: {
+      getAll: () => attributes.map(a => ({
+        LogicalName: a.LogicalName,
+        DisplayName: { UserLocalizedLabel: { Label: a.DisplayName } },
+        attributeDescriptor: a.options ? {
+          OptionSet: {
+            Options: a.options.map(o => ({
+              Value: o.Value,
+              Label: { UserLocalizedLabel: { Label: o.Label } },
+              Color: o.Color,
+            })),
+          },
+        } : undefined,
+      })),
+    },
+  };
+}
+
+/** The booking record from data.json, wrapped as a WebAPI entity */
+const BOOKING_RECORD = makeWebAPIRecord(
+  testData.bookableresourcebooking[0] as unknown as Record<string, unknown>
+);
 
 // Utility to access private methods via any-cast
 function asAny(obj: unknown): Record<string, (...args: unknown[]) => unknown> {
@@ -1209,6 +1273,367 @@ describe("InfoCard PCF Lifecycle", () => {
       const ctx = createMockContext();
       control.init(ctx, notifyOutputChanged);
       expect(() => control.destroy()).not.toThrow();
+    });
+  });
+
+  // ── contextInfo detection ────────────
+
+  describe("contextInfo()", () => {
+    it("stores form entity and record ID from contextInfo", () => {
+      const ctx = createMockContext({
+        contextInfo: {
+          entityTypeName: "bookableresourcebooking",
+          entityId: "bb111111-1111-1111-1111-111111111111",
+        },
+        slots: {
+          titleField: {
+            raw: "WO-123",
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      expect(element.props.currentRecordEntityType).toBe("bookableresourcebooking");
+      expect(element.props.currentRecordId).toBe("bb111111-1111-1111-1111-111111111111");
+    });
+
+    it("passes resolveRecordFields when contextInfo present and not design-time", () => {
+      const ctx = createMockContext({
+        contextInfo: {
+          entityTypeName: "bookableresourcebooking",
+          entityId: "bb111111-1111-1111-1111-111111111111",
+        },
+        slots: {
+          titleField: {
+            raw: "WO-123",
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      expect(element.props.resolveRecordFields).toBeDefined();
+    });
+
+    it("omits resolveRecordFields at design time", () => {
+      const ctx = createMockContext({
+        contextInfo: {
+          entityTypeName: "bookableresourcebooking",
+          entityId: "bb111111-1111-1111-1111-111111111111",
+        },
+        slots: {
+          // titleField with no raw = design time
+          titleField: {
+            raw: null,
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      expect(element.props.resolveRecordFields).toBeUndefined();
+    });
+  });
+
+  // ── resolveRecordFieldsAsync ─────────
+
+  describe("resolveRecordFieldsAsync()", () => {
+    function getResolve(ctrl: InfoCard) {
+      return asAny(ctrl).resolveRecordFieldsAsync.bind(ctrl) as (
+        ctx: ComponentFramework.Context<IInputs>,
+      ) => Promise<Record<string, { label: string; value: string; color?: string }>>;
+    }
+
+    it("matches numeric param to WebAPI column and resolves formatted value", async () => {
+      const webAPIMock = jest.fn().mockResolvedValue(BOOKING_RECORD);
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "bookingtype", DisplayName: "Booking Type", options: [
+          { Value: 1, Label: "Solid" }, { Value: 2, Label: "Liquid" },
+        ]},
+        { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+      ]));
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        metadataMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO-00047", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+          gridField3: { raw: 1, type: "OptionSet", attributes: {} },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx); // sets _formEntityName + _formRecordId
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.gridField3).toBeDefined();
+      expect(overrides.gridField3.label).toBe("Booking Type");
+      expect(overrides.gridField3.value).toBe("Solid");
+    });
+
+    it("matches datetime param to WebAPI column", async () => {
+      const startDate = new Date("2026-03-30T09:00:00Z");
+      const webAPIMock = jest.fn().mockResolvedValue(makeWebAPIRecord({
+        starttime: "2026-03-30T09:00:00Z",
+        "starttime@OData.Community.Display.V1.FormattedValue": "3/30/2026 9:00 AM",
+        statecode: 0, statuscode: 1,
+      }));
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "starttime", DisplayName: "Start Time" },
+      ]));
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        metadataMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO-00047", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+          gridField1: { raw: startDate, type: "DateAndTime.DateAndTime", attributes: {} },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.gridField1).toBeDefined();
+      expect(overrides.gridField1.label).toBe("Start Time");
+      expect(overrides.gridField1.value).toBe("3/30/2026 9:00 AM");
+    });
+
+    it("skips system columns during value matching", async () => {
+      const webAPIMock = jest.fn().mockResolvedValue(makeWebAPIRecord({
+        statuscode: 1, statecode: 0, bookingtype: 1,
+        "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+      }));
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "bookingtype", DisplayName: "Booking Type" },
+      ]));
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        metadataMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+          // raw=1 matches both statuscode(1) and bookingtype(1)
+          // System columns should be skipped → matches bookingtype
+          gridField3: { raw: 1, type: "OptionSet", attributes: {} },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.gridField3).toBeDefined();
+      expect(overrides.gridField3.label).toBe("Booking Type");
+    });
+
+    it("resolves booking status color from lookup entity", async () => {
+      const webAPIMock = jest.fn().mockImplementation((entityType: string) => {
+        if (entityType === "bookableresourcebooking") {
+          return Promise.resolve(makeWebAPIRecord({
+            _bookingstatus_value: "bs111111-1111-1111-1111-111111111111",
+          }));
+        }
+        if (entityType === "bookingstatus") {
+          return Promise.resolve({ msdyn_statuscolor: "49F249" });
+        }
+        return Promise.resolve({});
+      });
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+          tagField1: {
+            raw: [{ id: "bs111111-1111-1111-1111-111111111111", name: "Scheduled", entityType: "bookingstatus" }],
+            type: "Lookup.Simple",
+            attributes: {},
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.tagField1).toBeDefined();
+      expect(overrides.tagField1.color).toBe("#49F249");
+    });
+
+    it("skips titleField in overrides", async () => {
+      const webAPIMock = jest.fn().mockResolvedValue(BOOKING_RECORD);
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+      ]));
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        metadataMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO-00047", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.titleField).toBeUndefined();
+    });
+  });
+
+  // ── fetchRelatedFields ───────────────
+
+  describe("fetchRelatedFields()", () => {
+    function getFetch(ctrl: InfoCard) {
+      return asAny(ctrl).fetchRelatedFields.bind(ctrl) as (
+        ctx: ComponentFramework.Context<IInputs>,
+        entityType: string, id: string, columns: string[], skipExpand?: boolean,
+      ) => Promise<Record<string, { value: string; label: string; lookupId?: string; lookupEntityType?: string; color?: string }>>;
+    }
+
+    it("reads direct field with OData formatted value", async () => {
+      const woRecord = makeWebAPIRecord({
+        msdyn_instructions: "Fix the boiler",
+        "msdyn_instructions@OData.Community.Display.V1.FormattedValue": "Fix the boiler",
+      });
+      const webAPIMock = jest.fn().mockResolvedValue(woRecord);
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "msdyn_instructions", DisplayName: "Instructions" },
+      ]));
+
+      const ctx = createMockContext({ webAPIMock, metadataMock });
+      control.init(ctx, notifyOutputChanged);
+
+      const results = await getFetch(control)(ctx, "msdyn_workorder", "wo-123", ["msdyn_instructions"]);
+      expect(results.msdyn_instructions).toBeDefined();
+      expect(results.msdyn_instructions.value).toBe("Fix the boiler");
+      expect(results.msdyn_instructions.label).toBe("Instructions");
+    });
+
+    it("reads lookup field via _col_value pattern", async () => {
+      const woRecord = makeWebAPIRecord({
+        _msdyn_serviceaccount_value: "acct-123",
+        "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Contoso Ltd",
+        "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+      });
+      const webAPIMock = jest.fn().mockResolvedValue(woRecord);
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "msdyn_serviceaccount", DisplayName: "Service Account" },
+      ]));
+
+      const ctx = createMockContext({ webAPIMock, metadataMock });
+      control.init(ctx, notifyOutputChanged);
+
+      const results = await getFetch(control)(ctx, "msdyn_workorder", "wo-123", ["msdyn_serviceaccount"]);
+      expect(results.msdyn_serviceaccount).toBeDefined();
+      expect(results.msdyn_serviceaccount.value).toBe("Contoso Ltd");
+      expect(results.msdyn_serviceaccount.lookupEntityType).toBe("account");
+    });
+
+    it("uses hop2 for @. dotted paths when skipExpand=true", async () => {
+      const webAPIMock = jest.fn().mockImplementation(
+        (entityType: string, _id: string, options: string) => {
+          if (entityType === "bookableresourcebooking" && options.includes("_resource_value")) {
+            return Promise.resolve(makeWebAPIRecord({
+              _resource_value: "res-123",
+              "_resource_value@OData.Community.Display.V1.FormattedValue": "John Smith",
+              "_resource_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookableresource",
+            }));
+          }
+          if (entityType === "bookableresource") {
+            return Promise.resolve(makeWebAPIRecord({
+              resourcetype: 2,
+              "resourcetype@OData.Community.Display.V1.FormattedValue": "Contact",
+            }));
+          }
+          return Promise.resolve({});
+        },
+      );
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "resourcetype", DisplayName: "Resource Type" },
+      ]));
+
+      const ctx = createMockContext({ webAPIMock, metadataMock });
+      control.init(ctx, notifyOutputChanged);
+
+      const results = await getFetch(control)(
+        ctx, "bookableresourcebooking", "bk-123", ["resource.resourcetype"], true,
+      );
+      expect(results["resource.resourcetype"]).toBeDefined();
+      expect(results["resource.resourcetype"].value).toBe("Contact");
+      expect(results["resource.resourcetype"].label).toBe("Resource Type");
+    });
+
+    it("returns empty object on complete failure", async () => {
+      const webAPIMock = jest.fn().mockRejectedValue(new Error("Network error"));
+      const ctx = createMockContext({ webAPIMock });
+      control.init(ctx, notifyOutputChanged);
+
+      const results = await getFetch(control)(ctx, "msdyn_workorder", "wo-123", ["msdyn_name"]);
+      expect(results).toEqual({});
+    });
+  });
+
+  // ── Realistic Dynamics runtime ───────
+
+  describe("Dynamics runtime realism", () => {
+    it("input slot has empty attributes by default", () => {
+      const ctx = createMockContext({
+        slots: {
+          titleField: {
+            raw: "Title",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          gridField1: {
+            raw: "some value",
+          },
+        },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const params = ctx.parameters as Record<string, any>;
+      // titleField (bound) gets real attributes
+      expect(params.titleField.attributes.LogicalName).toBe("name");
+      // gridField1 (input) gets empty attributes like real Dynamics
+      expect(params.gridField1.attributes).toEqual({});
+    });
+
+    it("readSlot returns field for input slot with empty attributes", () => {
+      const ctx = createMockContext({
+        slots: {
+          gridField1: {
+            raw: "test value",
+            // No attributes override → gets {} (realistic input property)
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const readSlot = asAny(control).readSlot.bind(control) as (
+        ctx: ComponentFramework.Context<IInputs>, key: string,
+      ) => unknown;
+      const result = readSlot(ctx, "gridField1");
+      // Should NOT be null — the field has data, it just lacks metadata
+      expect(result).not.toBeNull();
     });
   });
 });

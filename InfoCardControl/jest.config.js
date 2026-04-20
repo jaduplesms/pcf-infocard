@@ -25,6 +25,7 @@ module.exports = {
         module: "commonjs",
         target: "es6",
         strict: false,
+        resolveJsonModule: true,
         typeRoots: ["node_modules/@types"],
       },
     },
