@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: README — slot reference & related-field syntax
+    url: https://github.com/jaduplesms/pcf-infocard/blob/main/README.md
+    about: How slots are bound, the @-syntax for related fields, and built-in layout presets.
+  - name: Roadmap
+    url: https://github.com/jaduplesms/pcf-infocard/blob/main/docs/ROADMAP.md
+    about: What's planned next — your idea may already be on it.

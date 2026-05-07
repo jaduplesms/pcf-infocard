@@ -23,13 +23,13 @@ Small, high-leverage items focused on production hardening.
 
 Features anticipated from typical Field Service / model-driven app feedback.
 
-| # | Item | Effort |
-|---|------|--------|
-| 5 | **More layout presets** — `msdyn_customerasset`, `msdyn_workorderservicetask`, `msdyn_agreement`, fuller `incident`. | S |
-| 6 | **Header avatar / image slot** — bind `entityimage` for contact / account / resource cards. | M |
-| 7 | **Copy-to-clipboard** affordance on phone / email / address rows (desktop). | S |
-| 8 | **Configurable subtitle separator** (currently hardcoded `·`). | XS |
-| 9 | **Telemetry hook** — optional callback prop so customers can wire fetch failures and render-time metrics to Application Insights. | M |
+| # | Item | Effort | Status |
+|---|------|--------|--------|
+| 5 | **More layout presets** — `msdyn_customerasset`, `msdyn_workorderservicetask`, `msdyn_agreement`, fuller `incident`. | S | ✅ done |
+| 6 | **Header avatar / image slot** — bind `entityimage` for contact / account / resource cards. | M | |
+| 7 | **Copy-to-clipboard** affordance on phone / email / address rows (desktop). | S | ✅ done |
+| 8 | **Configurable subtitle separator** (currently hardcoded `·`). | XS | ✅ done |
+| 9 | **Telemetry hook** — optional callback prop so customers can wire fetch failures and render-time metrics to Application Insights. | M | |
 
 ## v5 — Architectural
 
@@ -43,12 +43,12 @@ Larger investments that change the shape of the control.
 
 ## Documentation & community
 
-| # | Item | Effort |
-|---|------|--------|
-| 13 | **Animated GIF / short video** in the README showing all three layouts on a real form. | S |
-| 14 | **Sample model-driven app** demonstrating 2–3 entities all using InfoCard, exportable as a solution. | M |
-| 15 | **Issue / PR templates** under `.github/`. | XS |
-| 16 | **Layout screenshots** — three PNGs into `docs/images/` (see `docs/images/README.md` for filenames). | XS |
+| # | Item | Effort | Status |
+|---|------|--------|--------|
+| 13 | **Animated GIF / short video** in the README showing all three layouts on a real form. | S | |
+| 14 | **Sample model-driven app** demonstrating 2–3 entities all using InfoCard, exportable as a solution. | M | |
+| 15 | **Issue / PR templates** under `.github/`. | XS | ✅ done |
+| 16 | **Layout screenshots** — three PNGs into `docs/images/` (see `docs/images/README.md` for filenames). | XS | |
 
 ---
 

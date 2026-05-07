@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a new capability or enhancement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the scenario / customer pain. "I'm always having to..." is a great start.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How might InfoCard help? Mockups / screenshots welcome.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you've tried, similar controls you've seen, etc.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Suggested scope
+      options:
+        - New manifest property / config
+        - New layout preset (entity-specific)
+        - New layout mode
+        - New related-field syntax
+        - Theming / styling
+        - Performance
+        - Accessibility / localization
+        - Other

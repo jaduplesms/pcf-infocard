@@ -136,6 +136,10 @@ export interface InfoCardProps {
     showVersion: boolean;
     showTitle: boolean;
     startExpanded: boolean;
+    /** Separator string rendered between subtitle parts. Default "·" (middle dot). */
+    subtitleSeparator?: string;
+    /** Form factor from context.client.getFormFactor(): 0=mobile, 1=tablet, 2=web. Used to gate desktop-only affordances. */
+    formFactor?: number;
     designTime?: boolean;
     theme: InfoCardTheme;
     version: string;
@@ -182,6 +186,10 @@ export interface InfoCardStrings {
     durationHoursSuffix: string;
     durationMinutesSuffix: string;
     durationZero: string;
+    /** Copy-to-clipboard button aria-label/title. {0} = value being copied */
+    actionCopy: string;
+    /** Live-region announcement after a successful copy */
+    actionCopied: string;
 }
 
 /**
@@ -204,6 +212,8 @@ export const DEFAULT_STRINGS: InfoCardStrings = {
     durationHoursSuffix: "h",
     durationMinutesSuffix: "m",
     durationZero: "0m",
+    actionCopy: "Copy {0}",
+    actionCopied: "Copied",
 };
 
 /** Format a localized template string. Replaces {0} with `arg`. */
@@ -458,6 +468,86 @@ function ValueOrShimmer(props: {
     return <>{props.field.value}</>;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// Copy-to-clipboard (desktop only)
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Returns a stable copy callback and a transient "copied" announcement.
+ * Hook is no-op-safe when navigator.clipboard is unavailable (returns null cb).
+ *
+ * The "copied" string is exposed so callers can render it into an aria-live
+ * region for screen-reader users; it auto-clears after 1500ms so re-copies
+ * still announce.
+ */
+function useClipboardCopy(announceText: string): {
+    copy: ((value: string) => void) | null;
+    announcement: string;
+} {
+    const [announcement, setAnnouncement] = React.useState("");
+    const timerRef = React.useRef<number | null>(null);
+
+    const copy = React.useMemo(() => {
+        if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+            return null;
+        }
+        return (value: string) => {
+            navigator.clipboard.writeText(value).then(
+                () => {
+                    setAnnouncement("");
+                    // Force re-trigger so consecutive copies still announce.
+                    requestAnimationFrame(() => setAnnouncement(announceText));
+                    if (timerRef.current) window.clearTimeout(timerRef.current);
+                    timerRef.current = window.setTimeout(() => setAnnouncement(""), 1500);
+                },
+                (err) => console.warn("[InfoCard] clipboard copy failed", err),
+            );
+        };
+    }, [announceText]);
+
+    React.useEffect(() => () => {
+        if (timerRef.current) window.clearTimeout(timerRef.current);
+    }, []);
+
+    return { copy, announcement };
+}
+
+interface CopyButtonProps {
+    value: string;
+    label: string;
+    theme: InfoCardTheme;
+    onCopy: (value: string) => void;
+}
+
+/** Small icon-only button that copies a value. Renders nothing when value is empty. */
+const CopyButton: React.FC<CopyButtonProps> = ({ value, label, theme, onCopy }) => {
+    if (!value) return null;
+    return (
+        <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onCopy(value); }}
+            aria-label={label}
+            title={label}
+            style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 24,
+                height: 24,
+                marginLeft: 4,
+                padding: 0,
+                border: "none",
+                background: "transparent",
+                color: theme.textMuted,
+                cursor: "pointer",
+                borderRadius: 4,
+            }}
+        >
+            <ClipboardIcon size={14} color="currentColor" />
+        </button>
+    );
+};
+
 function guessDetailIcon(field: SlotField, color: string): React.ReactElement | null {
     const lbl = field.label.toLowerCase();
     if (lbl.includes("address") || lbl.includes("location")) {
@@ -586,9 +676,11 @@ interface HeaderProps {
     designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
     strings: InfoCardStrings;
+    /** Separator string rendered between subtitle parts. Default "·" (middle dot). */
+    subtitleSeparator?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
+const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator }) => {
     const title = data.title;
     if (!title || (!designTime && title.isEmpty)) return null;
 
@@ -634,7 +726,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                         return (
                             <React.Fragment key={i}>
                                 {i > 0 && (
-                                    <span style={{ margin: "0 6px", color: theme.textMuted }}>{"\u00b7"}</span>
+                                    <span style={{ margin: "0 6px", color: theme.textMuted }}>{subtitleSeparator || "\u00b7"}</span>
                                 )}
                                 {icon && <span style={{ marginRight: 3, verticalAlign: "middle", display: "inline-flex" }} aria-hidden="true">{icon}</span>}
                                 <span
@@ -677,9 +769,11 @@ interface ContactRowsProps {
     theme: InfoCardTheme;
     hideEmpty: boolean;
     strings: InfoCardStrings;
+    /** 0=mobile, 1=tablet, 2=web. Copy-to-clipboard buttons render only when 2 (desktop). */
+    formFactor?: number;
 }
 
-const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strings }) => {
+const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strings, formFactor }) => {
     const mapUrl = buildMapUrl(data.latitude, data.longitude);
     const address = data.address;
     const phones = filterEmpty(data.phones, hideEmpty);
@@ -687,7 +781,15 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
     const web = data.web && (!data.web.isEmpty || data.web.isPending) ? data.web : null;
 
     const hasAny = (address && (!address.isEmpty || address.isPending)) || phones.length > 0 || email || web;
+    const { copy, announcement } = useClipboardCopy(strings.actionCopied);
     if (!hasAny) return null;
+    const showCopy = formFactor === 2 && !!copy;
+    const renderCopy = (value: string) => (
+        showCopy && copy
+            ? <CopyButton value={value} label={formatTemplate(strings.actionCopy, value)} theme={theme} onCopy={copy} />
+            : null
+    );
+    const groupStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center" };
 
     const rowStyle: React.CSSProperties = {
         display: "flex",
@@ -724,73 +826,81 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
         }}>
             {/* Address */}
             {address && (!address.isEmpty || address.isPending) && (
-                address.isPending ? (
-                    <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
-                        <PinIcon size={16} color={theme.textMuted} />
-                        <Shimmer theme={theme} width="120px" />
-                    </span>
-                ) : mapUrl ? (
-                    <a
-                        href={mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={chipStyle}
-                        title={address.label}
-                        aria-label={formatTemplate(strings.actionOpenInMaps, String(address.value))}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <PinIcon size={16} color={theme.brand} />
-                        {address.value}
-                    </a>
-                ) : (
-                    <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
-                        <PinIcon size={16} color={theme.textMuted} />
-                        {address.value}
-                    </span>
-                )
+                <span style={groupStyle}>
+                    {address.isPending ? (
+                        <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
+                            <PinIcon size={16} color={theme.textMuted} />
+                            <Shimmer theme={theme} width="120px" />
+                        </span>
+                    ) : mapUrl ? (
+                        <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={chipStyle}
+                            title={address.label}
+                            aria-label={formatTemplate(strings.actionOpenInMaps, String(address.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <PinIcon size={16} color={theme.brand} />
+                            {address.value}
+                        </a>
+                    ) : (
+                        <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
+                            <PinIcon size={16} color={theme.textMuted} />
+                            {address.value}
+                        </span>
+                    )}
+                    {!address.isPending && renderCopy(String(address.value))}
+                </span>
             )}
 
             {/* Phones — phone1 gets landline icon, phone2 gets mobile icon */}
             {phones.map((phone, i) => (
-                phone.isPending ? (
-                    <span key={`phone-${i}`} style={{ ...chipStyle, cursor: "default" }} title={phone.label}>
-                        {i === 0 ? <PhoneIcon size={14} color={theme.textMuted} /> : <MobileIcon size={14} color={theme.textMuted} />}
-                        <Shimmer theme={theme} width="90px" />
-                    </span>
-                ) : (
-                    <a
-                        key={`phone-${i}`}
-                        href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
-                        style={chipStyle}
-                        title={phone.label}
-                        aria-label={formatTemplate(strings.actionCall, String(phone.value))}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
-                        {phone.value}
-                    </a>
-                )
+                <span key={`phone-${i}`} style={groupStyle}>
+                    {phone.isPending ? (
+                        <span style={{ ...chipStyle, cursor: "default" }} title={phone.label}>
+                            {i === 0 ? <PhoneIcon size={14} color={theme.textMuted} /> : <MobileIcon size={14} color={theme.textMuted} />}
+                            <Shimmer theme={theme} width="90px" />
+                        </span>
+                    ) : (
+                        <a
+                            href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
+                            style={chipStyle}
+                            title={phone.label}
+                            aria-label={formatTemplate(strings.actionCall, String(phone.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
+                            {phone.value}
+                        </a>
+                    )}
+                    {!phone.isPending && renderCopy(String(phone.value))}
+                </span>
             ))}
 
             {/* Email */}
             {email && (
-                email.isPending ? (
-                    <span style={{ ...chipStyle, cursor: "default" }} title={email.label}>
-                        <EmailIcon size={14} color={theme.textMuted} />
-                        <Shimmer theme={theme} width="110px" />
-                    </span>
-                ) : (
-                    <a
-                        href={`mailto:${email.value}`}
-                        style={chipStyle}
-                        title={email.label}
-                        aria-label={formatTemplate(strings.actionEmail, String(email.value))}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <EmailIcon size={14} color={theme.brand} />
-                        {email.value}
-                    </a>
-                )
+                <span style={groupStyle}>
+                    {email.isPending ? (
+                        <span style={{ ...chipStyle, cursor: "default" }} title={email.label}>
+                            <EmailIcon size={14} color={theme.textMuted} />
+                            <Shimmer theme={theme} width="110px" />
+                        </span>
+                    ) : (
+                        <a
+                            href={`mailto:${email.value}`}
+                            style={chipStyle}
+                            title={email.label}
+                            aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <EmailIcon size={14} color={theme.brand} />
+                            {email.value}
+                        </a>
+                    )}
+                    {!email.isPending && renderCopy(String(email.value))}
+                </span>
             )}
 
             {/* Web */}
@@ -826,6 +936,14 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                     );
                 })()
             )}
+            {/* SR-only live region for copy success announcements */}
+            <span
+                aria-live="polite"
+                aria-atomic="true"
+                style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}
+            >
+                {announcement}
+            </span>
         </div>
     );
 };
@@ -1067,9 +1185,12 @@ interface LayoutProps {
     /** Smart-layout collapse state, controlled by parent so the whole card surface can toggle. */
     collapsed?: boolean;
     strings: InfoCardStrings;
+    subtitleSeparator?: string;
+    /** Form factor: 0=mobile, 1=tablet, 2=web. Plumbed to ContactRows for desktop-only copy buttons. */
+    formFactor?: number;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, strings }) => {
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, strings, subtitleSeparator, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -1084,7 +1205,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
                 </div>
                 {hasCollapsible && (
                     <div
@@ -1103,7 +1224,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
             </div>
 
             {/* Contact section — ALWAYS visible */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
 
             {/* Collapsible body */}
             {!collapsed && hasBody && (
@@ -1145,7 +1266,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
 // Contact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
+const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -1157,12 +1278,12 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
                 </div>
             </div>
 
             {/* Contact section */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
 
             {/* Detail rows */}
             {details.length > 0 && (
@@ -1199,7 +1320,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 // Compact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
+const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const phones = filterEmpty(data.phones, effectiveHideEmpty);
     const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
@@ -1238,7 +1359,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
                 </div>
             </div>
 
@@ -1719,6 +1840,8 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         onOpenRecord,
         collapsed,
         strings,
+        subtitleSeparator: props.subtitleSeparator,
+        formFactor: props.formFactor,
     };
 
     // Whole-card click-to-toggle (Smart layout only). Active hit zones (anchors,

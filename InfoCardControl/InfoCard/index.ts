@@ -8,7 +8,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.0.0";
+const CONTROL_VERSION = "4.1.0";
 
 // Minimal shape of context.formatting we use. The PCF typings don't expose
 // formatInteger consistently across hosts, so we narrow it ourselves and
@@ -65,6 +65,8 @@ function getStrings(context: ComponentFramework.Context<IInputs>): InfoCardStrin
         durationHoursSuffix: readResxString(context, "Duration_Hours_Suffix", DEFAULT_STRINGS.durationHoursSuffix),
         durationMinutesSuffix: readResxString(context, "Duration_Minutes_Suffix", DEFAULT_STRINGS.durationMinutesSuffix),
         durationZero: readResxString(context, "Duration_Zero", DEFAULT_STRINGS.durationZero),
+        actionCopy: readResxString(context, "Action_Copy", DEFAULT_STRINGS.actionCopy),
+        actionCopied: readResxString(context, "Action_Copied", DEFAULT_STRINGS.actionCopied),
     };
 }
 
@@ -210,10 +212,51 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
     incident: {
         subtitleField1: "customerid",
         subtitleField2: "casetypecode",
+        phoneField1: "customercontacted",
+        emailField: "emailaddress",
+        detailField1: "description",
         gridField1: "createdon",
         gridField2: "modifiedon",
+        gridField3: "ticketnumber",
+        gridField4: "casetypecode",
         tagField1: "prioritycode",
         tagField2: "statuscode",
+        tagField3: "severitycode",
+    },
+    msdyn_customerasset: {
+        subtitleField1: "msdyn_account",
+        subtitleField2: "msdyn_product",
+        addressField: "msdyn_address1_composite",
+        latitudeField: "msdyn_latitude",
+        longitudeField: "msdyn_longitude",
+        detailField1: "msdyn_description",
+        gridField1: "msdyn_serialnumber",
+        gridField2: "msdyn_registrationnumber",
+        gridField3: "msdyn_installdate",
+        gridField4: "msdyn_warrantystartdate",
+        gridField5: "msdyn_warrantyenddate",
+        tagField1: "statuscode",
+    },
+    msdyn_workorderservicetask: {
+        subtitleField1: "msdyn_workorder",
+        subtitleField2: "msdyn_tasktype",
+        detailField1: "msdyn_description",
+        gridField1: "msdyn_estimateddurationminutes",
+        gridField2: "msdyn_actualdurationminutes",
+        gridField3: "msdyn_lineorder",
+        gridField4: "msdyn_percentcomplete",
+        tagField1: "msdyn_iscompleted",
+    },
+    msdyn_agreement: {
+        subtitleField1: "msdyn_serviceaccount",
+        subtitleField2: "msdyn_billingaccount",
+        addressField: "msdyn_serviceaddress_composite",
+        detailField1: "msdyn_description",
+        gridField1: "msdyn_startdate",
+        gridField2: "msdyn_enddate",
+        gridField3: "msdyn_systemstatus",
+        gridField4: "msdyn_substatus",
+        tagField1: "msdyn_systemstatus",
     },
 };
 
@@ -326,6 +369,15 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const showVersion = context.parameters.showVersionInfo?.raw === true; // default false
         const showTitle = context.parameters.showTitle?.raw !== false; // default true
         const startExpanded = context.parameters.startExpanded?.raw !== false; // default true
+        const subtitleSeparator = context.parameters.subtitleSeparator?.raw || undefined;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const clientAny = (context as any).client;
+        const formFactor: number | undefined = (() => {
+            try {
+                const v = clientAny?.getFormFactor?.();
+                return typeof v === "number" ? v : undefined;
+            } catch { return undefined; }
+        })();
         const theme = this.resolveTheme(context);
 
         // Detect all related field mappings, split by source
@@ -365,6 +417,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             showVersion,
             showTitle,
             startExpanded,
+            subtitleSeparator,
+            formFactor,
             designTime,
             theme,
             version: CONTROL_VERSION,

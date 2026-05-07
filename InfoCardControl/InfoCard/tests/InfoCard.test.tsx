@@ -88,6 +88,8 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
     fetchRelatedData: overrides.fetchRelatedData,
     resolveRecordFields: overrides.resolveRecordFields,
     onOpenRecord: overrides.onOpenRecord,
+    subtitleSeparator: overrides.subtitleSeparator,
+    formFactor: overrides.formFactor,
   };
 }
 
@@ -145,6 +147,21 @@ describe("InfoCardComponent", () => {
       );
       // The dot separator is a middle dot character \u00b7
       expect(container.textContent).toContain("\u00b7");
+    });
+
+    it("uses custom subtitleSeparator when provided", () => {
+      const data = makeData({
+        subtitles: [
+          makeField({ label: "Account", value: "Contoso" }),
+          makeField({ label: "Priority", value: "High" }),
+        ],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", subtitleSeparator: " | " })} />,
+      );
+      expect(container.textContent).toContain("|");
+      // Default middle dot is no longer present between subtitles when overridden
+      expect(container.textContent).not.toContain("\u00b7");
     });
   });
 
@@ -261,6 +278,88 @@ describe("InfoCardComponent", () => {
       );
       const link = container.querySelector("a[href='https://example.com']");
       expect(link).not.toBeNull();
+    });
+  });
+
+  // ── Copy-to-clipboard (desktop only) ───
+
+  describe("copy-to-clipboard", () => {
+    const originalClipboard = (navigator as Navigator & { clipboard?: Clipboard }).clipboard;
+
+    beforeEach(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: jest.fn().mockResolvedValue(undefined) },
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: originalClipboard,
+      });
+    });
+
+    it("does not render copy buttons on mobile (formFactor=0)", () => {
+      const data = makeData({
+        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
+        email: makeField({ label: "Email", value: "a@b.co" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 0 })} />,
+      );
+      // Copy button has aria-label starting with "Copy "
+      const copyBtn = container.querySelector("button[aria-label^='Copy ']");
+      expect(copyBtn).toBeNull();
+    });
+
+    it("does not render copy buttons on tablet (formFactor=1)", () => {
+      const data = makeData({
+        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 1 })} />,
+      );
+      expect(container.querySelector("button[aria-label^='Copy ']")).toBeNull();
+    });
+
+    it("renders copy buttons on web (formFactor=2)", () => {
+      const data = makeData({
+        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
+        email: makeField({ label: "Email", value: "a@b.co" }),
+        address: makeField({ label: "Address", value: "1 Microsoft Way" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+      );
+      const copyButtons = container.querySelectorAll("button[aria-label^='Copy ']");
+      expect(copyButtons.length).toBe(3); // phone, email, address
+    });
+
+    it("invokes navigator.clipboard.writeText with chip value when clicked", async () => {
+      const data = makeData({
+        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+      );
+      const copyBtn = container.querySelector("button[aria-label^='Copy ']") as HTMLButtonElement;
+      expect(copyBtn).not.toBeNull();
+      fireEvent.click(copyBtn);
+      await flushPromises();
+      const writeText = (navigator.clipboard as Clipboard).writeText as jest.Mock;
+      expect(writeText).toHaveBeenCalledWith("+1 555 1234");
+    });
+
+    it("hides copy buttons when navigator.clipboard is unavailable", () => {
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
+      const data = makeData({
+        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+      );
+      expect(container.querySelector("button[aria-label^='Copy ']")).toBeNull();
     });
   });
 

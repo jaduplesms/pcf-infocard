@@ -7,7 +7,15 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 ## Unreleased — v4.1.0 (in progress on `main`)
 
 ### Added
-- **Localization** via standard Dataverse PCF `resx` resources (`Sample/strings/SampleInfoCard.<LCID>.resx`). Ships with English (1033), German (1031), French (1036), Spanish (1034), Italian (1040), Dutch (1043), and Japanese (1041). 14 keys cover section headers, action chip aria-labels, expand/collapse labels, and duration unit suffixes.
+- **Subtitle separator** is now configurable via the `subtitleSeparator` config property (default `·`). Makers can set any literal string (` • `, ` | `, etc.) in the form designer.
+- **Copy-to-clipboard buttons** appear next to phone, email, and address chips on web (`getFormFactor() === 2`). Hidden on mobile/tablet (where `tel:`/`mailto:`/map links remain primary). Uses `navigator.clipboard.writeText` with a feature-detect; degrades silently in environments without the API. Includes a polite `aria-live` region announcing "Copied" for screen readers.
+- **Four new layout presets** in `SLOT_PRESETS` so unbound slots auto-populate with sensible defaults on these entities:
+  - `msdyn_customerasset` (Customer Asset)
+  - `msdyn_workorderservicetask` (Work Order Service Task)
+  - `msdyn_agreement` (Agreement)
+  - `incident` preset expanded with phone/email/detail/grid mappings
+- **GitHub community templates** under `.github/`: structured Bug Report and Feature Request issue forms, a config link to the README and roadmap, and a checklist-driven Pull Request template.
+- **Localization** via standard Dataverse PCF `resx` resources (`Sample/strings/SampleInfoCard.<LCID>.resx`). Ships with English (1033), German (1031), French (1036), Spanish (1034), Italian (1040), Dutch (1043), and Japanese (1041). 16 keys cover section headers, action chip aria-labels, expand/collapse labels, copy-button labels, and duration unit suffixes.
   - Non-English translations are machine-generated; customers should have a native speaker review the resx for their language before shipping in production. The English (1033) file is the source of truth.
   - To add a new language, copy `SampleInfoCard.1033.resx`, translate the `<value>` entries, save as `SampleInfoCard.<LCID>.resx`, and register it in `ControlManifest.Input.xml` under `<resources>`.
 - **Locale-aware duration formatting** — `formatDuration` now consults `context.formatting.formatInteger` (so `1h 30m` becomes locale-formatted digits where appropriate) and uses resx-driven unit suffixes (`Std/Min` for German, etc.). Falls back to plain ASCII digits if `formatInteger` is unavailable or throws.
@@ -17,11 +25,11 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   - Smart-card whole-card toggle exposes `aria-label` ("Expand card" / "Collapse card") in addition to the existing `aria-expanded`.
   - Decorative entity icons inside subtitle rows marked `aria-hidden="true"`.
 - **CI workflow** (`.github/workflows/ci.yml`) — every PR and push to `main` runs `npm ci`, lint, build, and the full Jest suite on Node 18.
-- 9 new unit tests covering localized strings (`getStrings` translation pass-through, key-as-value fallback, throwing-getString safety), locale-aware duration (`formatInteger` substitution, throw-safety, custom suffixes), and keyboard a11y (Enter/Space on lookup title, non-lookup title not focusable, localized phone aria-label).
+- 15 new unit tests covering localized strings, locale-aware duration, keyboard a11y, the configurable subtitle separator, and copy-to-clipboard behaviour across form factors.
 
 ### Changed
-- `CONTROL_VERSION` constant in `index.ts` bumped from stale `3.9.13` to `4.0.0` to match the manifest. Going forward this gets bumped alongside the manifest version on every deploy.
-- `InfoCardProps` gains an optional `strings?: Partial<InfoCardStrings>` prop. Existing call sites without this prop continue to work — `DEFAULT_STRINGS` (English) is merged in at the component root.
+- `CONTROL_VERSION` constant in `index.ts` bumped from `4.0.0` to `4.1.0` to match the manifest.
+- `InfoCardProps` gains optional `strings?: Partial<InfoCardStrings>`, `subtitleSeparator?: string`, and `formFactor?: number` props. Existing call sites without these continue to work.
 - `formatDuration(minutes)` signature is now `formatDuration(minutes, formatting?, strings?)` — backward-compatible (existing 1-arg callers still work).
 - Centralized `MaybeFormatting` interface and `getFormatting(context)` helper (replaces the ad-hoc cast at the date-formatting site).
 

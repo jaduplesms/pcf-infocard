@@ -94,4 +94,12 @@
     <value>0 Min.</value>
     <comment>Rendered text when a duration is zero minutes.</comment>
   </data>
+  <data name="Action_Copy" xml:space="preserve">
+    <value>{0} kopieren</value>
+    <comment>aria-label / tooltip for the copy-to-clipboard button next to phone/email/address chips. {0} is the value being copied.</comment>
+  </data>
+  <data name="Action_Copied" xml:space="preserve">
+    <value>Kopiert</value>
+    <comment>Live-region announcement after a successful copy-to-clipboard.</comment>
+  </data>
 </root>

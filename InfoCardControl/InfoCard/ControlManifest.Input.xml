@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard" version="4.0.0"
+  <control namespace="Sample" constructor="InfoCard" version="4.1.0"
            display-name-key="InfoCard"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -55,6 +55,9 @@
     <property name="showTitle" display-name-key="Show Title"
               description-key="Show the title field in the card header. Set to false when the form section header already provides the title. Default true."
               of-type="TwoOptions" usage="input" required="false" />
+    <property name="subtitleSeparator" display-name-key="Subtitle Separator"
+              description-key="Separator rendered between subtitle parts in the card header. Defaults to a middle dot (·). Set to e.g. ' | ' or ' — ' to taste."
+              of-type="SingleLine.Text" usage="input" required="false" />
 
     <!-- HEADER (1 bound + 3 subtitles) -->
     <property name="titleField" display-name-key="Title"
