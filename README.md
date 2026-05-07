@@ -9,7 +9,7 @@ A compact, read-only info card PCF control for Dynamics 365 and Power Apps model
 
 InfoCard uses a **slot-based architecture** where admins bind form fields to card zones (header, contact, address, details, grid, tags) directly in the form designer -- no code required. It supports **related entity field fetching** via `@fieldName` syntax, enabling data from lookup records to appear on the card without custom scripting.
 
-**Version:** 4.0.0 | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
+**Version:** 4.3.0 | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
 
 > ⚠️ **This is a sample.** The control ships under the `Sample.InfoCard` namespace with publisher prefix `smp` so that it is obvious in your environment that this is reference code, not a vendor product. Before using in production, **re-namespace** the control to your own publisher (see [Re-namespacing for production](#re-namespacing-for-production)). No support, warranty, or SLA is offered.
 
@@ -20,31 +20,37 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 | Smart Card | Contact Card | Compact Form |
 |:---:|:---:|:---:|
 | <img src="docs/images/layout-smart.png" alt="Smart Card layout" width="260"> | <img src="docs/images/layout-contact.png" alt="Contact Card layout" width="260"> | <img src="docs/images/layout-compact.png" alt="Compact Form layout" width="260"> |
-| Collapsible card with action bar, 2-col grid and detail rows | Default. Icon action buttons, icon+text detail rows, tag chips | Section labels and label:value rows that preserve the form feel |
+| Action bar, 2-col grid, and icon+text detail rows. Whole-card collapse on tap | Default. Icon action buttons, icon+text detail rows, tag chips. Optional whole-card collapse | Section labels and label:value rows that preserve the form feel. Optional whole-card collapse |
 
 ---
 
 ## Key Features
 
-- **3 layout modes** -- Smart Card (collapsible), Contact Card (full), and Compact Form (dense grid)
-- **23 configurable slot properties** across 6 groups (header, contact, address, details, grid, tags), plus 6 config properties
+- **3 layout modes** -- Smart Card, Contact Card, and Compact Form. All three support optional whole-card collapse.
+- **24 configurable slot properties** across 6 groups (header, contact, address, details, grid, tags), plus **12 config properties**
 - **Related entity data** via `@fieldName` (1-hop) and `@lookup.field` (2-hop chaining)
 - **Bound field or static value** per property -- use `$columnName` for bound fields or enter a literal value
+- **Localized** out of the box -- ships with English, German, French, Spanish, Italian, Dutch, and Japanese resource strings; falls back to the user's Dataverse UI language
 - **Fluent UI theme integration** -- automatically adapts to Power Apps modern theming (light/dark mode)
-- **Tappable action links** -- phone (`tel:`), email (`mailto:`), web (`https:`), and map links
-- **Duration auto-formatting** -- minutes are automatically rendered as `Xh Xm`
+- **Tappable action links** -- phone (`tel:`), email (`mailto:`), web (`https:`), and map links (lat/lng or address text)
+- **Copy-to-clipboard buttons** on phone, email, and address chips on web (form factor 2); hidden on mobile/tablet where `tel:`/`mailto:` is primary
+- **Avatar / image** -- bind `imageField` to an entity image URL. Configurable shape (`rounded` default, `circle`, `square`). Initials show only as a fallback when a supplied URL fails to load
+- **Title prefix** -- optional muted-colour literal before the title (e.g. `Case: ACME-001`, `Work Order: WO-12345`)
+- **Configurable collapsible sections** -- choose what disappears when the card collapses: `none`, `body` (details + grid, default), `body-tags`, or `all`. Smart, Contact, and Compact layouts can all collapse
+- **Detail row presentation** -- optionally suppress leading icons (`showDetailIcons=false`) and/or render the field's display name inline-bold or as a small caps heading (`detailLabelStyle`) so detail rows read like prose
+- **Duration auto-formatting** -- numeric minutes are automatically rendered as `Xh Xm`
 - **Lookup navigation** -- tap a lookup value to open the related record
-- **Offline support** -- works in Field Service Mobile with offline-enabled entities
-- **Auto-detect icons** -- address, phone, email, instructions, dates, and asset fields receive contextual icons
-- **Collapsible smart card** -- preserves critical info (contact, address, tags) when collapsed
+- **Offline support** -- works in Field Service Mobile with offline-enabled entities; uses `context.webAPI` so cached data is honoured when offline
+- **Auto-detect icons** -- address, phone, email, instructions, dates, and asset fields receive contextual icons (when `showDetailIcons` is on)
+- **Layout presets** -- 8 entities auto-populate sensible default slots when fields aren't manually bound (Work Order, Bookable Resource Booking, Account, Contact, Case, Customer Asset, Work Order Service Task, Agreement)
 
 ---
 
 ## Slot Architecture
 
-InfoCard exposes 23 slot properties across 6 groups, plus 6 config properties. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
+InfoCard exposes 24 slot properties across 6 groups, plus 12 config properties. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
 
-### Config (6 properties)
+### Config (12 properties)
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -52,17 +58,24 @@ InfoCard exposes 23 slot properties across 6 groups, plus 6 config properties. E
 | `hideEmptyFields` | TwoOptions | Hide fields with no value (default: true) |
 | `showCardBorder` | TwoOptions | Show card border and shadow (default: true) |
 | `showVersionInfo` | TwoOptions | Show version badge in bottom-right corner (default: false) |
-| `startExpanded` | TwoOptions | Smart layout only — start expanded vs. collapsed (default: true) |
+| `startExpanded` | TwoOptions | Start expanded vs. collapsed when `collapsibleSections` is enabled (default: true) |
 | `showTitle` | TwoOptions | Show title field in card header (default: true) |
+| `subtitleSeparator` | Text | Separator string between subtitle parts (default: `·`). Set to ` • `, ` \| `, etc. |
+| `titlePrefix` | Text | Optional muted-colour literal rendered before the title (e.g. `Case: `, `Work Order: `) |
+| `imageShape` | Enum | Avatar / image shape: `rounded` (default, 8 px radius), `circle`, or `square` |
+| `collapsibleSections` | Enum | What collapses when the card is tapped: `none` (collapse off), `body` (details + grid, default), `body-tags`, or `all` (everything below the header) |
+| `showDetailIcons` | TwoOptions | Show auto-detected leading icons on Smart/Contact detail rows (default: true). No effect on Compact |
+| `detailLabelStyle` | Enum | Render the field's display name on Smart/Contact detail rows: `none` (value only, default), `inline-bold` (`**Label:** value`), or `above` (small caps heading on its own line). No effect on Compact |
 
-### Header (4 properties)
+### Header (5 properties)
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `titleField` | Bound (required) | Card header -- anchor field. Related fields (`@fieldName`) fetch from this lookup's entity. |
-| `subtitleField1` | Input | Shown under title, dot-separated. Supports `@fieldName` for related data. |
-| `subtitleField2` | Input | Shown under title, dot-separated |
-| `subtitleField3` | Input | Shown under title, dot-separated |
+| `imageField` | Input | Avatar / entity image URL (typically `entityimage_url` or `@entityimage_url`). Empty / unbound = no avatar |
+| `subtitleField1` | Input | Shown under title, separator-joined. Supports `@fieldName` for related data. |
+| `subtitleField2` | Input | Shown under title, separator-joined |
+| `subtitleField3` | Input | Shown under title, separator-joined |
 
 ### Contact (4 properties)
 
@@ -148,10 +161,13 @@ For known Dynamics tables, InfoCard ships with **built-in slot presets**. Drop t
 | Entity | Auto-filled slots |
 |--------|-------------------|
 | `msdyn_workorder` | service account, primary incident type, address, summary, status, priority |
-| `bookableresourcebooking` | resource, status, start/end/duration |
+| `bookableresourcebooking` | resource, work order, status, start/end/duration |
 | `account` | primary contact, industry, phones, email, web, address, status |
 | `contact` | job title, parent customer, mobile/phone, email, web, address, status |
 | `incident` | customer, case type, created/modified, priority, status |
+| `msdyn_customerasset` | account, parent asset, product, registration, install date, location, serial number, status |
+| `msdyn_workorderservicetask` | work order, task type, estimated duration, percent complete, completion notes |
+| `msdyn_agreement` | service account, billing account, start/end dates, status |
 
 **Maker bindings always win** — any slot configured in the form designer (with a `type` set) is left untouched by the preset. Preset slots that resolve to an empty column on the current record are hidden automatically.
 
@@ -339,7 +355,7 @@ InfoCard/
 
 ## Roadmap
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the prioritized list of v4.1, v4.2, v5, and documentation items. Issues and PRs welcome.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the prioritized list of v4.x, v5, and documentation items, including remaining customer-requested follow-ups (e.g. preferred geospatial-data-provider integration). Issues and PRs welcome.
 
 ---
 

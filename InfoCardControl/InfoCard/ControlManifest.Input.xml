@@ -32,7 +32,7 @@
       <type>Lookup.Simple</type>
     </type-group>
 
-    <!-- CONFIG (6 properties) -->
+    <!-- CONFIG (12 properties) -->
     <property name="layout" display-name-key="Layout Mode"
               description-key="Card layout. Smart = collapsible header summary with body on tap (best for mobile lists). Contact = full vCard-style block with action buttons. Compact = dense label:value form (closest to a classic form section)."
               of-type="Enum" usage="input" required="false">
