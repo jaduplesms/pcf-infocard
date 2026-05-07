@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <!--
+    Translations for German (de).
+    NOTE: Machine-generated translations. Review with a native speaker before production use.
+    Customers translating this control should treat the 1033 (English) file as the source of truth.
+  -->
+  <data name="Section_Contact" xml:space="preserve">
+    <value>Kontakt</value>
+    <comment>Section header above contact rows in the Compact layout.</comment>
+  </data>
+  <data name="Section_Details" xml:space="preserve">
+    <value>Details</value>
+    <comment>Section header above grid fields in the Compact layout.</comment>
+  </data>
+  <data name="Section_Info" xml:space="preserve">
+    <value>Info</value>
+    <comment>Section header above detail fields in the Compact layout.</comment>
+  </data>
+  <data name="Action_Call" xml:space="preserve">
+    <value>{0} anrufen</value>
+    <comment>aria-label / title for tappable phone link. {0} is the phone number.</comment>
+  </data>
+  <data name="Action_Email" xml:space="preserve">
+    <value>E-Mail an {0} senden</value>
+    <comment>aria-label / title for tappable email link. {0} is the email address.</comment>
+  </data>
+  <data name="Action_OpenInMaps" xml:space="preserve">
+    <value>In Karten öffnen: {0}</value>
+    <comment>aria-label / title for tappable map link. {0} is the address.</comment>
+  </data>
+  <data name="Action_OpenWebsite" xml:space="preserve">
+    <value>Webseite öffnen: {0}</value>
+    <comment>aria-label / title for tappable website link. {0} is the URL.</comment>
+  </data>
+  <data name="Action_OpenRecord" xml:space="preserve">
+    <value>Datensatz öffnen: {0}</value>
+    <comment>aria-label for clickable lookup title/subtitle. {0} is the record name.</comment>
+  </data>
+  <data name="Card_Expand" xml:space="preserve">
+    <value>Karte ausklappen</value>
+    <comment>aria-label when the Smart Card is collapsed and can be expanded.</comment>
+  </data>
+  <data name="Card_Collapse" xml:space="preserve">
+    <value>Karte einklappen</value>
+    <comment>aria-label when the Smart Card is expanded and can be collapsed.</comment>
+  </data>
+  <data name="Duration_Days_Suffix" xml:space="preserve">
+    <value>T</value>
+    <comment>Suffix appended after the day count in formatted durations (e.g. "3d").</comment>
+  </data>
+  <data name="Duration_Hours_Suffix" xml:space="preserve">
+    <value>Std.</value>
+    <comment>Suffix appended after the hour count in formatted durations (e.g. "5h").</comment>
+  </data>
+  <data name="Duration_Minutes_Suffix" xml:space="preserve">
+    <value>Min.</value>
+    <comment>Suffix appended after the minute count in formatted durations (e.g. "22m").</comment>
+  </data>
+  <data name="Duration_Zero" xml:space="preserve">
+    <value>0 Min.</value>
+    <comment>Rendered text when a duration is zero minutes.</comment>
+  </data>
+</root>

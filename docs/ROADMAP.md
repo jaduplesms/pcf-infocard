@@ -12,12 +12,12 @@
 
 Small, high-leverage items focused on production hardening.
 
-| # | Item | Effort |
-|---|------|--------|
-| 1 | **CI workflow** — `.github/workflows/ci.yml` running `npm ci`, lint, build and `jest` on every PR. | S |
-| 2 | **Accessibility pass** — keyboard focus order on tappable rows, `role="button"` + `aria-label` on action icons, color-contrast audit against the `defaultTheme` fallback. | S |
-| 3 | **Locale-aware formatting** — replace English `Xh Xm` duration and ad-hoc date strings with `context.formatting.formatInteger` / `formatDateShort` etc. | M |
-| 4 | **Localized labels** — section headers (`Contact`, `Details`, `Info`), action tooltips, etc. via PCF `resx` resources so customers can translate without a fork. | M |
+| # | Item | Effort | Status |
+|---|------|--------|--------|
+| 1 | **CI workflow** — `.github/workflows/ci.yml` running `npm ci`, lint, build and `jest` on every PR. | S | ✅ done (`6582606`) |
+| 2 | **Accessibility pass** — keyboard focus order on tappable rows, `role="button"` + `aria-label` on action icons, color-contrast audit against the `defaultTheme` fallback. | S | ✅ done |
+| 3 | **Locale-aware formatting** — replace English `Xh Xm` duration and ad-hoc date strings with `context.formatting.formatInteger` / `formatDateShort` etc. | M | ✅ done |
+| 4 | **Localized labels** — section headers (`Contact`, `Details`, `Info`), action tooltips, etc. via PCF `resx` resources so customers can translate without a fork. Ships with EN, DE, FR, ES, IT, NL, JA. Non-English translations are machine-generated and should be reviewed by a native speaker before production use. | M | ✅ done |
 
 ## v4.2 — Customer-requested features
 

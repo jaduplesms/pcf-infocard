@@ -1,11 +1,72 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { InfoCardComponent, InfoCardData, InfoCardTheme, SlotField, LayoutMode, defaultTheme } from "./InfoCard";
-import type { RelatedFieldMapping, BindingDiagnostic } from "./InfoCard";
+import {
+    InfoCardComponent, InfoCardData, InfoCardTheme, SlotField, LayoutMode, defaultTheme,
+    DEFAULT_STRINGS, formatLocalizedDuration,
+} from "./InfoCard";
+import type { RelatedFieldMapping, BindingDiagnostic, InfoCardStrings } from "./InfoCard";
 import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "3.9.13";
+const CONTROL_VERSION = "4.0.0";
+
+// Minimal shape of context.formatting we use. The PCF typings don't expose
+// formatInteger consistently across hosts, so we narrow it ourselves and
+// guard every call.
+interface MaybeFormatting {
+    formatDateShort?: (d: Date, includeTime?: boolean) => string;
+    formatTime?: (d: Date, behavior?: number) => string;
+    formatInteger?: (n: number) => string;
+}
+
+/** Pull context.formatting if available; tolerate hosts (tests) that omit it. */
+function getFormatting(context: ComponentFramework.Context<IInputs>): MaybeFormatting | undefined {
+    return (context as unknown as { formatting?: MaybeFormatting }).formatting;
+}
+
+/**
+ * Read a localized resx string with a safe fallback.
+ *
+ * The PCF runtime returns the KEY itself (not "" or undefined) when a key
+ * isn't present in the active language's resx — so we treat `value === key`
+ * as "missing" and substitute the English default.
+ */
+function readResxString(
+    context: ComponentFramework.Context<IInputs>,
+    key: string,
+    fallback: string,
+): string {
+    try {
+        const v = context.resources?.getString?.(key);
+        return v && v !== key ? v : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+/**
+ * Build the localized strings bag from context.resources, falling back to
+ * English defaults. This honors the user's Dataverse UI language when the
+ * resx for that LCID is registered in ControlManifest.Input.xml.
+ */
+function getStrings(context: ComponentFramework.Context<IInputs>): InfoCardStrings {
+    return {
+        sectionContact: readResxString(context, "Section_Contact", DEFAULT_STRINGS.sectionContact),
+        sectionDetails: readResxString(context, "Section_Details", DEFAULT_STRINGS.sectionDetails),
+        sectionInfo: readResxString(context, "Section_Info", DEFAULT_STRINGS.sectionInfo),
+        actionCall: readResxString(context, "Action_Call", DEFAULT_STRINGS.actionCall),
+        actionEmail: readResxString(context, "Action_Email", DEFAULT_STRINGS.actionEmail),
+        actionOpenInMaps: readResxString(context, "Action_OpenInMaps", DEFAULT_STRINGS.actionOpenInMaps),
+        actionOpenWebsite: readResxString(context, "Action_OpenWebsite", DEFAULT_STRINGS.actionOpenWebsite),
+        actionOpenRecord: readResxString(context, "Action_OpenRecord", DEFAULT_STRINGS.actionOpenRecord),
+        cardExpand: readResxString(context, "Card_Expand", DEFAULT_STRINGS.cardExpand),
+        cardCollapse: readResxString(context, "Card_Collapse", DEFAULT_STRINGS.cardCollapse),
+        durationDaysSuffix: readResxString(context, "Duration_Days_Suffix", DEFAULT_STRINGS.durationDaysSuffix),
+        durationHoursSuffix: readResxString(context, "Duration_Hours_Suffix", DEFAULT_STRINGS.durationHoursSuffix),
+        durationMinutesSuffix: readResxString(context, "Duration_Minutes_Suffix", DEFAULT_STRINGS.durationMinutesSuffix),
+        durationZero: readResxString(context, "Duration_Zero", DEFAULT_STRINGS.durationZero),
+    };
+}
 
 // Slot group definitions — order matters for rendering
 const SUBTITLE_KEYS = ["subtitleField1", "subtitleField2", "subtitleField3"] as const;
@@ -177,6 +238,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     // Form entity context
     private _formEntityName: string | null = null;
     private _formRecordId: string | null = null;
+    /** Cached per-updateView; consumed by readSlot for duration formatting. */
+    private _formatting?: MaybeFormatting;
+    private _strings: InfoCardStrings = DEFAULT_STRINGS;
 
     // Entity metadata cache for bound field labels + option set resolution
     private _columnMetadata: Record<string, ColumnMeta> = {};
@@ -250,7 +314,12 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             this._formRecordId = newRecordId;
         }
 
-        const data = this.collectData(context);
+        const strings = getStrings(context);
+        const formatting = getFormatting(context);
+        this._strings = strings;
+        this._formatting = formatting;
+
+        const data = this.collectData(context, formatting, strings);
         const layout = this.resolveLayout(context);
         const hideEmpty = context.parameters.hideEmptyFields?.raw !== false; // default true
         const showBorder = context.parameters.showCardBorder?.raw !== false; // default true
@@ -310,6 +379,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 ? this.boundResolveRecordFields : undefined,
             onOpenRecord,
             bindingDiagnostics,
+            strings,
         });
     }
 
@@ -323,7 +393,11 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     // Data collection
     // ────────────────────────────────────────
 
-    private collectData(context: ComponentFramework.Context<IInputs>): InfoCardData {
+    private collectData(
+        context: ComponentFramework.Context<IInputs>,
+        formatting?: MaybeFormatting,
+        strings?: InfoCardStrings,
+    ): InfoCardData {
         // Read lat/lng as numbers
         const latSlot = this.readSlot(context, "latitudeField");
         const lngSlot = this.readSlot(context, "longitudeField");
@@ -585,7 +659,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
         // Format duration fields (stored as minutes in Dataverse)
         if (!isEmpty && attrs && this.isDurationField(attrs, raw, formatted)) {
-            displayValue = this.formatDuration(Number(raw));
+            displayValue = this.formatDuration(Number(raw), this._formatting, this._strings);
         }
 
         // Extract lookup entity/id for navigation and related field fetches
@@ -619,7 +693,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             const isDateOnly = paramTypeStr === "DateAndTime.DateOnly";
             const isDateAndTime = paramTypeStr === "DateAndTime.DateAndTime";
             if (isDateAndTime || isDateOnly) {
-                const fmt = (this.context as unknown as { formatting?: { formatDateShort?: (d: Date, includeTime?: boolean) => string; formatTime?: (d: Date, behavior?: number) => string } }).formatting;
+                const fmt = this._formatting ?? getFormatting(this.context);
                 try {
                     dateText = fmt?.formatDateShort
                         ? fmt.formatDateShort(raw, false)
@@ -1417,18 +1491,16 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         return false;
     }
 
-    private formatDuration(minutes: number): string {
-        if (minutes < 0) return String(minutes);
-        const days = Math.floor(minutes / 1440);
-        const hrs = Math.floor((minutes % 1440) / 60);
-        const mins = minutes % 60;
-
-        const parts: string[] = [];
-        if (days > 0) parts.push(`${days}d`);
-        if (hrs > 0) parts.push(`${hrs}h`);
-        if (mins > 0) parts.push(`${mins}m`);
-
-        return parts.length > 0 ? parts.join(" ") : "0m";
+    private formatDuration(
+        minutes: number,
+        formatting?: MaybeFormatting,
+        strings?: InfoCardStrings,
+    ): string {
+        return formatLocalizedDuration(
+            minutes,
+            strings ?? DEFAULT_STRINGS,
+            formatting?.formatInteger,
+        );
     }
 
     // ────────────────────────────────────────

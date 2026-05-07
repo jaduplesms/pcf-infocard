@@ -148,6 +148,94 @@ export interface InfoCardProps {
     resolveRecordFields?: () => Promise<Record<string, { label: string; value: string; color?: string }>>;
     onOpenRecord?: (entityType: string, id: string) => void;
     bindingDiagnostics?: BindingDiagnostic[];
+    /**
+     * Localized strings. Optional — when omitted, English defaults from
+     * DEFAULT_STRINGS are used. Production code (index.ts) builds this via
+     * context.resources.getString() so the user's Dataverse UI language wins.
+     */
+    strings?: Partial<InfoCardStrings>;
+}
+
+/**
+ * Localized strings consumed by the React layouts and helpers. Keys mirror the
+ * resx file under strings/SampleInfoCard.<LCID>.resx. To add a translation,
+ * copy SampleInfoCard.1033.resx, rename to the target LCID, translate values,
+ * and register it in ControlManifest.Input.xml under <resources>.
+ */
+export interface InfoCardStrings {
+    sectionContact: string;
+    sectionDetails: string;
+    sectionInfo: string;
+    /** Phone link aria-label/title. {0} = phone number */
+    actionCall: string;
+    /** Email link aria-label/title. {0} = email address */
+    actionEmail: string;
+    /** Map link aria-label/title. {0} = address text */
+    actionOpenInMaps: string;
+    /** Web link aria-label/title. {0} = URL */
+    actionOpenWebsite: string;
+    /** Lookup row aria-label. {0} = record name */
+    actionOpenRecord: string;
+    cardExpand: string;
+    cardCollapse: string;
+    durationDaysSuffix: string;
+    durationHoursSuffix: string;
+    durationMinutesSuffix: string;
+    durationZero: string;
+}
+
+/**
+ * English defaults used when the host doesn't provide localized strings (e.g.
+ * jest/jsdom tests, unconfigured harness). Production runs always pass a
+ * resolved strings bag from index.ts via context.resources.getString().
+ */
+export const DEFAULT_STRINGS: InfoCardStrings = {
+    sectionContact: "Contact",
+    sectionDetails: "Details",
+    sectionInfo: "Info",
+    actionCall: "Call {0}",
+    actionEmail: "Email {0}",
+    actionOpenInMaps: "Open in Maps: {0}",
+    actionOpenWebsite: "Open website {0}",
+    actionOpenRecord: "Open record {0}",
+    cardExpand: "Expand card",
+    cardCollapse: "Collapse card",
+    durationDaysSuffix: "d",
+    durationHoursSuffix: "h",
+    durationMinutesSuffix: "m",
+    durationZero: "0m",
+};
+
+/** Format a localized template string. Replaces {0} with `arg`. */
+export function formatTemplate(template: string, arg: string): string {
+    return template.replace("{0}", arg);
+}
+
+/**
+ * Format a duration in minutes using localized unit suffixes. Reused by both
+ * the read-time formatter (index.ts readSlot) and any consumer of `strings`.
+ *
+ * Negative inputs return their string representation unchanged (matches the
+ * pre-localization behavior used by existing tests).
+ */
+export function formatLocalizedDuration(
+    minutes: number,
+    strings: InfoCardStrings,
+    formatInteger?: (n: number) => string,
+): string {
+    if (minutes < 0) return String(minutes);
+    const fmt = (n: number): string => {
+        if (!formatInteger) return String(n);
+        try { return formatInteger(n); } catch { return String(n); }
+    };
+    const days = Math.floor(minutes / 1440);
+    const hrs = Math.floor((minutes % 1440) / 60);
+    const mins = minutes % 60;
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${fmt(days)}${strings.durationDaysSuffix}`);
+    if (hrs > 0) parts.push(`${fmt(hrs)}${strings.durationHoursSuffix}`);
+    if (mins > 0) parts.push(`${fmt(mins)}${strings.durationMinutesSuffix}`);
+    return parts.length > 0 ? parts.join(" ") : strings.durationZero;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -497,13 +585,15 @@ interface HeaderProps {
     showTitle?: boolean;
     designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
+    strings: InfoCardStrings;
 }
 
-const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
+const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
     const title = data.title;
     if (!title || (!designTime && title.isEmpty)) return null;
 
     const isLookup = !!(title.lookupEntityType && title.lookupId);
+    const titleCanOpen = isLookup && !!onOpenRecord;
     const subtitles = deduplicateSubtitles(
         filterEmpty(data.subtitles, designTime ? false : hideEmpty),
     );
@@ -516,10 +606,20 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                         fontSize: 16,
                         fontWeight: 600,
                         color: isLookup ? theme.brand : theme.textPrimary,
-                        cursor: isLookup ? "pointer" : "default",
+                        cursor: titleCanOpen ? "pointer" : "default",
                         lineHeight: "22px",
                     }}
-                    onClick={isLookup && onOpenRecord ? (e) => { e.stopPropagation(); onOpenRecord(title.lookupEntityType!, title.lookupId!); } : undefined}
+                    onClick={titleCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(title.lookupEntityType!, title.lookupId!); } : undefined}
+                    onKeyDown={titleCanOpen ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onOpenRecord!(title.lookupEntityType!, title.lookupId!);
+                        }
+                    } : undefined}
+                    role={titleCanOpen ? "button" : undefined}
+                    tabIndex={titleCanOpen ? 0 : undefined}
+                    aria-label={titleCanOpen ? formatTemplate(strings.actionOpenRecord, String(title.value)) : undefined}
                     title={title.label}
                 >
                     {title.value}
@@ -529,23 +629,34 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                 <div style={{ fontSize: 13, color: theme.textSecondary, lineHeight: "18px", marginTop: showTitle ? 2 : 0 }}>
                     {subtitles.map((sub, i) => {
                         const isSubLookup = !!(sub.lookupEntityType && sub.lookupId);
+                        const subCanOpen = isSubLookup && !!onOpenRecord;
                         const icon = entityIcon(sub.lookupEntityType, 12, theme.textSecondary);
                         return (
                             <React.Fragment key={i}>
                                 {i > 0 && (
                                     <span style={{ margin: "0 6px", color: theme.textMuted }}>{"\u00b7"}</span>
                                 )}
-                                {icon && <span style={{ marginRight: 3, verticalAlign: "middle", display: "inline-flex" }}>{icon}</span>}
+                                {icon && <span style={{ marginRight: 3, verticalAlign: "middle", display: "inline-flex" }} aria-hidden="true">{icon}</span>}
                                 <span
                                     style={{
                                         color: isSubLookup ? theme.brand : theme.textSecondary,
-                                        cursor: isSubLookup ? "pointer" : "default",
+                                        cursor: subCanOpen ? "pointer" : "default",
                                     }}
                                     onClick={
-                                        isSubLookup && onOpenRecord
-                                            ? (e) => { e.stopPropagation(); onOpenRecord(sub.lookupEntityType!, sub.lookupId!); }
+                                        subCanOpen
+                                            ? (e) => { e.stopPropagation(); onOpenRecord!(sub.lookupEntityType!, sub.lookupId!); }
                                             : undefined
                                     }
+                                    onKeyDown={subCanOpen ? (e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onOpenRecord!(sub.lookupEntityType!, sub.lookupId!);
+                                        }
+                                    } : undefined}
+                                    role={subCanOpen ? "button" : undefined}
+                                    tabIndex={subCanOpen ? 0 : undefined}
+                                    aria-label={subCanOpen ? formatTemplate(strings.actionOpenRecord, String(sub.value)) : undefined}
                                     title={sub.label}
                                 >
                                     <ValueOrShimmer field={sub} theme={theme} width="80px" />
@@ -565,9 +676,10 @@ interface ContactRowsProps {
     data: InfoCardData;
     theme: InfoCardTheme;
     hideEmpty: boolean;
+    strings: InfoCardStrings;
 }
 
-const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => {
+const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strings }) => {
     const mapUrl = buildMapUrl(data.latitude, data.longitude);
     const address = data.address;
     const phones = filterEmpty(data.phones, hideEmpty);
@@ -618,7 +730,15 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
                         <Shimmer theme={theme} width="120px" />
                     </span>
                 ) : mapUrl ? (
-                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={chipStyle} title={address.label} onClick={(e) => e.stopPropagation()}>
+                    <a
+                        href={mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={chipStyle}
+                        title={address.label}
+                        aria-label={formatTemplate(strings.actionOpenInMaps, String(address.value))}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <PinIcon size={16} color={theme.brand} />
                         {address.value}
                     </a>
@@ -638,7 +758,14 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
                         <Shimmer theme={theme} width="90px" />
                     </span>
                 ) : (
-                    <a key={`phone-${i}`} href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={chipStyle} title={phone.label} onClick={(e) => e.stopPropagation()}>
+                    <a
+                        key={`phone-${i}`}
+                        href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
+                        style={chipStyle}
+                        title={phone.label}
+                        aria-label={formatTemplate(strings.actionCall, String(phone.value))}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
                         {phone.value}
                     </a>
@@ -653,7 +780,13 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
                         <Shimmer theme={theme} width="110px" />
                     </span>
                 ) : (
-                    <a href={`mailto:${email.value}`} style={chipStyle} title={email.label} onClick={(e) => e.stopPropagation()}>
+                    <a
+                        href={`mailto:${email.value}`}
+                        style={chipStyle}
+                        title={email.label}
+                        aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <EmailIcon size={14} color={theme.brand} />
                         {email.value}
                     </a>
@@ -684,6 +817,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
                             rel="noopener noreferrer"
                             style={chipStyle}
                             title={web.label}
+                            aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
                             onClick={(e) => e.stopPropagation()}
                         >
                             <WebIcon size={14} color={theme.brand} />
@@ -704,9 +838,10 @@ interface DetailRowsProps {
     hideEmpty: boolean;
     latitude: number | null;
     longitude: number | null;
+    strings: InfoCardStrings;
 }
 
-const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, latitude, longitude }) => {
+const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, latitude, longitude, strings }) => {
     const filtered = filterEmpty(details, hideEmpty);
     if (filtered.length === 0) return null;
 
@@ -742,6 +877,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ color: theme.brand, textDecoration: "none", cursor: "pointer" }}
+                                aria-label={formatTemplate(strings.actionOpenInMaps, String(field.value))}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <ValueOrShimmer field={field} theme={theme} width="60%" />
@@ -930,9 +1066,10 @@ interface LayoutProps {
     onOpenRecord?: (entityType: string, id: string) => void;
     /** Smart-layout collapse state, controlled by parent so the whole card surface can toggle. */
     collapsed?: boolean;
+    strings: InfoCardStrings;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false }) => {
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, strings }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -947,7 +1084,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
                 </div>
                 {hasCollapsible && (
                     <div
@@ -966,7 +1103,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
             </div>
 
             {/* Contact section — ALWAYS visible */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} />
 
             {/* Collapsible body */}
             {!collapsed && hasBody && (
@@ -980,6 +1117,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                                 hideEmpty={hideEmpty}
                                 latitude={data.latitude}
                                 longitude={data.longitude}
+                                strings={strings}
                             />
                         </div>
                     )}
@@ -1007,7 +1145,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
 // Contact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
+const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -1019,12 +1157,12 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
                 </div>
             </div>
 
             {/* Contact section */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} />
+            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} />
 
             {/* Detail rows */}
             {details.length > 0 && (
@@ -1035,6 +1173,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         hideEmpty={effectiveHideEmpty}
                         latitude={data.latitude}
                         longitude={data.longitude}
+                        strings={strings}
                     />
                 </div>
             )}
@@ -1060,7 +1199,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 // Compact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
+const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const phones = filterEmpty(data.phones, effectiveHideEmpty);
     const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
@@ -1099,14 +1238,14 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} />
                 </div>
             </div>
 
             {/* Contact section */}
             {hasContact && (
                 <div>
-                    <div style={sectionHeaderStyle}>Contact</div>
+                    <div style={sectionHeaderStyle}>{strings.sectionContact}</div>
                     {address && (
                         <div style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{address.label}</span>
@@ -1121,7 +1260,11 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                             {phone.isPending ? (
                                 <Shimmer theme={theme} width="100px" />
                             ) : (
-                                <a href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={{ color: theme.brand, textDecoration: "none" }}>
+                                <a
+                                    href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
+                                    style={{ color: theme.brand, textDecoration: "none" }}
+                                    aria-label={formatTemplate(strings.actionCall, String(phone.value))}
+                                >
                                     {phone.value}
                                 </a>
                             )}
@@ -1133,7 +1276,11 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                             {email.isPending ? (
                                 <Shimmer theme={theme} width="130px" />
                             ) : (
-                                <a href={`mailto:${email.value}`} style={{ color: theme.brand, textDecoration: "none" }}>
+                                <a
+                                    href={`mailto:${email.value}`}
+                                    style={{ color: theme.brand, textDecoration: "none" }}
+                                    aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                                >
                                     {email.value}
                                 </a>
                             )}
@@ -1155,6 +1302,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         style={{ color: theme.brand, textDecoration: "none" }}
+                                        aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
                                     >
                                         {web.value}
                                     </a>
@@ -1168,7 +1316,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             {/* Details section (grid fields) */}
             {hasDetails && (
                 <div>
-                    <div style={sectionHeaderStyle}>Details</div>
+                    <div style={sectionHeaderStyle}>{strings.sectionDetails}</div>
                     {gridFields.map((field, i) => (
                         <div key={i} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{field.label}</span>
@@ -1183,7 +1331,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             {/* Info section (detail fields) */}
             {hasInfo && (
                 <div>
-                    <div style={sectionHeaderStyle}>Info</div>
+                    <div style={sectionHeaderStyle}>{strings.sectionInfo}</div>
                     {details.map((field, i) => (
                         <div key={i} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{field.label}</span>
@@ -1314,6 +1462,14 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         onOpenRecord,
         bindingDiagnostics,
     } = props;
+
+    // Merge default English strings with any overrides supplied by the host.
+    // index.ts builds props.strings from context.resources.getString() so the
+    // user's Dataverse UI language wins when the resx is registered.
+    const strings: InfoCardStrings = React.useMemo(
+        () => ({ ...DEFAULT_STRINGS, ...(props.strings ?? {}) }),
+        [props.strings],
+    );
 
     const [relatedFields, setRelatedFields] = React.useState<Record<string, SlotField>>({});
     const [currentRecordFields, setCurrentRecordFields] = React.useState<Record<string, SlotField>>({});
@@ -1562,6 +1718,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         designTime: props.designTime,
         onOpenRecord,
         collapsed,
+        strings,
     };
 
     // Whole-card click-to-toggle (Smart layout only). Active hit zones (anchors,
@@ -1583,6 +1740,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         role: "button",
         tabIndex: 0,
         "aria-expanded": !collapsed,
+        "aria-label": collapsed ? strings.cardExpand : strings.cardCollapse,
     } : {};
 
     const finalCardStyle: React.CSSProperties = isSmartCollapsible

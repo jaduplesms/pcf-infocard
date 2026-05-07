@@ -118,7 +118,7 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
     navigation: {
       openForm: jest.fn().mockResolvedValue(undefined),
     } as unknown as ComponentFramework.Navigation,
-    resources: {} as ComponentFramework.Resources,
+    resources: { getString: jest.fn((k: string) => k) } as unknown as ComponentFramework.Resources,
     userSettings: {} as ComponentFramework.UserSettings,
     utils: {
       getEntityMetadata: overrides.metadataMock ?? jest.fn().mockResolvedValue({
@@ -1345,6 +1345,99 @@ describe("InfoCard PCF Lifecycle", () => {
       const fmt = getFormatDuration(control);
       // 3 days, 5 hours, 15 minutes = 4635 minutes
       expect(fmt(4635)).toBe("3d 5h 15m");
+    });
+
+    it("uses localized suffixes when strings are provided", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      // Bypass the bound private helper to pass custom strings
+      const ctrlAny = asAny(control);
+      const result = ctrlAny.formatDuration(
+        90,
+        undefined,
+        {
+          durationDaysSuffix: "j",
+          durationHoursSuffix: "u",
+          durationMinutesSuffix: "min",
+          durationZero: "0min",
+        },
+      );
+      expect(result).toBe("1u 30min");
+    });
+
+    it("uses formatting.formatInteger when supplied (locale digits)", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const ctrlAny = asAny(control);
+      const result = ctrlAny.formatDuration(
+        90,
+        { formatInteger: (n: number) => `[${n}]` },
+        undefined,
+      );
+      expect(result).toBe("[1]h [30]m");
+    });
+
+    it("falls back to plain digits when formatInteger throws", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const ctrlAny = asAny(control);
+      const result = ctrlAny.formatDuration(
+        90,
+        { formatInteger: () => { throw new Error("boom"); } },
+        undefined,
+      );
+      expect(result).toBe("1h 30m");
+    });
+  });
+
+  // ── localization (resx) ──────────────
+
+  describe("resx string resolution", () => {
+    it("uses translated strings when context.resources returns them", () => {
+      const ctx = createMockContext();
+      // German-style overrides
+      const trans: Record<string, string> = {
+        Section_Contact: "Kontakt",
+        Duration_Hours_Suffix: "Std",
+        Duration_Minutes_Suffix: "Min",
+      };
+      (ctx.resources as unknown as { getString: jest.Mock }).getString =
+        jest.fn((k: string) => trans[k] ?? k);
+
+      // Set duration field & trigger render so updateView calls getStrings + formatDuration
+      ctx.parameters.gridField1 = {
+        type: "Whole.None",
+        raw: 90,
+        formatted: "1 hour 30 minutes",
+        attributes: { DisplayName: "Duration", LogicalName: "duration" },
+      } as unknown as ComponentFramework.PropertyTypes.NumberProperty;
+
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      // The slot reader runs formatDuration with the cached strings
+      const ctrlAny = asAny(control);
+      expect((ctrlAny._strings as unknown as Record<string,string>).sectionContact).toBe("Kontakt");
+      expect((ctrlAny._strings as unknown as Record<string,string>).durationHoursSuffix).toBe("Std");
+    });
+
+    it("falls back to English when getString returns the key (missing translation)", () => {
+      const ctx = createMockContext();
+      // Default mock returns the key — simulating an unregistered LCID.
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const ctrlAny = asAny(control);
+      expect((ctrlAny._strings as unknown as Record<string,string>).sectionContact).toBe("Contact");
+      expect((ctrlAny._strings as unknown as Record<string,string>).durationHoursSuffix).toBe("h");
+    });
+
+    it("falls back to English when resources.getString throws", () => {
+      const ctx = createMockContext();
+      (ctx.resources as unknown as { getString: jest.Mock }).getString =
+        jest.fn(() => { throw new Error("not available"); });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const ctrlAny = asAny(control);
+      expect((ctrlAny._strings as unknown as Record<string,string>).sectionContact).toBe("Contact");
     });
   });
 

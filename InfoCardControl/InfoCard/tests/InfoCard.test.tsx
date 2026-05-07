@@ -603,6 +603,61 @@ describe("InfoCardComponent", () => {
       fireEvent.click(statusSpan!);
       expect(onOpenRecord).not.toHaveBeenCalled();
     });
+
+    it("opens lookup record on Enter / Space keypress (a11y keyboard)", () => {
+      const data = makeData({
+        title: makeField({
+          label: "Account",
+          value: "Adams",
+          rawValue: "abc-123",
+          lookupEntityType: "account",
+          lookupId: "abc-123",
+        }),
+      });
+      const onOpenRecord = jest.fn();
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, onOpenRecord, layout: "contact" })} />,
+      );
+
+      const titleEl = container.querySelector('[role="button"][aria-label*="Open record"]');
+      expect(titleEl).toBeTruthy();
+      fireEvent.keyDown(titleEl!, { key: "Enter" });
+      expect(onOpenRecord).toHaveBeenCalledWith("account", "abc-123");
+
+      onOpenRecord.mockClear();
+      fireEvent.keyDown(titleEl!, { key: " " });
+      expect(onOpenRecord).toHaveBeenCalledWith("account", "abc-123");
+
+      onOpenRecord.mockClear();
+      fireEvent.keyDown(titleEl!, { key: "Tab" });
+      expect(onOpenRecord).not.toHaveBeenCalled();
+    });
+
+    it("non-lookup title has no role/tabIndex (not keyboard-focusable)", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Plain Title" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
+      );
+      // Title text node is rendered without role="button"
+      const buttons = container.querySelectorAll('[role="button"]');
+      const titleAsBtn = Array.from(buttons).find(b => b.textContent === "Plain Title");
+      expect(titleAsBtn).toBeUndefined();
+    });
+
+    it("phone action chip has localized aria-label", () => {
+      const data = makeData({
+        title: makeField({ label: "Account", value: "Adams" }),
+        phones: [makeField({ label: "Phone", value: "555-1234" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
+      );
+      const phoneLink = container.querySelector('a[href^="tel:"]');
+      expect(phoneLink).toBeTruthy();
+      expect(phoneLink!.getAttribute("aria-label")).toBe("Call 555-1234");
+    });
   });
 
   // ── Related fields ────────────────────
