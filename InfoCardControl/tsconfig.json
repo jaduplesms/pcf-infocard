@@ -1,6 +1,8 @@
 {
     "extends": "./node_modules/pcf-scripts/tsconfig_base.json",
     "compilerOptions": {
-        "typeRoots": ["node_modules/@types"]
-    }
+        "typeRoots": ["node_modules/@types"],
+        "resolveJsonModule": true
+    },
+    "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules"]
 }

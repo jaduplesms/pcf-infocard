@@ -101,7 +101,7 @@ function splitControlDescriptions(formXml: string): string[] {
 
 function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig | null {
     // Form XML from pac may be single-line, attributes in any order
-    const controlRegex = /<customControl name="cli_Contoso\.InfoCard" formFactor="(\d)"><parameters>(.*?)<\/parameters>/g;
+    const controlRegex = /<customControl name="smp_Sample\.InfoCard" formFactor="(\d)"><parameters>(.*?)<\/parameters>/g;
     const paramRegex = /<(\w+) type="([^"]*)"(?: static="([^"]*)")?>(.*?)<\/\1>/g;
 
     const factorMap: Record<string, string> = { "0": "phone", "2": "tablet", "1": "desktop" };
@@ -110,7 +110,7 @@ function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig 
 
     // Find the controlDescription block that contains our InfoCard control
     for (const block of splitControlDescriptions(formXml)) {
-        if (block.includes("cli_Contoso.InfoCard")) {
+        if (block.includes("smp_Sample.InfoCard")) {
             const fnMatch = block.match(/<datafieldname>([^<]+)<\/datafieldname>/);
             if (fnMatch) fieldName = fnMatch[1];
             break;
@@ -138,7 +138,7 @@ function extractInfoCardConfig(formXml: string, formId: string): InfoCardConfig 
     if (Object.keys(formFactors).length === 0) return null;
 
     return {
-        controlName: "cli_Contoso.InfoCard",
+        controlName: "smp_Sample.InfoCard",
         extractedFrom: {
             formId,
             formName: "",
@@ -160,7 +160,7 @@ function buildControlXml(params: Record<string, ParameterBinding>, formFactor: n
         const staticAttr = binding.static ? ` static="true"` : "";
         return `<${name} type="${binding.type}"${staticAttr}>${binding.value}</${name}>`;
     });
-    return `<customControl name="cli_Contoso.InfoCard" formFactor="${formFactor}"><parameters>${paramParts.join("")}</parameters></customControl>`;
+    return `<customControl name="smp_Sample.InfoCard" formFactor="${formFactor}"><parameters>${paramParts.join("")}</parameters></customControl>`;
 }
 
 /** Build a full controlDescription block with all three form factors */
@@ -278,7 +278,7 @@ function cmdApply(formId: string, configFile: string, fieldName?: string): void 
     const allDescs = splitControlDescriptions(formXml);
     const blocksToRemove: string[] = [];
     for (const desc of allDescs) {
-        if (desc.includes(`<datafieldname>${targetField}</datafieldname>`) && desc.includes("cli_Contoso.InfoCard")) {
+        if (desc.includes(`<datafieldname>${targetField}</datafieldname>`) && desc.includes("smp_Sample.InfoCard")) {
             blocksToRemove.push(desc);
         }
     }
@@ -504,7 +504,7 @@ switch (command) {
             }
         }
         const config: InfoCardConfig = {
-            controlName: "cli_Contoso.InfoCard",
+            controlName: "smp_Sample.InfoCard",
             extractedFrom: {
                 formId: "", formName: scenario.name, entityName: scenario.pageEntityTypeName ?? "",
                 fieldName: pvs.titleField?.startsWith("$") ? pvs.titleField.substring(1) : "",

@@ -55,7 +55,7 @@
                   </customControl>
 
                   <!-- InfoCard on Phone -->
-                  <customControl formFactor="0" name="cli_Contoso.InfoCard">
+                  <customControl formFactor="0" name="smp_Sample.InfoCard">
                     <parameters>
                       <layout type="Enum" static="true">smart</layout>
                       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
@@ -84,7 +84,7 @@
                   </customControl>
 
                   <!-- InfoCard on Tablet -->
-                  <customControl formFactor="2" name="cli_Contoso.InfoCard">
+                  <customControl formFactor="2" name="smp_Sample.InfoCard">
                     <parameters>
                       <layout type="Enum" static="true">smart</layout>
                       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
@@ -113,7 +113,7 @@
                   </customControl>
 
                   <!-- InfoCard on Desktop -->
-                  <customControl formFactor="1" name="cli_Contoso.InfoCard">
+                  <customControl formFactor="1" name="smp_Sample.InfoCard">
                     <parameters>
                       <layout type="Enum" static="true">contact</layout>
                       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>

@@ -21,6 +21,7 @@ import {
   SlotField,
   LayoutMode,
   defaultTheme,
+  mergeRelatedFields,
 } from "../InfoCard";
 
 interface RelatedFieldMapping {
@@ -1034,6 +1035,109 @@ describe("InfoCardComponent", () => {
         s => s.textContent === "Scheduled"
       );
       expect(chips.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ── mergeRelatedFields direct unit tests ─
+  // Specifically guard against the "unconfigured slot in the middle" misalignment:
+  // readSlotGroup compacts null entries out of the array, so digit-derived indices
+  // (subtitleField2 → 1) no longer match the post-compaction position.
+
+  describe("mergeRelatedFields()", () => {
+    function fetched(slotKey: string, value: string): SlotField {
+      return { slotKey, label: "", value, rawValue: value, isEmpty: false };
+    }
+    function placeholder(slotKey: string, raw = "@related"): SlotField {
+      return { slotKey, label: "", value: raw, rawValue: raw, isEmpty: true };
+    }
+
+    it("places fetched value into the correct slot when an earlier slot is unconfigured (subtitles)", () => {
+      // subtitleField1 is unconfigured (compacted out). subtitleField2 has @-related placeholder.
+      const data = makeData({
+        subtitles: [placeholder("subtitleField2")],
+      });
+      const merged = mergeRelatedFields(
+        data,
+        { msdyn_serviceaccount: fetched("subtitleField2", "Contoso") },
+        [{ sourceSlot: "titleField", fetchField: "msdyn_serviceaccount", targetSlot: "subtitleField2" }],
+      );
+      // Must replace in-place — array length unchanged, slotKey still subtitleField2
+      expect(merged.subtitles).toHaveLength(1);
+      expect(merged.subtitles[0].slotKey).toBe("subtitleField2");
+      expect(merged.subtitles[0].value).toBe("Contoso");
+      expect(merged.subtitles[0].isEmpty).toBe(false);
+    });
+
+    it("places fetched value into the correct grid slot when earlier grid slots are unconfigured", () => {
+      // gridField1 + gridField2 unconfigured; gridField3 has @-related placeholder.
+      const data = makeData({
+        gridFields: [placeholder("gridField3")],
+      });
+      const merged = mergeRelatedFields(
+        data,
+        { workordertype: fetched("gridField3", "Repair") },
+        [{ sourceSlot: "titleField", fetchField: "workordertype", targetSlot: "gridField3" }],
+      );
+      expect(merged.gridFields).toHaveLength(1);
+      expect(merged.gridFields[0].slotKey).toBe("gridField3");
+      expect(merged.gridFields[0].value).toBe("Repair");
+    });
+
+    it("does not duplicate or misalign when multiple related fields target compacted slots", () => {
+      // Real scenario: subtitleField1 unconfigured, subtitleField2=@msdyn_serviceaccount, subtitleField3 unconfigured
+      // gridField1 unconfigured, gridField2=@workordertype.
+      const data = makeData({
+        subtitles: [placeholder("subtitleField2")],
+        gridFields: [placeholder("gridField2")],
+      });
+      const merged = mergeRelatedFields(
+        data,
+        {
+          msdyn_serviceaccount: fetched("subtitleField2", "Contoso"),
+          workordertype: fetched("gridField2", "Repair"),
+        },
+        [
+          { sourceSlot: "titleField", fetchField: "msdyn_serviceaccount", targetSlot: "subtitleField2" },
+          { sourceSlot: "titleField", fetchField: "workordertype", targetSlot: "gridField2" },
+        ],
+      );
+      expect(merged.subtitles.map(s => s.slotKey)).toEqual(["subtitleField2"]);
+      expect(merged.subtitles[0].value).toBe("Contoso");
+      expect(merged.gridFields.map(g => g.slotKey)).toEqual(["gridField2"]);
+      expect(merged.gridFields[0].value).toBe("Repair");
+    });
+
+    it("falls back to digit-derived position when target slot is not in the compacted array", () => {
+      // Edge case: readSlot returned null for the target slot entirely (not even a placeholder),
+      // but a related-field mapping still references it. Place it at digit-1 ordering.
+      const data = makeData({
+        details: [placeholder("detailField1")],
+      });
+      const merged = mergeRelatedFields(
+        data,
+        { instructions: fetched("detailField3", "Bring spare filter") },
+        [{ sourceSlot: "titleField", fetchField: "instructions", targetSlot: "detailField3" }],
+      );
+      // detailField3 should land after detailField1 in render order
+      const detailField3 = merged.details.find(d => d.slotKey === "detailField3");
+      expect(detailField3).toBeDefined();
+      expect(detailField3!.value).toBe("Bring spare filter");
+    });
+
+    it("replaces in place rather than appending when target slot already exists with @-placeholder", () => {
+      // Regression: previously the digit-parse path for subtitleField2 wrote to merged.subtitles[1]
+      // even when subtitles=[placeholder_subtitleField2], padding subtitles[0] with an extra empty
+      // entry and creating two array elements both keyed subtitleField2.
+      const data = makeData({
+        subtitles: [placeholder("subtitleField2")],
+      });
+      const merged = mergeRelatedFields(
+        data,
+        { svcacc: fetched("subtitleField2", "Contoso") },
+        [{ sourceSlot: "titleField", fetchField: "svcacc", targetSlot: "subtitleField2" }],
+      );
+      const subtitleField2Entries = merged.subtitles.filter(s => s.slotKey === "subtitleField2");
+      expect(subtitleField2Entries).toHaveLength(1);
     });
   });
 });

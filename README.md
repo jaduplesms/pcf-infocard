@@ -9,7 +9,9 @@ A compact, read-only info card PCF control for Dynamics 365 and Power Apps model
 
 InfoCard uses a **slot-based architecture** where admins bind form fields to card zones (header, contact, address, details, grid, tags) directly in the form designer -- no code required. It supports **related entity field fetching** via `@fieldName` syntax, enabling data from lookup records to appear on the card without custom scripting.
 
-**Version:** 3.0.0 | **Namespace:** Contoso | **Control type:** Virtual (React)
+**Version:** 4.0.0 | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
+
+> ⚠️ **This is a sample.** The control ships under the `Sample.InfoCard` namespace with publisher prefix `smp` so that it is obvious in your environment that this is reference code, not a vendor product. Before using in production, **re-namespace** the control to your own publisher (see [Re-namespacing for production](#re-namespacing-for-production)). No support, warranty, or SLA is offered.
 
 <!-- Screenshot placeholder -- add a screenshot of the control here -->
 <!-- ![InfoCard screenshot](docs/screenshot.png) -->
@@ -131,40 +133,103 @@ This enables rich, cross-entity cards without form scripts or additional customi
 
 ---
 
+## Layout Presets
+
+For known Dynamics tables, InfoCard ships with **built-in slot presets**. Drop the control on a form, bind only `titleField`, and unbound slots are auto-filled from a preset map keyed by the form's entity logical name.
+
+| Entity | Auto-filled slots |
+|--------|-------------------|
+| `msdyn_workorder` | service account, primary incident type, address, summary, status, priority |
+| `bookableresourcebooking` | resource, status, start/end/duration |
+| `account` | primary contact, industry, phones, email, web, address, status |
+| `contact` | job title, parent customer, mobile/phone, email, web, address, status |
+| `incident` | customer, case type, created/modified, priority, status |
+
+**Maker bindings always win** — any slot configured in the form designer (with a `type` set) is left untouched by the preset. Preset slots that resolve to an empty column on the current record are hidden automatically.
+
+The full map lives in `SLOT_PRESETS` in `InfoCardControl/InfoCard/index.ts`.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - Power Platform CLI (`pac`) authenticated to your environment
+- .NET SDK (for building the solution package)
 
-### Build
+### Build the control
 
 ```bash
 cd InfoCardControl
 npm install
 npm run build
+npm test
 ```
 
-### Deploy to Dataverse
-
-```bash
-pac pcf push --publisher-prefix cli
-```
-
-Or build and import the full solution:
+### Build the shipping solution package
 
 ```bash
 cd InfoCardSolution
-dotnet build --configuration Release
-pac solution import --path bin/Release/InfoCardSolution.zip --publish-changes
+dotnet build /p:SolutionPackageType=Unmanaged   # produces bin/Debug/InfoCardSolution.zip (unmanaged)
+# To produce a managed package, flip <Managed>0</Managed> → <Managed>1</Managed> in
+# src/Other/Solution.xml then run:
+dotnet build /p:SolutionPackageType=Managed
 ```
+
+Both zips contain only the control under `Controls/smp_Sample.InfoCard/`.
+
+### Import into a Dataverse environment
+
+```bash
+pac auth create --url https://<your-org>.crm.dynamics.com
+pac solution import --path InfoCardSolution/bin/Debug/InfoCardSolution.zip --publish-changes
+```
+
+After import, add the control to a form column via **Form designer → Components → Get more components → InfoCard (Sample)**.
+
+### Uninstall
+
+```bash
+pac solution delete --solution-name InfoCardSample
+```
+
+> Removing the solution removes the control. Ensure no live forms still reference `smp_Sample.InfoCard` before deleting.
 
 ### Regenerate types after manifest changes
 
 ```bash
 npm run refreshTypes
 ```
+
+---
+
+## Re-namespacing for production
+
+The control ships under `Sample.InfoCard` with publisher prefix `smp` so it is unmistakable that this is reference code. Before any production rollout you should re-namespace it under your own publisher. To do so:
+
+1. Edit `InfoCardControl/InfoCard/ControlManifest.Input.xml` and change `namespace="Sample"` to your own (e.g. `namespace="Contoso"`).
+2. Edit `InfoCardSolution/src/Other/Solution.xml` and replace the `<Publisher>` block with your real publisher (`UniqueName`, `CustomizationPrefix`, `CustomizationOptionValuePrefix`).
+3. Bump the `<Version>` (e.g. `4.0.0.0` → `1.0.0.0` for your first internal release).
+4. Run `npm run refreshTypes && npm run build` then rebuild the solution.
+5. Update any form Customizations.xml in your own solution to reference the new control name `<your-prefix>_<YourNamespace>.InfoCard`.
+
+Your customer is then importing **your** solution — not a sample — and lifecycle/upgrade rules belong to you.
+
+---
+
+## Supported environments
+
+| Host | Status |
+|------|--------|
+| Dynamics 365 model-driven apps (online) | Tested |
+| Field Service Mobile (online) | Tested |
+| Field Service Mobile (offline) | Works for offline-enabled entities; `@`-related fetches require the related entity to be in the offline profile |
+| Power Apps form designer (`make.powerapps.com`) | Authoring-mode preview supported |
+| Canvas apps | Not supported (model-driven only) |
+
+Tested against PCF SDK 1.x, React 16.8, Fluent UI 9 (host-provided), TypeScript 4.9.
 
 ---
 
@@ -180,6 +245,16 @@ PCF_CONTROL_PATH="../PowerApps/PCFGallery/InfoCard/InfoCardControl/InfoCard" npx
 ```
 
 The workbench loads the control's `data.json`, `test-scenarios.json`, and `metadata.json` files automatically.
+
+### Previewing authoring (designer) mode locally
+
+The browser harness has no equivalent of `context.mode.isAuthoringMode`. To exercise the maker preview path (sample data injection, suppressed WebAPI fetches) without deploying to a real environment, trigger any one of:
+
+- Append `#authoring` to the harness URL (e.g. `http://localhost:8181/#authoring`) — easiest for ad-hoc preview
+- Append `?authoring=1` to the URL
+- In DevTools, run `window.__INFOCARD_AUTHORING__ = true` then re-trigger `updateView` (e.g. by reloading)
+
+The control treats any of these as authoring mode, identical to the real Power Apps form designer. Useful for iterating on sample-data injection and snapshot-testing the designer preview output.
 
 ---
 
@@ -251,6 +326,12 @@ InfoCard/
         Customizations.xml               # Solution customizations
         Relationships.xml                # Entity relationships
 ```
+
+---
+
+## Roadmap / TODO
+
+_(Roadmap currently empty — see git log for completed items.)_
 
 ---
 

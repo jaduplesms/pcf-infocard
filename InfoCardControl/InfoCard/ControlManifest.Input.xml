@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Contoso" constructor="InfoCard" version="3.9.8"
+  <control namespace="Sample" constructor="InfoCard" version="4.0.0"
            display-name-key="InfoCard"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -34,107 +34,107 @@
 
     <!-- CONFIG (6 properties) -->
     <property name="layout" display-name-key="Layout Mode"
-              description-key="Card layout - smart (collapsible), contact (full), or compact (dense grid)"
+              description-key="Card layout. Smart = collapsible header summary with body on tap (best for mobile lists). Contact = full vCard-style block with action buttons. Compact = dense label:value form (closest to a classic form section)."
               of-type="Enum" usage="input" required="false">
       <value name="smart"   display-name-key="Smart Card">smart</value>
       <value name="contact" display-name-key="Contact Card">contact</value>
       <value name="compact" display-name-key="Compact Form">compact</value>
     </property>
     <property name="hideEmptyFields" display-name-key="Hide Empty Fields"
-              description-key="Hide fields with no value (default true)"
+              description-key="Hide rows whose value is blank or '---'. Recommended ON for mobile to keep cards tight. Default true."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="showCardBorder" display-name-key="Show Card Border"
-              description-key="Show card border and shadow (default true)"
+              description-key="Wrap the card in a border + shadow. Turn off when embedding inside another container that already provides chrome. Default true."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="showVersionInfo" display-name-key="Show Version Info"
-              description-key="Show version badge in bottom-right corner"
+              description-key="Show a small version badge in the bottom-right. Useful while validating mobile cache refresh; turn off in production."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="startExpanded" display-name-key="Start Expanded"
-              description-key="Smart layout starts expanded (default true). Set to false to start collapsed."
+              description-key="Smart layout only. True = body visible on load; false = collapsed to header until tapped. Default true."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="showTitle" display-name-key="Show Title"
-              description-key="Show the title field in the card header (default true). Set to false to hide it."
+              description-key="Show the title field in the card header. Set to false when the form section header already provides the title. Default true."
               of-type="TwoOptions" usage="input" required="false" />
 
     <!-- HEADER (1 bound + 3 subtitles) -->
     <property name="titleField" display-name-key="Title"
-              description-key="Card header. When bound to a lookup, related fields are fetched from that entity."
+              description-key="Main heading. Bind to the record's primary name column (e.g. account.name, msdyn_workorder.msdyn_name). When bound to a lookup column, related-field syntax (@column) on other slots fetches from the lookup target."
               of-type-group="fieldTypes" usage="bound" required="true" />
     <property name="subtitleField1" display-name-key="Subtitle 1"
-              description-key="Shown under title, dot-separated. Supports related field syntax."
+              description-key="Shown under title, dot-separated. Bind a column (e.g. jobtitle) or use @column to pull from the title's lookup target (e.g. @msdyn_serviceaccount)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="subtitleField2" display-name-key="Subtitle 2"
-              description-key="Shown under title, dot-separated"
+              description-key="Secondary subtitle. Same syntax as Subtitle 1. Tip: use status or category columns here for at-a-glance context."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="subtitleField3" display-name-key="Subtitle 3"
-              description-key="Shown under title, dot-separated"
+              description-key="Tertiary subtitle, dot-separated after the others. Use sparingly to avoid header crowding."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <!-- CONTACT (4 properties) -->
     <property name="phoneField1" display-name-key="Phone 1"
-              description-key="Tap to call phone button"
+              description-key="Tap-to-call button. Bind a phone column (e.g. telephone1, mobilephone) or @msdyn_phonenumber from a related work order."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="phoneField2" display-name-key="Phone 2"
-              description-key="Secondary phone button"
+              description-key="Secondary tap-to-call button. Common pattern: phoneField1=mobile, phoneField2=@account.telephone1 (office)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="emailField" display-name-key="Email"
-              description-key="Tap to send email button"
+              description-key="Tap-to-email button. Bind an email column (e.g. emailaddress1) or @relatedlookup.emailaddress1."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="webField" display-name-key="Website"
-              description-key="Tap to open URL button"
+              description-key="Tap-to-open URL button. Bind a URL column (e.g. websiteurl)."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <!-- ADDRESS (3 properties) -->
     <property name="addressField" display-name-key="Address"
-              description-key="Tappable address row that opens map when lat/lng are set"
+              description-key="Single-line address row. Bind a composite address column (e.g. address1_composite) or @msdyn_address1 from a related record. Becomes a tappable map link when Latitude/Longitude are also set."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="latitudeField" display-name-key="Latitude"
-              description-key="Latitude for map link on address"
+              description-key="Latitude for the map link (e.g. address1_latitude, msdyn_latitude). Required alongside Longitude to make Address tappable."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="longitudeField" display-name-key="Longitude"
-              description-key="Longitude for map link on address"
+              description-key="Longitude for the map link (e.g. address1_longitude, msdyn_longitude). Required alongside Latitude to make Address tappable."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <!-- DETAILS (3 properties) -->
     <property name="detailField1" display-name-key="Detail 1"
-              description-key="Icon + text info row"
+              description-key="Icon + text info row, ideal for longer narrative columns like instructions or summary (e.g. msdyn_instructions, description)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="detailField2" display-name-key="Detail 2"
-              description-key="Icon + text info row"
+              description-key="Icon + text info row. Example: @msdyn_workordersummary on a booking form."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="detailField3" display-name-key="Detail 3"
-              description-key="Icon + text info row"
+              description-key="Icon + text info row. Use for any read-only narrative the technician needs at a glance."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <!-- GRID (6 properties) -->
     <property name="gridField1" display-name-key="Grid 1"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid. Best for short scalar values (e.g. starttime, duration, revenue). Label is the column display name."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="gridField2" display-name-key="Grid 2"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid (e.g. endtime, numberofemployees)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="gridField3" display-name-key="Grid 3"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid (e.g. duration, msdyn_estimatedarrivaltime)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="gridField4" display-name-key="Grid 4"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid. Supports @column related-field syntax for cross-entity values."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="gridField5" display-name-key="Grid 5"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="gridField6" display-name-key="Grid 6"
-              description-key="Key-value field in 2-column grid"
+              description-key="Key-value cell in 2-column grid."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <!-- TAGS (3 properties) -->
     <property name="tagField1" display-name-key="Tag 1"
-              description-key="Compact chip/pill badge"
+              description-key="Compact chip/pill badge. Best for status/category lookups or option sets (e.g. bookingstatus, statuscode, msdyn_priority). Picks up status colour when available."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="tagField2" display-name-key="Tag 2"
-              description-key="Compact chip/pill badge"
+              description-key="Compact chip/pill badge (e.g. @msdyn_primaryincidenttype, industrycode)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="tagField3" display-name-key="Tag 3"
-              description-key="Compact chip/pill badge"
+              description-key="Compact chip/pill badge (e.g. @msdyn_priority)."
               of-type-group="fieldTypes" usage="input" required="false" />
 
     <resources>

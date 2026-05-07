@@ -453,6 +453,99 @@ describe("InfoCard PCF Lifecycle", () => {
     });
   });
 
+  // ── applyPreset (SLOT_PRESETS) ────────
+
+  describe("applyPreset()", () => {
+    it("fills unconfigured slots from preset for known form entity", () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "acc-1" },
+        slots: {
+          titleField: {
+            raw: "Acme",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      // account preset injects subtitleField1 (primarycontactid), telephone1, etc.
+      const subtitleSlots = element.props.data.subtitles.map((s: { slotKey?: string }) => s.slotKey);
+      expect(subtitleSlots).toContain("subtitleField1");
+      const phoneSlots = element.props.data.phones.map((s: { slotKey?: string }) => s.slotKey);
+      expect(phoneSlots).toContain("phoneField1");
+      // Preset slots are marked isPreset
+      const sub1 = element.props.data.subtitles.find((s: { slotKey?: string }) => s.slotKey === "subtitleField1");
+      expect(sub1.isPreset).toBe(true);
+    });
+
+    it("does not override slots already bound by the maker", () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "acc-1" },
+        slots: {
+          titleField: {
+            raw: "Acme",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+          subtitleField1: {
+            raw: "Maker-bound value",
+            type: "SingleLine.Text",
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      const sub1 = element.props.data.subtitles.find((s: { slotKey?: string }) => s.slotKey === "subtitleField1");
+      // Maker binding wins — value comes from form XML, not preset placeholder
+      expect(sub1.value).toBe("Maker-bound value");
+      expect(sub1.isPreset).toBeFalsy();
+    });
+
+    it("does nothing when form entity is not in preset map", () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "custom_unknownentity", entityId: "x-1" },
+        slots: {
+          titleField: {
+            raw: "Title",
+            attributes: { LogicalName: "name", DisplayName: "Name" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      const element = control.updateView(ctx);
+
+      // No preset entries → no preset-marked slots
+      const allFields = [
+        ...element.props.data.subtitles,
+        ...element.props.data.phones,
+        ...element.props.data.details,
+        ...element.props.data.gridFields,
+        ...element.props.data.tags,
+      ];
+      expect(allFields.every((f: { isPreset?: boolean }) => !f.isPreset)).toBe(true);
+    });
+
+    it("registers preset slot→column mapping on the control", () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "contact", entityId: "ct-1" },
+        slots: {
+          titleField: {
+            raw: "Jane",
+            attributes: { LogicalName: "fullname", DisplayName: "Full Name" },
+          },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const slotToColumn = asAny(control)._slotToColumn as unknown as Record<string, string>;
+      expect(slotToColumn.subtitleField1).toBe("jobtitle");
+      expect(slotToColumn.phoneField1).toBe("mobilephone");
+      expect(slotToColumn.emailField).toBe("emailaddress1");
+    });
+  });
+
   // ── readSlot ──────────────────────────
 
   describe("readSlot()", () => {
@@ -1348,7 +1441,7 @@ describe("InfoCard PCF Lifecycle", () => {
       ) => Promise<Record<string, { label: string; value: string; color?: string }>>;
     }
 
-    it("matches numeric param to WebAPI column and resolves formatted value", async () => {
+    it("resolves OptionSet label via metadata when slot is bound to a column", async () => {
       const webAPIMock = jest.fn().mockResolvedValue(BOOKING_RECORD);
       const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
         { LogicalName: "bookingtype", DisplayName: "Booking Type", options: [
@@ -1366,7 +1459,10 @@ describe("InfoCard PCF Lifecycle", () => {
             raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO-00047", entityType: "msdyn_workorder" }],
             attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
           },
-          gridField3: { raw: 1, type: "OptionSet", attributes: {} },
+          // Numeric raws can't be value-matched (intentional: option-set / two-options /
+          // duration integers collide). The slot must be bound via attributes.LogicalName
+          // so readSlot pre-populates _slotToColumn.
+          gridField3: { raw: 1, type: "OptionSet", attributes: { LogicalName: "bookingtype", DisplayName: "Booking Type" } },
         },
       });
       control.init(ctx, notifyOutputChanged);
@@ -1410,7 +1506,10 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(overrides.gridField1.value).toBe("3/30/2026 9:00 AM");
     });
 
-    it("skips system columns during value matching", async () => {
+    it("does not value-match numeric raws to ambiguous columns (e.g. statuscode vs bookingtype)", async () => {
+      // raw=1 in a non-bound slot would historically match statuscode(1) AND bookingtype(1).
+      // Numeric matching is intentionally disabled to avoid silently-wrong bindings.
+      // The slot stays unresolved unless the maker binds via attributes.LogicalName.
       const webAPIMock = jest.fn().mockResolvedValue(makeWebAPIRecord({
         statuscode: 1, statecode: 0, bookingtype: 1,
         "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
@@ -1428,8 +1527,6 @@ describe("InfoCard PCF Lifecycle", () => {
             raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO", entityType: "msdyn_workorder" }],
             attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
           },
-          // raw=1 matches both statuscode(1) and bookingtype(1)
-          // System columns should be skipped → matches bookingtype
           gridField3: { raw: 1, type: "OptionSet", attributes: {} },
         },
       });
@@ -1437,8 +1534,7 @@ describe("InfoCard PCF Lifecycle", () => {
       control.updateView(ctx);
 
       const overrides = await getResolve(control)(ctx);
-      expect(overrides.gridField3).toBeDefined();
-      expect(overrides.gridField3.label).toBe("Booking Type");
+      expect(overrides.gridField3).toBeUndefined();
     });
 
     it("resolves booking status color from lookup entity", async () => {
@@ -1634,6 +1730,195 @@ describe("InfoCard PCF Lifecycle", () => {
       const result = readSlot(ctx, "gridField1");
       // Should NOT be null — the field has data, it just lacks metadata
       expect(result).not.toBeNull();
+    });
+  });
+
+  // ────────────────────────────────────────
+  // Authoring mode (form designer) sample data injection
+  // ────────────────────────────────────────
+  describe("authoring mode / design-time sample data", () => {
+    /** Make a context that signals form-designer (authoring) mode. */
+    function makeAuthoringContext(slots: Record<string, SlotParamOverride> = {}) {
+      const ctx = createMockContext({
+        slots: {
+          titleField: { type: "Lookup.Simple", raw: null },
+          ...slots,
+        },
+      });
+      // Set the undocumented isAuthoringMode flag the platform exposes in the designer.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (ctx.mode as any).isAuthoringMode = true;
+      return ctx;
+    }
+
+    test("injects slot-semantic sample for titleField when raw is null", () => {
+      const ctx = makeAuthoringContext();
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as { title: { value: string; isEmpty: boolean } };
+      expect(data.title.value).toBe("Adventure Works");
+      expect(data.title.isEmpty).toBe(false);
+    });
+
+    test("does NOT set lookupId/lookupEntityType on sampled title (prevents fetches)", () => {
+      const ctx = makeAuthoringContext();
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        title: { lookupId?: string; lookupEntityType?: string };
+      };
+      expect(data.title.lookupId).toBeUndefined();
+      expect(data.title.lookupEntityType).toBeUndefined();
+    });
+
+    test("populates phone/email/web/address with semantic samples", () => {
+      const ctx = makeAuthoringContext({
+        phoneField1: { type: "SingleLine.Phone", raw: null },
+        emailField: { type: "SingleLine.Email", raw: null },
+        webField: { type: "SingleLine.URL", raw: null },
+        addressField: { type: "SingleLine.Text", raw: null },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        phones: Array<{ value: string }>;
+        email: { value: string };
+        web: { value: string };
+        address: { value: string };
+      };
+      expect(data.phones[0].value).toBe("+1 (555) 123-4567");
+      expect(data.email.value).toBe("contact@contoso.com");
+      expect(data.web.value).toBe("https://contoso.com");
+      expect(data.address.value).toBe("1 Microsoft Way, Redmond, WA 98052");
+    });
+
+    test("falls back to type-based sample for grid slots without semantic override", () => {
+      const ctx = makeAuthoringContext({
+        gridField1: { type: "Currency", raw: null },
+        gridField2: { type: "DateAndTime.DateAndTime", raw: null },
+        gridField3: { type: "Whole.None", raw: null },
+        gridField4: { type: "TwoOptions", raw: null },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        gridFields: Array<{ value: string }>;
+      };
+      const values = data.gridFields.map(f => f.value);
+      expect(values).toContain("$1,234.56");
+      expect(values).toContain("Jan 15, 2026 09:30");
+      expect(values).toContain("42");
+      expect(values).toContain("Yes");
+    });
+
+    test("substitutes sample for @-prefix related-field placeholders (no fetch needed)", () => {
+      const ctx = makeAuthoringContext({
+        subtitleField1: { type: "SingleLine.Text", raw: "@msdyn_serviceaccount" },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        subtitles: Array<{ value: string; isEmpty: boolean }>;
+      };
+      expect(data.subtitles[0].isEmpty).toBe(false);
+      expect(data.subtitles[0].value).toBe("Primary Contact");
+      expect(data.subtitles[0].value.startsWith("@")).toBe(false);
+    });
+
+    test("does NOT inject samples when isAuthoringMode is false (runtime behaviour preserved)", () => {
+      const ctx = createMockContext({
+        slots: {
+          titleField: { type: "Lookup.Simple", raw: null },
+          subtitleField1: { type: "SingleLine.Text", raw: null },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        title: { isEmpty: boolean; value: string };
+        subtitles: Array<{ isEmpty: boolean; value: string }>;
+      };
+      expect(data.title.isEmpty).toBe(true);
+      expect(data.title.value).toBe("---");
+      // Subtitle should also be empty (no sample injection at runtime)
+      if (data.subtitles.length > 0) {
+        expect(data.subtitles[0].isEmpty).toBe(true);
+      }
+    });
+
+    test("origin-fallback detection: ancestorOrigins make.powerapps.com triggers authoring mode", () => {
+      const ctx = createMockContext({
+        slots: { titleField: { type: "Lookup.Simple", raw: null } },
+      });
+      // Leave isAuthoringMode unset; rely on origin fallback.
+      // jsdom doesn't ship ancestorOrigins, so define it directly on window.location.
+      const originalDescriptor = Object.getOwnPropertyDescriptor(window.location, "ancestorOrigins");
+      Object.defineProperty(window.location, "ancestorOrigins", {
+        value: ["https://make.powerapps.com"],
+        configurable: true,
+      });
+      try {
+        control.init(ctx, notifyOutputChanged);
+        control.updateView(ctx);
+        const data = asAny(control).collectData(ctx) as { title: { value: string } };
+        expect(data.title.value).toBe("Adventure Works");
+      } finally {
+        if (originalDescriptor) {
+          Object.defineProperty(window.location, "ancestorOrigins", originalDescriptor);
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          delete (window.location as any).ancestorOrigins;
+        }
+      }
+    });
+
+    test("does NOT inject samples for unconfigured slots (type=Unknown)", () => {
+      const ctx = makeAuthoringContext({
+        gridField1: { type: "Unknown", raw: null },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as { gridFields: Array<unknown> };
+      // Unknown slots are filtered out entirely — sample injection requires a valid type.
+      expect(data.gridFields.length).toBe(0);
+    });
+
+    test("harness flag: window.__INFOCARD_AUTHORING__=true triggers authoring mode", () => {
+      const ctx = createMockContext({
+        slots: { titleField: { type: "Lookup.Simple", raw: null } },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__INFOCARD_AUTHORING__ = true;
+      try {
+        control.init(ctx, notifyOutputChanged);
+        control.updateView(ctx);
+        // Authoring mode → readSlot synthesizes a sample value for unbound titleField.
+        const data = asAny(control).collectData(ctx) as { title: { value: string } };
+        expect(data.title.value).toBeTruthy();
+        expect(data.title.value).not.toBe("---");
+      } finally {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any).__INFOCARD_AUTHORING__;
+      }
+    });
+
+    test("URL flag: location.hash contains 'authoring' triggers authoring mode", () => {
+      const ctx = createMockContext({
+        slots: { titleField: { type: "Lookup.Simple", raw: null } },
+      });
+      const originalHash = window.location.hash;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window.location as any).hash = "#authoring";
+      try {
+        control.init(ctx, notifyOutputChanged);
+        control.updateView(ctx);
+        const data = asAny(control).collectData(ctx) as { title: { value: string } };
+        expect(data.title.value).toBeTruthy();
+        expect(data.title.value).not.toBe("---");
+      } finally {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window.location as any).hash = originalHash;
+      }
     });
   });
 });

@@ -8,20 +8,67 @@
 import * as React from "react";
 
 // ════════════════════════════════════════════════════════════════════
+// URL safety
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Validate a user-provided URL string before using it in an href attribute.
+ * React 16.8.6 does NOT block javascript:/data:/vbscript: URLs (the protections
+ * landed in 16.9 / 17). We must do it ourselves.
+ *
+ * @returns the safe URL to use in href, or null if the input must be rendered as plain text.
+ */
+export function safeHttpUrl(value: string | undefined | null): string | null {
+    if (!value) return null;
+    const trimmed = String(value).trim();
+    if (!trimmed) return null;
+    // Strip ASCII control chars that some URL parsers ignore (\t, \n, \r in href)
+    // eslint-disable-next-line no-control-regex
+    const cleaned = trimmed.replace(/[\u0000-\u001F\u007F]/g, "");
+    if (!cleaned) return null;
+    // If the value already declares a scheme, only allow http(s).
+    const schemeMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(cleaned);
+    if (schemeMatch) {
+        const scheme = schemeMatch[1].toLowerCase();
+        if (scheme === "http" || scheme === "https") return cleaned;
+        return null; // javascript:, data:, vbscript:, file:, ftp:, etc.
+    }
+    // Reject protocol-relative URLs ("//evil.com/...") — ambiguous, often unsafe.
+    if (cleaned.startsWith("//")) return null;
+    // No scheme — assume https.
+    return `https://${cleaned}`;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // Types
 // ════════════════════════════════════════════════════════════════════
 
 export type LayoutMode = "smart" | "contact" | "compact";
 
 export interface SlotField {
+    /** Slot identifier (e.g. "gridField2", "tagField1") — set by readSlot or mergeRelatedFields.
+     *  Used by the override pass to apply record-fetched labels/colors back onto the right
+     *  rendered row, regardless of how readSlotGroup compacts unconfigured slots. */
+    slotKey?: string;
     label: string;
     value: string;
     rawValue: unknown;
     isEmpty: boolean;
+    /** True while related-record fetch is in flight; renders as a shimmer placeholder. */
+    isPending?: boolean;
+    /** True for slots populated by SLOT_PRESETS (auto-fill for known entity types).
+     *  Preset slots are hidden when empty even with hideEmpty=false — they're speculative
+     *  fills for columns that may not have data on this record. */
+    isPreset?: boolean;
     lookupEntityType?: string;
     lookupId?: string;
     /** OptionSet color from Dataverse metadata (hex, e.g. "#d13438") */
     optionColor?: string;
+    /** Pre-computed date portion (locale-formatted) for DateAndTime.DateAndTime fields. */
+    dateText?: string;
+    /** Pre-computed time portion (locale-formatted) for DateAndTime.DateAndTime fields.
+     *  When both dateText and timeText are present, the renderer stacks them on two lines. */
+    timeText?: string;
 }
 
 export interface InfoCardData {
@@ -219,7 +266,108 @@ function buildMapUrl(lat: number | null, lng: number | null): string | null {
 
 function filterEmpty(fields: SlotField[], hideEmpty: boolean): SlotField[] {
     if (!hideEmpty) return fields;
-    return fields.filter(f => !f.isEmpty);
+    return fields.filter(f => !f.isEmpty || f.isPending);
+}
+
+// ── Loading affordances: shimmer + top progress bar ──────────────
+// Inline keyframes (styles are otherwise inline; one global <style> is
+// the simplest way to drive CSS animations).
+const LOADING_KEYFRAMES = `
+@keyframes infocard-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+@keyframes infocard-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}`;
+
+const LoadingKeyframes: React.FC = () => (
+    <style dangerouslySetInnerHTML={{ __html: LOADING_KEYFRAMES }} />
+);
+
+interface ShimmerProps {
+    theme: InfoCardTheme;
+    width?: string | number;
+    height?: string | number;
+}
+
+const Shimmer: React.FC<ShimmerProps> = ({ theme, width = "70%", height = "0.9em" }) => (
+    <span
+        aria-hidden="true"
+        style={{
+            display: "inline-block",
+            verticalAlign: "middle",
+            width: typeof width === "number" ? `${width}px` : width,
+            height: typeof height === "number" ? `${height}px` : height,
+            borderRadius: 4,
+            background: `linear-gradient(90deg, ${theme.borderLight} 0%, ${theme.border} 50%, ${theme.borderLight} 100%)`,
+            backgroundSize: "200px 100%",
+            backgroundRepeat: "no-repeat",
+            animation: "infocard-shimmer 1.4s linear infinite",
+            opacity: 0.85,
+        }}
+    />
+);
+
+const TopProgressBar: React.FC<{ theme: InfoCardTheme }> = ({ theme }) => (
+    <div
+        aria-hidden="true"
+        role="progressbar"
+        style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 2,
+            overflow: "hidden",
+            borderTopLeftRadius: theme.radius,
+            borderTopRightRadius: theme.radius,
+            background: theme.borderLight,
+            pointerEvents: "none",
+            zIndex: 1,
+        }}
+    >
+        <div
+            style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                height: "100%",
+                width: "25%",
+                background: theme.brand,
+                animation: "infocard-progress 1.6s ease-in-out infinite",
+                borderRadius: 2,
+            }}
+        />
+    </div>
+);
+
+/** Renders a shimmer when `field.isPending`, otherwise the supplied children (defaults to field.value).
+ *  When the field has both dateText and timeText (DateAndTime.DateAndTime), they are stacked on two lines
+ *  unless the caller passes children to override. */
+function ValueOrShimmer(props: {
+    field: SlotField;
+    theme: InfoCardTheme;
+    width?: string | number;
+    children?: React.ReactNode;
+}): React.ReactElement {
+    if (props.field.isPending) {
+        return <Shimmer theme={props.theme} width={props.width ?? "70%"} />;
+    }
+    if (props.children !== undefined) {
+        return <>{props.children}</>;
+    }
+    const { dateText, timeText } = props.field;
+    if (dateText && timeText) {
+        return (
+            <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.2 }}>
+                <span>{dateText}</span>
+                <span style={{ color: props.theme.textMuted, fontSize: "0.9em" }}>{timeText}</span>
+            </span>
+        );
+    }
+    return <>{props.field.value}</>;
 }
 
 function guessDetailIcon(field: SlotField, color: string): React.ReactElement | null {
@@ -261,7 +409,7 @@ function deduplicateSubtitles(subtitles: SlotField[]): SlotField[] {
 // mergeRelatedFields
 // ════════════════════════════════════════════════════════════════════
 
-function mergeRelatedFields(
+export function mergeRelatedFields(
     data: InfoCardData,
     relatedFields: Record<string, SlotField>,
     mappings: RelatedFieldMapping[],
@@ -275,53 +423,61 @@ function mergeRelatedFields(
         tags: [...data.tags],
     };
 
+    // Replace by slotKey rather than digit-derived index. readSlotGroup compacts unconfigured
+    // slots out of the array, so the trailing digit (e.g. subtitleField2 → 1) does not match
+    // the post-compaction position. Fall back to position-from-digit only when the array does
+    // not yet contain a placeholder for this slot (e.g. readSlot returned null entirely).
+    function placeBySlotKey(
+        arr: SlotField[],
+        target: string,
+        groupPrefix: string,
+        fetched: SlotField,
+    ): void {
+        const existingIdx = arr.findIndex(f => f.slotKey === target);
+        if (existingIdx >= 0) {
+            arr[existingIdx] = fetched;
+            return;
+        }
+        const digit = parseInt(target.replace(groupPrefix, ""), 10);
+        if (!Number.isNaN(digit)) {
+            const idx = digit - 1;
+            while (arr.length < idx) {
+                arr.push({
+                    slotKey: `${groupPrefix}${arr.length + 1}`,
+                    label: "", value: "---", rawValue: null, isEmpty: true,
+                });
+            }
+            arr.splice(idx, 0, fetched);
+            return;
+        }
+        arr.push(fetched);
+    }
+
     for (const mapping of mappings) {
         const fetched = relatedFields[mapping.fetchField];
         if (!fetched) continue;
 
         const target = mapping.targetSlot;
+        // Stamp slotKey so the override pass can match by slot name regardless of array-index drift
+        // when readSlotGroup compacts unconfigured slots.
+        const fetchedWithKey: SlotField = { ...fetched, slotKey: target };
 
         if (target === "addressField") {
-            merged.address = fetched;
-        } else if (target === "phoneField1") {
-            if (merged.phones.length >= 1) {
-                merged.phones[0] = fetched;
-            } else {
-                merged.phones.push(fetched);
-            }
-        } else if (target === "phoneField2") {
-            while (merged.phones.length < 2) {
-                merged.phones.push({ label: "", value: "---", rawValue: null, isEmpty: true });
-            }
-            merged.phones[1] = fetched;
+            merged.address = fetchedWithKey;
+        } else if (target === "phoneField1" || target === "phoneField2") {
+            placeBySlotKey(merged.phones, target, "phoneField", fetchedWithKey);
         } else if (target === "emailField") {
-            merged.email = fetched;
+            merged.email = fetchedWithKey;
         } else if (target === "webField") {
-            merged.web = fetched;
+            merged.web = fetchedWithKey;
         } else if (target.startsWith("subtitleField")) {
-            const idx = parseInt(target.replace("subtitleField", ""), 10) - 1;
-            while (merged.subtitles.length <= idx) {
-                merged.subtitles.push({ label: "", value: "---", rawValue: null, isEmpty: true });
-            }
-            merged.subtitles[idx] = fetched;
+            placeBySlotKey(merged.subtitles, target, "subtitleField", fetchedWithKey);
         } else if (target.startsWith("detailField")) {
-            const idx = parseInt(target.replace("detailField", ""), 10) - 1;
-            while (merged.details.length <= idx) {
-                merged.details.push({ label: "", value: "---", rawValue: null, isEmpty: true });
-            }
-            merged.details[idx] = fetched;
+            placeBySlotKey(merged.details, target, "detailField", fetchedWithKey);
         } else if (target.startsWith("gridField")) {
-            const idx = parseInt(target.replace("gridField", ""), 10) - 1;
-            while (merged.gridFields.length <= idx) {
-                merged.gridFields.push({ label: "", value: "---", rawValue: null, isEmpty: true });
-            }
-            merged.gridFields[idx] = fetched;
+            placeBySlotKey(merged.gridFields, target, "gridField", fetchedWithKey);
         } else if (target.startsWith("tagField")) {
-            const idx = parseInt(target.replace("tagField", ""), 10) - 1;
-            while (merged.tags.length <= idx) {
-                merged.tags.push({ label: "", value: "---", rawValue: null, isEmpty: true });
-            }
-            merged.tags[idx] = fetched;
+            placeBySlotKey(merged.tags, target, "tagField", fetchedWithKey);
         }
     }
 
@@ -363,7 +519,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                         cursor: isLookup ? "pointer" : "default",
                         lineHeight: "22px",
                     }}
-                    onClick={isLookup && onOpenRecord ? () => onOpenRecord(title.lookupEntityType!, title.lookupId!) : undefined}
+                    onClick={isLookup && onOpenRecord ? (e) => { e.stopPropagation(); onOpenRecord(title.lookupEntityType!, title.lookupId!); } : undefined}
                     title={title.label}
                 >
                     {title.value}
@@ -387,12 +543,12 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                                     }}
                                     onClick={
                                         isSubLookup && onOpenRecord
-                                            ? () => onOpenRecord(sub.lookupEntityType!, sub.lookupId!)
+                                            ? (e) => { e.stopPropagation(); onOpenRecord(sub.lookupEntityType!, sub.lookupId!); }
                                             : undefined
                                     }
                                     title={sub.label}
                                 >
-                                    {sub.value}
+                                    <ValueOrShimmer field={sub} theme={theme} width="80px" />
                                 </span>
                             </React.Fragment>
                         );
@@ -415,10 +571,10 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
     const mapUrl = buildMapUrl(data.latitude, data.longitude);
     const address = data.address;
     const phones = filterEmpty(data.phones, hideEmpty);
-    const email = data.email && !data.email.isEmpty ? data.email : null;
-    const web = data.web && !data.web.isEmpty ? data.web : null;
+    const email = data.email && (!data.email.isEmpty || data.email.isPending) ? data.email : null;
+    const web = data.web && (!data.web.isEmpty || data.web.isPending) ? data.web : null;
 
-    const hasAny = (address && !address.isEmpty) || phones.length > 0 || email || web;
+    const hasAny = (address && (!address.isEmpty || address.isPending)) || phones.length > 0 || email || web;
     if (!hasAny) return null;
 
     const rowStyle: React.CSSProperties = {
@@ -455,15 +611,20 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
             margin: "8px 0 0",
         }}>
             {/* Address */}
-            {address && !address.isEmpty && (
-                mapUrl ? (
-                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={chipStyle} title={address.label}>
-                        <PinIcon size={14} color={theme.brand} />
+            {address && (!address.isEmpty || address.isPending) && (
+                address.isPending ? (
+                    <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
+                        <PinIcon size={16} color={theme.textMuted} />
+                        <Shimmer theme={theme} width="120px" />
+                    </span>
+                ) : mapUrl ? (
+                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={chipStyle} title={address.label} onClick={(e) => e.stopPropagation()}>
+                        <PinIcon size={16} color={theme.brand} />
                         {address.value}
                     </a>
                 ) : (
                     <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
-                        <PinIcon size={14} color={theme.textMuted} />
+                        <PinIcon size={16} color={theme.textMuted} />
                         {address.value}
                     </span>
                 )
@@ -471,32 +632,65 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty }) => 
 
             {/* Phones — phone1 gets landline icon, phone2 gets mobile icon */}
             {phones.map((phone, i) => (
-                <a key={`phone-${i}`} href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={chipStyle} title={phone.label}>
-                    {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
-                    {phone.value}
-                </a>
+                phone.isPending ? (
+                    <span key={`phone-${i}`} style={{ ...chipStyle, cursor: "default" }} title={phone.label}>
+                        {i === 0 ? <PhoneIcon size={14} color={theme.textMuted} /> : <MobileIcon size={14} color={theme.textMuted} />}
+                        <Shimmer theme={theme} width="90px" />
+                    </span>
+                ) : (
+                    <a key={`phone-${i}`} href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={chipStyle} title={phone.label} onClick={(e) => e.stopPropagation()}>
+                        {i === 0 ? <PhoneIcon size={14} color={theme.brand} /> : <MobileIcon size={14} color={theme.brand} />}
+                        {phone.value}
+                    </a>
+                )
             ))}
 
             {/* Email */}
             {email && (
-                <a href={`mailto:${email.value}`} style={chipStyle} title={email.label}>
-                    <EmailIcon size={14} color={theme.brand} />
-                    {email.value}
-                </a>
+                email.isPending ? (
+                    <span style={{ ...chipStyle, cursor: "default" }} title={email.label}>
+                        <EmailIcon size={14} color={theme.textMuted} />
+                        <Shimmer theme={theme} width="110px" />
+                    </span>
+                ) : (
+                    <a href={`mailto:${email.value}`} style={chipStyle} title={email.label} onClick={(e) => e.stopPropagation()}>
+                        <EmailIcon size={14} color={theme.brand} />
+                        {email.value}
+                    </a>
+                )
             )}
 
             {/* Web */}
             {web && (
-                <a
-                    href={web.value.startsWith("http") ? web.value : `https://${web.value}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={chipStyle}
-                    title={web.label}
-                >
-                    <WebIcon size={14} color={theme.brand} />
-                    {web.value}
-                </a>
+                web.isPending ? (
+                    <span style={{ ...chipStyle, cursor: "default" }} title={web.label}>
+                        <WebIcon size={14} color={theme.textMuted} />
+                        <Shimmer theme={theme} width="110px" />
+                    </span>
+                ) : (() => {
+                    const safeWeb = safeHttpUrl(web.value);
+                    if (!safeWeb) {
+                        return (
+                            <span style={{ ...chipStyle, cursor: "default", color: theme.textMuted }} title={web.label}>
+                                <WebIcon size={14} color={theme.textMuted} />
+                                {web.value}
+                            </span>
+                        );
+                    }
+                    return (
+                        <a
+                            href={safeWeb}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={chipStyle}
+                            title={web.label}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <WebIcon size={14} color={theme.brand} />
+                            {web.value}
+                        </a>
+                    );
+                })()
             )}
         </div>
     );
@@ -548,11 +742,14 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ color: theme.brand, textDecoration: "none", cursor: "pointer" }}
+                                onClick={(e) => e.stopPropagation()}
                             >
-                                {field.value}
+                                <ValueOrShimmer field={field} theme={theme} width="60%" />
                             </a>
                         ) : (
-                            <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{field.value}</span>
+                            <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                <ValueOrShimmer field={field} theme={theme} width="80%" />
+                            </span>
                         )}
                     </div>
                 );
@@ -593,13 +790,13 @@ const GridFields: React.FC<GridFieldsProps> = ({ fields, theme, hideEmpty }) => 
                             fontSize: 13,
                             color: theme.textPrimary,
                             lineHeight: "18px",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            whiteSpace: "normal",
+                            wordBreak: "break-word",
+                            overflowWrap: "anywhere",
                         }}
                         title={field.value}
                     >
-                        {field.value}
+                        <ValueOrShimmer field={field} theme={theme} width="80%" />
                     </div>
                 </div>
             ))}
@@ -643,7 +840,7 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
                         }}
                         title={tag.label}
                     >
-                        {tag.value}
+                        <ValueOrShimmer field={tag} theme={theme} width="50px" />
                     </span>
                 );
             })}
@@ -731,11 +928,11 @@ interface LayoutProps {
     startExpanded?: boolean;
     designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
+    /** Smart-layout collapse state, controlled by parent so the whole card surface can toggle. */
+    collapsed?: boolean;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, startExpanded = true, designTime, onOpenRecord }) => {
-    const [collapsed, setCollapsed] = React.useState(!startExpanded);
-
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -755,13 +952,13 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                 {hasCollapsible && (
                     <div
                         style={{
-                            cursor: "pointer",
                             padding: 4,
                             flexShrink: 0,
                             transition: "transform 0.2s ease",
                             transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                            pointerEvents: "none",
                         }}
-                        onClick={() => setCollapsed(!collapsed)}
+                        aria-hidden="true"
                     >
                         <ChevronDown size={12} color={theme.textMuted} />
                     </div>
@@ -866,9 +1063,9 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const phones = filterEmpty(data.phones, effectiveHideEmpty);
-    const email = data.email && (designTime || !data.email.isEmpty) ? data.email : null;
-    const web = data.web && (designTime || !data.web.isEmpty) ? data.web : null;
-    const address = data.address && (designTime || !data.address.isEmpty) ? data.address : null;
+    const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
+    const web = data.web && (designTime || !data.web.isEmpty || data.web.isPending) ? data.web : null;
+    const address = data.address && (designTime || !data.address.isEmpty || data.address.isPending) ? data.address : null;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
     const tags = filterEmpty(data.tags, effectiveHideEmpty);
@@ -913,36 +1110,56 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                     {address && (
                         <div style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{address.label}</span>
-                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>{address.value}</span>
+                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>
+                                <ValueOrShimmer field={address} theme={theme} width="120px" />
+                            </span>
                         </div>
                     )}
                     {phones.map((phone, i) => (
                         <div key={`phone-${i}`} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{phone.label}</span>
-                            <a href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={{ color: theme.brand, textDecoration: "none" }}>
-                                {phone.value}
-                            </a>
+                            {phone.isPending ? (
+                                <Shimmer theme={theme} width="100px" />
+                            ) : (
+                                <a href={`tel:${String(phone.value).replace(/\s+/g, "")}`} style={{ color: theme.brand, textDecoration: "none" }}>
+                                    {phone.value}
+                                </a>
+                            )}
                         </div>
                     ))}
                     {email && (
                         <div style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{email.label}</span>
-                            <a href={`mailto:${email.value}`} style={{ color: theme.brand, textDecoration: "none" }}>
-                                {email.value}
-                            </a>
+                            {email.isPending ? (
+                                <Shimmer theme={theme} width="130px" />
+                            ) : (
+                                <a href={`mailto:${email.value}`} style={{ color: theme.brand, textDecoration: "none" }}>
+                                    {email.value}
+                                </a>
+                            )}
                         </div>
                     )}
                     {web && (
                         <div style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{web.label}</span>
-                            <a
-                                href={web.value.startsWith("http") ? web.value : `https://${web.value}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: theme.brand, textDecoration: "none" }}
-                            >
-                                {web.value}
-                            </a>
+                            {web.isPending ? (
+                                <Shimmer theme={theme} width="130px" />
+                            ) : (() => {
+                                const safeWeb = safeHttpUrl(web.value);
+                                if (!safeWeb) {
+                                    return <span style={{ color: theme.textMuted }}>{web.value}</span>;
+                                }
+                                return (
+                                    <a
+                                        href={safeWeb}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ color: theme.brand, textDecoration: "none" }}
+                                    >
+                                        {web.value}
+                                    </a>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>
@@ -955,7 +1172,9 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                     {gridFields.map((field, i) => (
                         <div key={i} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{field.label}</span>
-                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>{field.value}</span>
+                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>
+                                <ValueOrShimmer field={field} theme={theme} width="100px" />
+                            </span>
                         </div>
                     ))}
                 </div>
@@ -969,7 +1188,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         <div key={i} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{field.label}</span>
                             <span style={{ color: theme.textPrimary, textAlign: "right", wordBreak: "break-word" }}>
-                                {field.value}
+                                <ValueOrShimmer field={field} theme={theme} width="140px" />
                             </span>
                         </div>
                     ))}
@@ -1100,6 +1319,12 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     const [currentRecordFields, setCurrentRecordFields] = React.useState<Record<string, SlotField>>({});
     // Overrides for bound field labels, values, and colors (from record fetch + metadata)
     const [recordOverrides, setRecordOverrides] = React.useState<Record<string, { label: string; value: string; color?: string }>>({});
+    // Loading state — true while related-record fetches are in flight
+    const [titleFetchDone, setTitleFetchDone] = React.useState(false);
+    const [currentFetchDone, setCurrentFetchDone] = React.useState(false);
+    // Smart-layout collapse state lives here so the whole card surface can toggle.
+    const [collapsed, setCollapsed] = React.useState(!props.startExpanded);
+    const toggleCollapsed = React.useCallback(() => setCollapsed(c => !c), []);
 
     // Resolve bound field labels/values/colors via record fetch
     React.useEffect(() => {
@@ -1109,13 +1334,18 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
 
     // Fetch title-entity related data
     React.useEffect(() => {
-        if (relatedMappings.length === 0 || !fetchRelatedData) return;
+        if (relatedMappings.length === 0 || !fetchRelatedData) {
+            setTitleFetchDone(true);
+            return;
+        }
+        setTitleFetchDone(false);
 
         const sourceField = data.title;
         if (!sourceField || !sourceField.lookupEntityType || !sourceField.lookupId) {
             if (relatedMappings.length > 0 && sourceField) {
                 console.warn("[InfoCard] Title mappings exist but title has no lookup data.");
             }
+            setTitleFetchDone(true);
             return;
         }
 
@@ -1126,7 +1356,8 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
             })
             .catch((err) => {
                 console.error("[InfoCard] Title-entity fetch failed:", err);
-            });
+            })
+            .finally(() => setTitleFetchDone(true));
     }, [
         data.title?.lookupId,
         relatedMappings.length,
@@ -1135,9 +1366,15 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
 
     // Fetch current-record related data (@. syntax)
     React.useEffect(() => {
-        if (!currentRecordMappings || currentRecordMappings.length === 0 || !fetchRelatedData) return;
+        if (!currentRecordMappings || currentRecordMappings.length === 0 || !fetchRelatedData) {
+            setCurrentFetchDone(true);
+            return;
+        }
+        setCurrentFetchDone(false);
+
         if (!currentRecordEntityType || !currentRecordId) {
             console.warn("[InfoCard] @. mappings exist but no current record context available.");
+            setCurrentFetchDone(true);
             return;
         }
 
@@ -1148,7 +1385,8 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
             })
             .catch((err) => {
                 console.error("[InfoCard] Current-record fetch failed:", err);
-            });
+            })
+            .finally(() => setCurrentFetchDone(true));
     }, [
         currentRecordEntityType,
         currentRecordId,
@@ -1164,12 +1402,31 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         : data;
 
     // Apply record-fetch overrides (labels, formatted values, colors) for bound fields
+    // and for SLOT_PRESETS-populated slots. Covers every group so preset placeholders
+    // get filled in once the form record fetch resolves.
     if (Object.keys(recordOverrides).length > 0) {
+        const applyOverride = (f: SlotField): SlotField => {
+            const ov = f.slotKey ? recordOverrides[f.slotKey] : undefined;
+            if (!ov) return f;
+            return {
+                ...f,
+                label: ov.label || f.label,
+                ...(ov.value ? { value: ov.value, isEmpty: false } : {}),
+                optionColor: ov.color ?? f.optionColor,
+            };
+        };
+        const applyOverrideOrNull = (f: SlotField | null): SlotField | null =>
+            f ? applyOverride(f) : f;
         displayData = {
             ...displayData,
-            gridFields: displayData.gridFields.map((f, i) => {
-                const key = `gridField${i + 1}`;
-                const ov = recordOverrides[key];
+            subtitles: displayData.subtitles.map(applyOverride),
+            phones: displayData.phones.map(applyOverride),
+            email: applyOverrideOrNull(displayData.email),
+            web: applyOverrideOrNull(displayData.web),
+            address: applyOverrideOrNull(displayData.address),
+            details: displayData.details.map(applyOverride),
+            gridFields: displayData.gridFields.map((f) => {
+                const ov = f.slotKey ? recordOverrides[f.slotKey] : undefined;
                 if (!ov) return f;
                 return {
                     ...f,
@@ -1178,16 +1435,67 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                     optionColor: ov.color ?? f.optionColor,
                 };
             }),
-            tags: displayData.tags.map((f, i) => {
-                const key = `tagField${i + 1}`;
-                const ov = recordOverrides[key];
+            tags: displayData.tags.map((f) => {
+                const ov = f.slotKey ? recordOverrides[f.slotKey] : undefined;
                 if (!ov) return f;
                 return {
                     ...f,
                     ...(ov.label ? { label: ov.label } : {}),
+                    ...(ov.value ? { value: ov.value, isEmpty: false } : {}),
                     optionColor: ov.color ?? f.optionColor,
                 };
             }),
+        };
+    }
+
+    // Hide preset-populated slots that remain empty after the override pass — they
+    // were speculative fills for columns that have no data on this specific record.
+    {
+        const dropEmptyPreset = (f: SlotField): boolean => !(f.isPreset && f.isEmpty);
+        const dropEmptyPresetOrKeep = (f: SlotField | null): SlotField | null =>
+            f && f.isPreset && f.isEmpty ? null : f;
+        displayData = {
+            ...displayData,
+            subtitles: displayData.subtitles.filter(dropEmptyPreset),
+            phones: displayData.phones.filter(dropEmptyPreset),
+            email: dropEmptyPresetOrKeep(displayData.email),
+            web: dropEmptyPresetOrKeep(displayData.web),
+            address: dropEmptyPresetOrKeep(displayData.address),
+            details: displayData.details.filter(dropEmptyPreset),
+            gridFields: displayData.gridFields.filter(dropEmptyPreset),
+            tags: displayData.tags.filter(dropEmptyPreset),
+        };
+    }
+
+    // Compute set of slot names whose related-record fetch is still in flight.
+    // Pending slots that are still empty get rendered as a shimmer placeholder.
+    const pendingTargets = new Set<string>();
+    if (fetchRelatedData && !titleFetchDone) {
+        for (const m of relatedMappings) pendingTargets.add(m.targetSlot);
+    }
+    if (fetchRelatedData && !currentFetchDone) {
+        for (const m of (currentRecordMappings ?? [])) pendingTargets.add(m.targetSlot);
+    }
+    const isLoading = pendingTargets.size > 0;
+
+    if (isLoading) {
+        const markPending = (f: SlotField | null, slotKey: string): SlotField | null => {
+            if (!f) return f;
+            if (pendingTargets.has(slotKey) && f.isEmpty) {
+                return { ...f, isPending: true };
+            }
+            return f;
+        };
+        displayData = {
+            ...displayData,
+            subtitles: displayData.subtitles.map((f, i) => markPending(f, `subtitleField${i + 1}`)!),
+            phones: displayData.phones.map((f, i) => markPending(f, `phoneField${i + 1}`)!),
+            email: markPending(displayData.email, "emailField"),
+            web: markPending(displayData.web, "webField"),
+            address: markPending(displayData.address, "addressField"),
+            details: displayData.details.map((f, i) => markPending(f, `detailField${i + 1}`)!),
+            gridFields: displayData.gridFields.map((f, i) => markPending(f, `gridField${i + 1}`)!),
+            tags: displayData.tags.map((f, i) => markPending(f, `tagField${i + 1}`)!),
         };
     }
 
@@ -1253,10 +1561,38 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         startExpanded: props.startExpanded,
         designTime: props.designTime,
         onOpenRecord,
+        collapsed,
     };
 
+    // Whole-card click-to-toggle (Smart layout only). Active hit zones (anchors,
+    // lookup nav handlers) call stopPropagation so they don't toggle the card.
+    const isSmartCollapsible =
+        layout === "smart" &&
+        (displayData.details.some(f => !f.isEmpty || f.isPending) ||
+            displayData.gridFields.some(f => !f.isEmpty || f.isPending));
+
+    const interactiveCardProps: React.HTMLAttributes<HTMLDivElement> = isSmartCollapsible ? {
+        onClick: toggleCollapsed,
+        onKeyDown: (e) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggleCollapsed();
+            }
+        },
+        role: "button",
+        tabIndex: 0,
+        "aria-expanded": !collapsed,
+    } : {};
+
+    const finalCardStyle: React.CSSProperties = isSmartCollapsible
+        ? { ...cardStyle, cursor: "pointer", outline: "none" }
+        : cardStyle;
+
     return (
-        <div style={cardStyle}>
+        <div style={finalCardStyle} {...interactiveCardProps}>
+            <LoadingKeyframes />
+            {isLoading && <TopProgressBar theme={theme} />}
             {layout === "smart" && <SmartCardLayout {...layoutProps} />}
             {layout === "contact" && <ContactCardLayout {...layoutProps} />}
             {layout === "compact" && <CompactCardLayout {...layoutProps} />}

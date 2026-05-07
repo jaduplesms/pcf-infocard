@@ -3,7 +3,9 @@ import { InfoCardComponent, InfoCardData, InfoCardTheme, SlotField, LayoutMode, 
 import type { RelatedFieldMapping, BindingDiagnostic } from "./InfoCard";
 import * as React from "react";
 
-const CONTROL_VERSION = "3.9.8";
+// IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
+// Bump both together on every deploy (mobile aggressively caches by manifest version).
+const CONTROL_VERSION = "3.9.13";
 
 // Slot group definitions — order matters for rendering
 const SUBTITLE_KEYS = ["subtitleField1", "subtitleField2", "subtitleField3"] as const;
@@ -19,6 +21,67 @@ const ALL_SLOT_KEYS = [
     ...DETAIL_KEYS, ...GRID_KEYS, ...TAG_KEYS,
 ];
 
+// Opt-in slot-resolution tracing. Toggle in browser DevTools or harness:
+//   (window as any).__INFOCARD_DEBUG__ = true;
+// then re-trigger updateView. Off by default to keep mobile/host logs clean.
+function isSlotDebugEnabled(): boolean {
+    if (typeof window === "undefined") return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).__INFOCARD_DEBUG__ === true;
+}
+
+// ────────────────────────────────────────
+// Design-time / authoring mode sample data
+// ────────────────────────────────────────
+// Deterministic — no Date.now()/Math.random() so designer previews stay stable
+// across re-renders and snapshot tests remain reproducible.
+const SAMPLE_DATE = new Date(2026, 0, 15, 9, 30, 0, 0);
+
+// Slot-name semantic overrides (preferred over type lookup).
+// Uses the slot's intent (e.g. phone, email, address) rather than its underlying
+// PCF type so the maker preview looks like a real card, not a row of "42"s.
+const SAMPLE_BY_SLOT: Record<string, string> = {
+    titleField: "Adventure Works",
+    subtitleField1: "Primary Contact",
+    subtitleField2: "Active",
+    subtitleField3: "Premium",
+    phoneField1: "+1 (555) 123-4567",
+    phoneField2: "+1 (555) 987-6543",
+    emailField: "contact@contoso.com",
+    webField: "https://contoso.com",
+    addressField: "1 Microsoft Way, Redmond, WA 98052",
+    latitudeField: "47.6395",
+    longitudeField: "-122.1283",
+    detailField1: "Customer reports issue with main unit. Service history shows last visit 6 months ago.",
+    detailField2: "Access via side gate. Key with neighbor at #14.",
+    detailField3: "Bring replacement filter and pressure gauge.",
+    tagField1: "Active",
+    tagField2: "High",
+    tagField3: "Premium",
+    // gridField1..6 fall through to SAMPLE_BY_TYPE so date/currency/number columns
+    // render with type-appropriate sample values in the grid.
+};
+
+// Per-PCF-type fallback when slot has no semantic sample (e.g. gridField*).
+const SAMPLE_BY_TYPE: Record<string, { value: string; raw: unknown }> = {
+    "SingleLine.Text": { value: "Sample text", raw: "Sample text" },
+    "SingleLine.TextArea": { value: "Sample multi-line description.", raw: "Sample multi-line description." },
+    "Multiple": { value: "Sample multi-line description.", raw: "Sample multi-line description." },
+    "SingleLine.Email": { value: "sample@contoso.com", raw: "sample@contoso.com" },
+    "SingleLine.Phone": { value: "+1 (555) 123-4567", raw: "+1 (555) 123-4567" },
+    "SingleLine.URL": { value: "https://contoso.com", raw: "https://contoso.com" },
+    "Whole.None": { value: "42", raw: 42 },
+    "Currency": { value: "$1,234.56", raw: 1234.56 },
+    "Decimal": { value: "1.23", raw: 1.23 },
+    "FP": { value: "1.23", raw: 1.23 },
+    "DateAndTime.DateOnly": { value: "Jan 15, 2026", raw: SAMPLE_DATE },
+    "DateAndTime.DateAndTime": { value: "Jan 15, 2026 09:30", raw: SAMPLE_DATE },
+    "OptionSet": { value: "Active", raw: "Active" },
+    "MultiSelectOptionSet": { value: "Option A, Option B", raw: "Option A, Option B" },
+    "TwoOptions": { value: "Yes", raw: true },
+    "Lookup.Simple": { value: "Sample Record", raw: "Sample Record" },
+};
+
 // Friendly names for slot keys in diagnostics
 const SLOT_LABELS: Record<string, string> = {
     titleField: "Title", subtitleField1: "Subtitle 1", subtitleField2: "Subtitle 2", subtitleField3: "Subtitle 3",
@@ -28,6 +91,69 @@ const SLOT_LABELS: Record<string, string> = {
     gridField1: "Grid 1", gridField2: "Grid 2", gridField3: "Grid 3",
     gridField4: "Grid 4", gridField5: "Grid 5", gridField6: "Grid 6",
     tagField1: "Tag 1", tagField2: "Tag 2", tagField3: "Tag 3",
+};
+
+// ────────────────────────────────────────
+// Standard layout presets per table type
+// ────────────────────────────────────────
+// When a slot is not bound by the maker, the preset for the form entity (if known)
+// fills it in by referencing a column on that same entity. The value is resolved via
+// the existing resolveRecordFieldsAsync record fetch — no extra WebAPI calls.
+//
+// Maker bindings always win: a slot that has a `type` (i.e. is configured in form XML)
+// is never overridden by a preset, even when the preset has an entry for that slot.
+//
+// Goal: drop the control on a known entity's form, bind only `titleField`, get a useful
+// card for free. Makers can still override individual slots as needed.
+type SlotPreset = Partial<Record<string, string>>;
+
+const SLOT_PRESETS: Record<string, SlotPreset> = {
+    msdyn_workorder: {
+        subtitleField1: "msdyn_serviceaccount",
+        subtitleField2: "msdyn_primaryincidenttype",
+        addressField: "msdyn_addressline1_composite",
+        detailField1: "msdyn_workordersummary",
+        gridField1: "msdyn_systemstatus",
+        gridField2: "msdyn_subtotalamount",
+        tagField1: "msdyn_priority",
+        tagField2: "msdyn_primaryincidenttype",
+    },
+    bookableresourcebooking: {
+        subtitleField1: "resource",
+        subtitleField2: "bookingstatus",
+        gridField1: "starttime",
+        gridField2: "endtime",
+        gridField3: "duration",
+        tagField1: "bookingstatus",
+    },
+    account: {
+        subtitleField1: "primarycontactid",
+        subtitleField2: "industrycode",
+        phoneField1: "telephone1",
+        phoneField2: "telephone2",
+        emailField: "emailaddress1",
+        webField: "websiteurl",
+        addressField: "address1_composite",
+        tagField1: "statuscode",
+    },
+    contact: {
+        subtitleField1: "jobtitle",
+        subtitleField2: "parentcustomerid",
+        phoneField1: "mobilephone",
+        phoneField2: "telephone1",
+        emailField: "emailaddress1",
+        webField: "websiteurl",
+        addressField: "address1_composite",
+        tagField1: "statuscode",
+    },
+    incident: {
+        subtitleField1: "customerid",
+        subtitleField2: "casetypecode",
+        gridField1: "createdon",
+        gridField2: "modifiedon",
+        tagField1: "prioritycode",
+        tagField2: "statuscode",
+    },
 };
 
 interface ColumnMeta {
@@ -58,6 +184,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     private _resolvedValues: Record<string, string> = {};
     // Colors resolved from lookup entity records
     private _resolvedColors: Record<string, string> = {};
+    // True when rendering inside the Power Apps form designer. When set, readSlot
+    // substitutes deterministic sample data and updateView suppresses WebAPI fetches.
+    private _isAuthoringMode = false;
 
     constructor() { }
 
@@ -71,16 +200,54 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         this.context = context;
-        // Detect form entity context for metadata resolution and @. syntax
+        // Detect form-designer (authoring) mode.
+        // Primary: undocumented context.mode.isAuthoringMode flag (true ONLY in designer).
+        // Fallback 1: location.ancestorOrigins[0] === make.powerapps.com — resilient if MS
+        //   ever renames or moves the flag.
+        // Fallback 2 (test harness): window.__INFOCARD_AUTHORING__ === true OR location.hash
+        //   contains "authoring" OR ?authoring=1 — lets `npm start` preview the designer path
+        //   locally without needing a real Power Apps host. See README "Authoring-mode preview".
+        // Refs: itmustbecode.com (2025-06), butenko.pro (2023-01).
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const modeRecord = context.mode as unknown as Record<string, any>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const harnessFlag = typeof window !== "undefined" && (window as any).__INFOCARD_AUTHORING__ === true;
+        const urlFlag = typeof location !== "undefined" && (
+            (location.hash || "").toLowerCase().includes("authoring") ||
+            (location.search || "").toLowerCase().includes("authoring=1")
+        );
+        this._isAuthoringMode = modeRecord.isAuthoringMode === true ||
+            (typeof location !== "undefined" && (
+                location.ancestorOrigins?.[0] === "https://make.powerapps.com" ||
+                location.ancestorOrigins?.[0] === "https://make.preview.powerapps.com"
+            )) ||
+            harnessFlag ||
+            urlFlag;
+
+        // Detect form entity context for metadata resolution and @. syntax.
+        // PCF instances can be reused across SPA navigations between records — re-read on every
+        // updateView and clear record-scoped caches when entity or recordId changes, otherwise
+        // resolveRecordFieldsAsync would bind to a stale GUID and overrides would be wrong.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modeAny = context.mode as Record<string, any>;
-        if (!this._formEntityName && modeAny.contextInfo?.entityTypeName) {
-            this._formEntityName = modeAny.contextInfo.entityTypeName;
-            console.log("[InfoCard] Form entity:", this._formEntityName);
-        }
-        if (!this._formRecordId && modeAny.contextInfo?.entityId) {
-            this._formRecordId = this.formatGuid(String(modeAny.contextInfo.entityId));
-            console.log("[InfoCard] Form record ID:", this._formRecordId);
+        const newEntity: string | null = modeAny.contextInfo?.entityTypeName ?? null;
+        const newRecordId: string | null = modeAny.contextInfo?.entityId
+            ? this.formatGuid(String(modeAny.contextInfo.entityId))
+            : null;
+        if (newEntity && (newEntity !== this._formEntityName || newRecordId !== this._formRecordId)) {
+            if (this._formEntityName !== null) {
+                // Record context changed — clear caches scoped to the previous record.
+                this._slotToColumn = {};
+                this._resolvedValues = {};
+                this._resolvedColors = {};
+                // Column metadata is keyed by logical name and is per-entity, so only clear it
+                // when the entity itself changed.
+                if (newEntity !== this._formEntityName) {
+                    this._columnMetadata = {};
+                }
+            }
+            this._formEntityName = newEntity;
+            this._formRecordId = newRecordId;
         }
 
         const data = this.collectData(context);
@@ -132,12 +299,14 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             designTime,
             theme,
             version: CONTROL_VERSION,
-            relatedMappings: titleMappings,
-            currentRecordMappings,
+            // Suppress all fetch pathways while authoring — sample data is already
+            // baked into `data` by readSlot, and the maker isn't bound to a real record.
+            relatedMappings: this._isAuthoringMode ? [] : titleMappings,
+            currentRecordMappings: this._isAuthoringMode ? [] : currentRecordMappings,
             currentRecordEntityType: this._formEntityName ?? undefined,
             currentRecordId: this._formRecordId ?? undefined,
-            fetchRelatedData: this.boundFetchRelatedData,
-            resolveRecordFields: (!designTime && this._formEntityName && this._formRecordId)
+            fetchRelatedData: this._isAuthoringMode ? undefined : this.boundFetchRelatedData,
+            resolveRecordFields: (!designTime && !this._isAuthoringMode && this._formEntityName && this._formRecordId)
                 ? this.boundResolveRecordFields : undefined,
             onOpenRecord,
             bindingDiagnostics,
@@ -161,7 +330,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const lat = latSlot && !latSlot.isEmpty ? Number(latSlot.rawValue) : null;
         const lng = lngSlot && !lngSlot.isEmpty ? Number(lngSlot.rawValue) : null;
 
-        return {
+        const data: InfoCardData = {
             title: this.readSlot(context, "titleField"),
             subtitles: this.readSlotGroup(context, SUBTITLE_KEYS),
             phones: this.readSlotGroup(context, PHONE_KEYS),
@@ -175,6 +344,79 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             tags: this.readSlotGroup(context, TAG_KEYS),
             imageUrl: null,
         };
+
+        // Apply standard layout preset for the form entity (if known) to slots the
+        // maker did not bind. Inserts placeholders into the data and registers the
+        // slot→column mapping so resolveRecordFieldsAsync resolves the value via the
+        // record fetch already in flight. Does not run in authoring mode (samples
+        // already cover unbound slots there).
+        if (!this._isAuthoringMode) {
+            this.applyPreset(context, data);
+        }
+
+        return data;
+    }
+
+    /**
+     * Fill unconfigured slots from SLOT_PRESETS for the current form entity. A slot
+     * is considered unconfigured if the maker did not set a `type` on the property
+     * (i.e. didn't bind a column or static value in the form designer). Configured
+     * slots are left untouched.
+     *
+     * The slot→column mapping is recorded in `_slotToColumn` so the existing
+     * resolveRecordFieldsAsync flow picks up labels and formatted values from the
+     * already-fetched form record. A placeholder SlotField is injected into the data
+     * so the slot has a render position; the override pass populates the actual value.
+     */
+    private applyPreset(
+        context: ComponentFramework.Context<IInputs>,
+        data: InfoCardData,
+    ): void {
+        const formEntity = this._formEntityName;
+        if (!formEntity) return;
+        const preset = SLOT_PRESETS[formEntity];
+        if (!preset) return;
+
+        for (const [slotKey, columnName] of Object.entries(preset)) {
+            if (!columnName) continue;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const param = (context.parameters as Record<string, any>)[slotKey];
+            const isMakerConfigured = !!(param && param.type && param.type !== "Unknown");
+            if (isMakerConfigured) continue;
+
+            // Reserve the slot→column mapping for resolveRecordFieldsAsync. Marker so
+            // we know this slot was preset-driven and should be hidden when empty even
+            // when hideEmpty=false (preset slots are speculative; don't show "---" rows
+            // for columns that turn out to have no data on this record).
+            this._slotToColumn[slotKey] = columnName;
+
+            const placeholder: SlotField = {
+                slotKey,
+                label: this.formatLogicalName(columnName),
+                value: "---",
+                rawValue: null,
+                isEmpty: true,
+                isPreset: true,
+            };
+
+            if (slotKey.startsWith("subtitleField")) {
+                if (!data.subtitles.some(s => s.slotKey === slotKey)) data.subtitles.push(placeholder);
+            } else if (slotKey.startsWith("phoneField")) {
+                if (!data.phones.some(s => s.slotKey === slotKey)) data.phones.push(placeholder);
+            } else if (slotKey.startsWith("detailField")) {
+                if (!data.details.some(s => s.slotKey === slotKey)) data.details.push(placeholder);
+            } else if (slotKey.startsWith("gridField")) {
+                if (!data.gridFields.some(s => s.slotKey === slotKey)) data.gridFields.push(placeholder);
+            } else if (slotKey.startsWith("tagField")) {
+                if (!data.tags.some(s => s.slotKey === slotKey)) data.tags.push(placeholder);
+            } else if (slotKey === "emailField" && !data.email) {
+                data.email = placeholder;
+            } else if (slotKey === "webField" && !data.web) {
+                data.web = placeholder;
+            } else if (slotKey === "addressField" && !data.address) {
+                data.address = placeholder;
+            }
+        }
     }
 
     private readSlotGroup(
@@ -197,16 +439,28 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     ): SlotField | null {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const param = (context.parameters as Record<string, any>)[key];
-        if (!param) return null;
+        if (!param) {
+            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (no param)");
+            return null;
+        }
 
         // Skip unconfigured properties (no type, no data, and no attributes)
         const hasAttributes = param.attributes && (param.attributes.DisplayName || param.attributes.LogicalName
             || param.attributes.displayName || param.attributes.logicalName);
-        if (!param.type && !hasAttributes && (param.raw === null || param.raw === undefined)) return null;
-        if (param.type === "Unknown") return null;
+        if (!param.type && !hasAttributes && (param.raw === null || param.raw === undefined)) {
+            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (unconfigured)");
+            return null;
+        }
+        if (param.type === "Unknown") {
+            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (type=Unknown)");
+            return null;
+        }
         // Attributes exist but have no identifying metadata and no type — field is not properly configured
         // Static input properties (static="true" in form XML) may have attributes={} but valid type and data
-        if (param.attributes && !hasAttributes && !param.type) return null;
+        if (param.attributes && !hasAttributes && !param.type) {
+            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (attrs without metadata, no type)");
+            return null;
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attrs = (param as Record<string, any>).attributes;
@@ -253,6 +507,29 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
         const formatted = param.formatted;
         const resolvedValue = this._resolvedValues[key]; // from WebAPI record fetch
+
+        // Authoring-mode (form-designer) sample injection.
+        // Substitutes deterministic sample data when the slot is configured but the
+        // designer can't supply a real value (raw=null, or @-prefix related-field
+        // placeholder that won't resolve without a real record). Returns early to
+        // bypass the rest of the formatting pipeline; no lookupId/lookupEntityType
+        // is set so useEffect won't fire WebAPI requests.
+        if (this._isAuthoringMode && param.type && param.type !== "Unknown") {
+            const isPlaceholder = raw === null || raw === undefined ||
+                (typeof raw === "string" && raw.startsWith("@"));
+            if (isPlaceholder) {
+                const sample = this.getDesignTimeSample(key, String(param.type));
+                if (sample) {
+                    return {
+                        slotKey: key,
+                        label,
+                        value: sample.value,
+                        rawValue: sample.raw,
+                        isEmpty: false,
+                    };
+                }
+            }
+        }
 
         let displayValue = "";
         let isEmpty = false;
@@ -331,7 +608,39 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             if (opt?.color) optionColor = opt.color;
         }
 
-        return {
+        // Pre-compute split date/time text for DateAndTime.DateAndTime fields so the renderer
+        // can stack them on two lines. Honors user locale formats via context.formatting.
+        // DateOnly fields skip timeText. Falls back to toLocaleDateString/toLocaleTimeString
+        // when context.formatting is unavailable (test harness).
+        let dateText: string | undefined;
+        let timeText: string | undefined;
+        if (!isEmpty && raw instanceof Date) {
+            const paramTypeStr = String(param.type ?? "");
+            const isDateOnly = paramTypeStr === "DateAndTime.DateOnly";
+            const isDateAndTime = paramTypeStr === "DateAndTime.DateAndTime";
+            if (isDateAndTime || isDateOnly) {
+                const fmt = (this.context as unknown as { formatting?: { formatDateShort?: (d: Date, includeTime?: boolean) => string; formatTime?: (d: Date, behavior?: number) => string } }).formatting;
+                try {
+                    dateText = fmt?.formatDateShort
+                        ? fmt.formatDateShort(raw, false)
+                        : raw.toLocaleDateString();
+                } catch {
+                    dateText = raw.toLocaleDateString();
+                }
+                if (isDateAndTime) {
+                    try {
+                        timeText = fmt?.formatTime
+                            ? fmt.formatTime(raw, 1 /* DateTimeFieldBehavior.UserLocal */)
+                            : raw.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+                    } catch {
+                        timeText = raw.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+                    }
+                }
+            }
+        }
+
+        const result: SlotField = {
+            slotKey: key,
             label,
             value: isEmpty ? "---" : displayValue,
             rawValue: raw,
@@ -339,7 +648,48 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             lookupEntityType,
             lookupId,
             optionColor,
+            dateText,
+            timeText,
         };
+
+        if (isSlotDebugEnabled()) {
+            // Uniform per-slot trace covering every group (header/contact/address/details/grid/tags).
+            // Keep payload small — full param dumps are noisy in mobile logs.
+            console.log("[InfoCard.readSlot]", key, {
+                type: param.type,
+                rawType: typeof raw,
+                isEmpty,
+                value: result.value,
+                lookupEntityType: result.lookupEntityType,
+                lookupId: result.lookupId,
+                hasFormatted: formatted != null,
+                hasResolved: resolvedValue != null,
+            });
+        }
+
+        return result;
+    }
+
+    /**
+     * Resolve a deterministic sample value for the form-designer preview.
+     * Slot-name semantic match (titleField → "Adventure Works") wins over
+     * type-based fallback so the preview reads like a real card rather than
+     * a row of generic "Sample text" entries. Returns null only when neither
+     * a slot override nor a type entry matches (caller treats that as "no sample").
+     */
+    private getDesignTimeSample(
+        key: string,
+        paramType: string,
+    ): { value: string; raw: unknown } | null {
+        const slotSample = SAMPLE_BY_SLOT[key];
+        if (slotSample !== undefined) {
+            return { value: slotSample, raw: slotSample };
+        }
+        const typeSample = SAMPLE_BY_TYPE[paramType];
+        if (typeSample) {
+            return typeSample;
+        }
+        return { value: "Sample", raw: "Sample" };
     }
 
     // ────────────────────────────────────────
@@ -422,7 +772,13 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 && !InfoCard.SYSTEM_COLUMNS.has(k)
             );
 
-            // For each bound slot without a resolved column, match by value
+            // For each bound slot without a resolved column, match by value.
+            // Plain numeric/boolean raws are too ambiguous to value-match (option-set integers,
+            // two-options, durations all collide across columns) and the prior "first match wins"
+            // behaviour produced silently-wrong column bindings. Skip them here — those slots rely
+            // on attributes.LogicalName already populated by readSlot, or remain unresolved.
+            // For non-numeric raws, only commit when exactly one column matches; multiple matches
+            // are a sign of ambiguity and we refuse rather than guess.
             for (const key of ALL_SLOT_KEYS) {
                 if (this._slotToColumn[key]) continue;
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -431,22 +787,25 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 const raw = param.raw;
                 if (raw === null || raw === undefined) continue;
                 if (typeof raw === "string" && raw.startsWith("@")) continue;
+                if (typeof raw === "number" || typeof raw === "boolean") continue;
 
+                const candidates: string[] = [];
                 for (const colName of columnNames) {
                     const colVal = rec[colName];
                     if (colVal === null || colVal === undefined) continue;
-
-                    if (this.valuesMatch(raw, colVal)) {
-                        this._slotToColumn[key] = colName;
-                        // Cache formatted value from WebAPI response
-                        const fmtKey = `${colName}@OData.Community.Display.V1.FormattedValue`;
-                        const fmtVal = rec[fmtKey]
-                            ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(colName) : null);
-                        if (fmtVal) {
-                            this._resolvedValues[key] = String(fmtVal);
-                        }
-                        break;
+                    if (this.valuesMatch(raw, colVal)) candidates.push(colName);
+                }
+                if (candidates.length === 1) {
+                    const colName = candidates[0];
+                    this._slotToColumn[key] = colName;
+                    const fmtKey = `${colName}@OData.Community.Display.V1.FormattedValue`;
+                    const fmtVal = rec[fmtKey]
+                        ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(colName) : null);
+                    if (fmtVal) {
+                        this._resolvedValues[key] = String(fmtVal);
                     }
+                } else if (candidates.length > 1) {
+                    console.warn(`[InfoCard] Ambiguous value match for slot ${key} (matched ${candidates.join(", ")}); not committing — bind the slot to a column directly to disambiguate.`);
                 }
             }
 
@@ -485,6 +844,20 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                     console.log("[InfoCard] Bound field labels:", Object.entries(this._slotToColumn)
                         .map(([k, col]) => `${k}→"${this._columnMetadata[col]?.displayName ?? col}"`).join(", "));
                 } catch { /* metadata is optional */ }
+            }
+
+            // Resolve formatted values from the fetched record for slots bound via
+            // attributes.LogicalName (readSlot populated _slotToColumn but didn't pull
+            // OData formatted values). Without this, attribute-bound numeric/option-set
+            // slots produce empty override values even though the record carried the label.
+            for (const [slotKey, colName] of Object.entries(this._slotToColumn)) {
+                if (this._resolvedValues[slotKey]) continue;
+                const fmtKey = `${colName}@OData.Community.Display.V1.FormattedValue`;
+                const fmtVal = rec[fmtKey]
+                    ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(colName) : null);
+                if (fmtVal) {
+                    this._resolvedValues[slotKey] = String(fmtVal);
+                }
             }
 
             // Resolve colors for lookup-based tag fields

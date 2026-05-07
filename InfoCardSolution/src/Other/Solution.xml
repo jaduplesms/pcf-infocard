@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ImportExportXml version="9.2.26034.167" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SolutionManifest>
-    <UniqueName>InfoCardTestSolution</UniqueName>
+    <UniqueName>InfoCardSample</UniqueName>
     <LocalizedNames>
-      <LocalizedName description="InfoCard Test Solution" languagecode="1033" />
+      <LocalizedName description="InfoCard (Sample)" languagecode="1033" />
     </LocalizedNames>
     <Descriptions>
-      <Description description="Test solution for the InfoCard PCF control on the Bookable Resource Booking form. Sample artifact — not for production use." languagecode="1033" />
+      <Description description="InfoCard PCF control (Sample) — a compact read-only info card for Dynamics 365 / Power Apps model-driven forms. Sample artifact, not a supported product. Re-namespace before production use." languagecode="1033" />
     </Descriptions>
-    <Version>4.0.0</Version>
+    <Version>4.0.0.0</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>Sample</UniqueName>
@@ -30,7 +30,6 @@
       </Addresses>
     </Publisher>
     <RootComponents>
-      <RootComponent type="1" schemaName="bookableresourcebooking" behavior="2" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>

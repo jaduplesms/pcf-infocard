@@ -35,3 +35,7 @@ debug_*.png
 EntityDefinitions_*.customization
 *.docx
 CLAUDE.md
+
+# Local Copilot CLI config
+agency.toml
+
