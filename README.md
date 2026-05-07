@@ -337,9 +337,9 @@ InfoCard/
 
 ---
 
-## Roadmap / TODO
+## Roadmap
 
-_(Roadmap currently empty — see git log for completed items.)_
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the prioritized list of v4.1, v4.2, v5, and documentation items. Issues and PRs welcome.
 
 ---
 
