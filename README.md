@@ -13,9 +13,6 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 
 > ⚠️ **This is a sample.** The control ships under the `Sample.InfoCard` namespace with publisher prefix `smp` so that it is obvious in your environment that this is reference code, not a vendor product. Before using in production, **re-namespace** the control to your own publisher (see [Re-namespacing for production](#re-namespacing-for-production)). No support, warranty, or SLA is offered.
 
-<!-- Screenshot placeholder -- add a screenshot of the control here -->
-<!-- ![InfoCard screenshot](docs/screenshot.png) -->
-
 ---
 
 ## Layouts at a glance
