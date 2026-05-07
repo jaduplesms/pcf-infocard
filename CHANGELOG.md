@@ -4,6 +4,13 @@ All notable changes to the InfoCard PCF control are documented in this file.
 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — v4.3.0 (in progress on `main`)
+
+### Added
+- **Show / hide detail icons** — new `showDetailIcons` config property (TwoOptions, default `true`). When `false`, the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, 📅 dates, etc.) on Smart and Contact detail rows is suppressed and only the value text renders. No effect on Compact layout (which uses label:value format).
+- **Detail label style** — new `detailLabelStyle` config property (Enum: `none` / `inline-bold` / `above`, default `none`). Lets the maker render the field's display name on Smart and Contact detail rows: `inline-bold` prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) so the row reads like prose; `above` renders the display name as a small caps heading on its own line above the value. Combine with `showDetailIcons=false` for plain-text section-style content. No effect on Compact layout.
+- 9 new unit tests covering icon suppression and all three label-style modes across Smart, Contact, and Compact layouts (plus the combined "prose-style" case with both options enabled).
+
 ## Unreleased — v4.2.0 (in progress on `main`)
 
 ### Added

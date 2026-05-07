@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard" version="4.2.0"
+  <control namespace="Sample" constructor="InfoCard" version="4.3.0"
            display-name-key="InfoCard"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -75,6 +75,16 @@
       <value name="body"      display-name-key="Body (Details + Grid)">body</value>
       <value name="body-tags" display-name-key="Body + Tags">body-tags</value>
       <value name="all"       display-name-key="All (Below Header)">all</value>
+    </property>
+    <property name="showDetailIcons" display-name-key="Show Detail Icons"
+              description-key="Show the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, etc.) on Smart and Contact detail rows. Set to false when the maker prefers plain text rows or has chosen to show field labels via Detail Label Style. Default true. No effect on Compact layout (which uses label:value format)."
+              of-type="TwoOptions" usage="input" required="false" />
+    <property name="detailLabelStyle" display-name-key="Detail Label Style"
+              description-key="How to render the field's display name on Smart and Contact detail rows. 'None' (default) shows only the value — current behaviour. 'Inline Bold' prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) — reads like prose. 'Above' renders the display name as a small caps heading on its own line above the value. No effect on Compact layout (which already shows labels)."
+              of-type="Enum" usage="input" required="false">
+      <value name="none"        display-name-key="None (Value Only)">none</value>
+      <value name="inline-bold" display-name-key="Inline Bold">inline-bold</value>
+      <value name="above"       display-name-key="Above (Heading)">above</value>
     </property>
 
     <!-- HEADER (1 bound + 3 subtitles + 1 image) -->

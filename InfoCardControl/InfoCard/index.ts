@@ -8,7 +8,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.1.0";
+const CONTROL_VERSION = "4.3.0";
 
 // Minimal shape of context.formatting we use. The PCF typings don't expose
 // formatInteger consistently across hosts, so we narrow it ourselves and
@@ -377,6 +377,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const titlePrefix = context.parameters.titlePrefix?.raw || undefined;
         const imageShape = (context.parameters.imageShape?.raw as "rounded" | "circle" | "square" | null) || "rounded";
         const collapsibleSections = (context.parameters.collapsibleSections?.raw as "none" | "body" | "body-tags" | "all" | null) || "body";
+        const showDetailIcons = context.parameters.showDetailIcons?.raw !== false; // default true
+        const detailLabelStyle = (context.parameters.detailLabelStyle?.raw as "none" | "inline-bold" | "above" | null) || "none";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const clientAny = (context as any).client;
         const formFactor: number | undefined = (() => {
@@ -428,6 +430,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             titlePrefix,
             imageShape,
             collapsibleSections,
+            showDetailIcons,
+            detailLabelStyle,
             formFactor,
             designTime,
             theme,

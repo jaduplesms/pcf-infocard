@@ -144,6 +144,10 @@ export interface InfoCardProps {
     imageShape?: "rounded" | "circle" | "square";
     /** Which sections collapse when the chevron is tapped. Default "body" (details + grid). "none" disables collapse entirely. */
     collapsibleSections?: "none" | "body" | "body-tags" | "all";
+    /** Show auto-detected leading icons on Smart/Contact detail rows. Default true. No effect on Compact. */
+    showDetailIcons?: boolean;
+    /** How to render the field's display name on Smart/Contact detail rows. Default "none". No effect on Compact. */
+    detailLabelStyle?: "none" | "inline-bold" | "above";
     /** Form factor from context.client.getFormFactor(): 0=mobile, 1=tablet, 2=web. Used to gate desktop-only affordances. */
     formFactor?: number;
     designTime?: boolean;
@@ -975,9 +979,13 @@ interface DetailRowsProps {
     latitude: number | null;
     longitude: number | null;
     strings: InfoCardStrings;
+    /** Show leading auto-detected icon. Default true. */
+    showIcons?: boolean;
+    /** How to render the field's display name. Default "none". */
+    labelStyle?: "none" | "inline-bold" | "above";
 }
 
-const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, latitude, longitude, strings }) => {
+const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, latitude, longitude, strings, showIcons = true, labelStyle = "none" }) => {
     const filtered = filterEmpty(details, hideEmpty);
     if (filtered.length === 0) return null;
 
@@ -986,9 +994,66 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {filtered.map((field, i) => {
-                const icon = guessDetailIcon(field, theme.textMuted);
+                const icon = showIcons ? guessDetailIcon(field, theme.textMuted) : null;
                 const isAddressLike = field.label.toLowerCase().includes("address") || field.label.toLowerCase().includes("location");
                 const showMapLink = isAddressLike && mapUrl;
+                const hasLabel = !!field.label && labelStyle !== "none";
+
+                const valueNode = showMapLink ? (
+                    <a
+                        href={mapUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: theme.brand, textDecoration: "none", cursor: "pointer" }}
+                        aria-label={formatTemplate(strings.actionOpenInMaps, String(field.value))}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <ValueOrShimmer field={field} theme={theme} width="60%" />
+                    </a>
+                ) : (
+                    <ValueOrShimmer field={field} theme={theme} width="80%" />
+                );
+
+                if (labelStyle === "above") {
+                    return (
+                        <div
+                            key={i}
+                            style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 8,
+                                padding: "4px 0",
+                                fontSize: 13,
+                                color: theme.textSecondary,
+                                lineHeight: "18px",
+                            }}
+                            title={field.label}
+                        >
+                            {icon && (
+                                <span style={{ flexShrink: 0, marginTop: 2 }}>{icon}</span>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                {hasLabel && (
+                                    <div
+                                        style={{
+                                            fontSize: 11,
+                                            fontWeight: 600,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.04em",
+                                            color: theme.textMuted,
+                                            marginBottom: 2,
+                                        }}
+                                    >
+                                        {field.label}
+                                    </div>
+                                )}
+                                <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                    {valueNode}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                }
 
                 return (
                     <div
@@ -1008,19 +1073,22 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                             <span style={{ flexShrink: 0, marginTop: 2 }}>{icon}</span>
                         )}
                         {showMapLink ? (
-                            <a
-                                href={mapUrl!}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: theme.brand, textDecoration: "none", cursor: "pointer" }}
-                                aria-label={formatTemplate(strings.actionOpenInMaps, String(field.value))}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <ValueOrShimmer field={field} theme={theme} width="60%" />
-                            </a>
+                            <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                {labelStyle === "inline-bold" && hasLabel && (
+                                    <span style={{ fontWeight: 600, color: theme.textPrimary }}>
+                                        {field.label}:{" "}
+                                    </span>
+                                )}
+                                {valueNode}
+                            </span>
                         ) : (
                             <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                <ValueOrShimmer field={field} theme={theme} width="80%" />
+                                {labelStyle === "inline-bold" && hasLabel && (
+                                    <span style={{ fontWeight: 600, color: theme.textPrimary }}>
+                                        {field.label}:{" "}
+                                    </span>
+                                )}
+                                {valueNode}
                             </span>
                         )}
                     </div>
@@ -1268,6 +1336,10 @@ interface LayoutProps {
     titlePrefix?: string;
     /** Avatar shape passed through to ImageAvatar. */
     imageShape?: "rounded" | "circle" | "square";
+    /** Show leading icons on detail rows. Smart/Contact only. */
+    showDetailIcons?: boolean;
+    /** Render field display name as inline-bold prefix or above-heading on detail rows. Smart/Contact only. */
+    detailLabelStyle?: "none" | "inline-bold" | "above";
     /** Form factor: 0=mobile, 1=tablet, 2=web. Plumbed to ContactRows for desktop-only copy buttons. */
     formFactor?: number;
 }
@@ -1285,7 +1357,7 @@ function shouldCollapseSection(
     }
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, formFactor }) => {
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, showDetailIcons, detailLabelStyle, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -1337,6 +1409,8 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                                 latitude={data.latitude}
                                 longitude={data.longitude}
                                 strings={strings}
+                                showIcons={showDetailIcons}
+                                labelStyle={detailLabelStyle}
                             />
                         </div>
                     )}
@@ -1362,7 +1436,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
 // Contact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, formFactor }) => {
+const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, showDetailIcons, detailLabelStyle, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
@@ -1411,6 +1485,8 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         latitude={data.latitude}
                         longitude={data.longitude}
                         strings={strings}
+                        showIcons={showDetailIcons}
+                        labelStyle={detailLabelStyle}
                     />
                 </div>
             )}
@@ -2006,6 +2082,8 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         subtitleSeparator: props.subtitleSeparator,
         titlePrefix: props.titlePrefix,
         imageShape: props.imageShape,
+        showDetailIcons: props.showDetailIcons,
+        detailLabelStyle: props.detailLabelStyle,
         formFactor: props.formFactor,
     };
 

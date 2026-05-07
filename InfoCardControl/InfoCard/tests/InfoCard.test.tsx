@@ -92,6 +92,8 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
     titlePrefix: overrides.titlePrefix,
     imageShape: overrides.imageShape,
     collapsibleSections: overrides.collapsibleSections,
+    showDetailIcons: overrides.showDetailIcons,
+    detailLabelStyle: overrides.detailLabelStyle,
     formFactor: overrides.formFactor,
   };
 }
@@ -1529,6 +1531,125 @@ describe("InfoCardComponent", () => {
       );
       const subtitleField2Entries = merged.subtitles.filter(s => s.slotKey === "subtitleField2");
       expect(subtitleField2Entries).toHaveLength(1);
+    });
+  });
+
+  // ── v4.3 features: showDetailIcons, detailLabelStyle ─────────────
+  describe("showDetailIcons", () => {
+    function detailData(): InfoCardData {
+      return makeData({
+        details: [
+          makeField({ label: "Instructions", value: "Access via back garden" }),
+          makeField({ label: "Summary", value: "Replace filter" }),
+        ],
+      });
+    }
+
+    it("renders leading icons by default on smart layout", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "smart", collapsibleSections: "none" })} />,
+      );
+      // guessDetailIcon emits an <svg> element inside the leading <span>.
+      const svgs = container.querySelectorAll("svg");
+      expect(svgs.length).toBeGreaterThan(0);
+    });
+
+    it("suppresses leading icons when showDetailIcons=false on smart layout", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "smart", showDetailIcons: false, collapsibleSections: "none" })} />,
+      );
+      // Detail values are still rendered…
+      expect(container.textContent).toContain("Access via back garden");
+      expect(container.textContent).toContain("Replace filter");
+      // …but no detail-icon <svg>s are present (chevron suppressed via collapsibleSections="none").
+      const svgs = container.querySelectorAll("svg");
+      expect(svgs.length).toBe(0);
+    });
+
+    it("suppresses leading icons when showDetailIcons=false on contact layout", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "contact", showDetailIcons: false, collapsibleSections: "none" })} />,
+      );
+      expect(container.textContent).toContain("Access via back garden");
+      const svgs = container.querySelectorAll("svg");
+      expect(svgs.length).toBe(0);
+    });
+  });
+
+  describe("detailLabelStyle", () => {
+    function detailData(): InfoCardData {
+      return makeData({
+        details: [
+          makeField({ label: "Instructions", value: "Access via back garden" }),
+        ],
+      });
+    }
+
+    it("does not render the field label by default", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "smart" })} />,
+      );
+      expect(container.textContent).toContain("Access via back garden");
+      // Default labelStyle="none" — no "Instructions" text is rendered as a label
+      expect(container.textContent).not.toContain("Instructions:");
+    });
+
+    it("renders bold inline 'Label: value' when detailLabelStyle='inline-bold' on smart layout", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "smart", detailLabelStyle: "inline-bold" })} />,
+      );
+      expect(container.textContent).toContain("Instructions:");
+      expect(container.textContent).toContain("Access via back garden");
+      // Find the bold span carrying the label
+      const boldLabel = Array.from(container.querySelectorAll("span"))
+        .find(s => s.textContent === "Instructions: " && s.style.fontWeight === "600");
+      expect(boldLabel).toBeDefined();
+    });
+
+    it("renders bold inline label on contact layout", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "contact", detailLabelStyle: "inline-bold" })} />,
+      );
+      expect(container.textContent).toContain("Instructions:");
+      expect(container.textContent).toContain("Access via back garden");
+    });
+
+    it("renders label as a heading above value when detailLabelStyle='above'", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "smart", detailLabelStyle: "above" })} />,
+      );
+      expect(container.textContent).toContain("Instructions");
+      expect(container.textContent).toContain("Access via back garden");
+      // The above-heading style uses uppercase + small font + 600 weight on its own line
+      const headingDiv = Array.from(container.querySelectorAll("div"))
+        .find(d => d.textContent === "Instructions"
+          && d.style.textTransform === "uppercase"
+          && d.style.fontWeight === "600");
+      expect(headingDiv).toBeDefined();
+    });
+
+    it("does not render labels on compact layout (compact already shows label:value)", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: detailData(), layout: "compact", detailLabelStyle: "inline-bold" })} />,
+      );
+      // Compact ignores the prop — its own label rendering is unchanged
+      expect(container.textContent).toContain("Access via back garden");
+    });
+
+    it("combines showDetailIcons=false with detailLabelStyle='inline-bold' for prose-style rows", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({
+          data: detailData(),
+          layout: "smart",
+          showDetailIcons: false,
+          detailLabelStyle: "inline-bold",
+          collapsibleSections: "none",
+        })} />,
+      );
+      expect(container.textContent).toContain("Instructions:");
+      expect(container.textContent).toContain("Access via back garden");
+      // No detail icons (and no chevron since collapsibleSections="none")
+      expect(container.querySelectorAll("svg").length).toBe(0);
     });
   });
 });
