@@ -16,6 +16,7 @@
       "address1_country": "United Kingdom",
       "address1_latitude": 51.5034,
       "address1_longitude": -0.1276,
+      "entityimage_url": "https://picsum.photos/seed/sarah-connor/96/96",
       "_parentcustomerid_value": "a1111111-1111-1111-1111-111111111111",
       "_parentcustomerid_value@OData.Community.Display.V1.FormattedValue": "Contoso Energy",
       "_parentcustomerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account"
@@ -36,6 +37,7 @@
       "address1_country": "United Kingdom",
       "address1_latitude": 51.5230,
       "address1_longitude": -0.0850,
+      "entityimage_url": "https://picsum.photos/seed/contoso-energy/96/96",
       "revenue": 125000,
       "numberofemployees": 250,
       "industrycode": 16,
