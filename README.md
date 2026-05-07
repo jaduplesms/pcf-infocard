@@ -21,7 +21,7 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 ## Key Features
 
 - **3 layout modes** -- Smart Card (collapsible), Contact Card (full), and Compact Form (dense grid)
-- **27 configurable slot properties** across 7 groups (config, header, contact, address, details, grid, tags)
+- **23 configurable slot properties** across 6 groups (header, contact, address, details, grid, tags), plus 6 config properties
 - **Related entity data** via `@fieldName` (1-hop) and `@lookup.field` (2-hop chaining)
 - **Bound field or static value** per property -- use `$columnName` for bound fields or enter a literal value
 - **Fluent UI theme integration** -- automatically adapts to Power Apps modern theming (light/dark mode)
@@ -36,9 +36,9 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 
 ## Slot Architecture
 
-InfoCard exposes 27 property slots organized into 7 groups. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
+InfoCard exposes 23 slot properties across 6 groups, plus 6 config properties. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
 
-### Config (4 properties)
+### Config (6 properties)
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -46,6 +46,8 @@ InfoCard exposes 27 property slots organized into 7 groups. Each slot can be bou
 | `hideEmptyFields` | TwoOptions | Hide fields with no value (default: true) |
 | `showCardBorder` | TwoOptions | Show card border and shadow (default: true) |
 | `showVersionInfo` | TwoOptions | Show version badge in bottom-right corner (default: false) |
+| `startExpanded` | TwoOptions | Smart layout only — start expanded vs. collapsed (default: true) |
+| `showTitle` | TwoOptions | Show title field in card header (default: true) |
 
 ### Header (4 properties)
 

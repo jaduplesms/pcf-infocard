@@ -2,11 +2,12 @@
 
 ## What this repo is
 
-A Power Apps PCF **virtual (React) control** that renders multiple read-only fields as a compact card on Dynamics 365 model-driven forms (primarily Field Service Mobile). Namespace `Sample`, constructor `InfoCard`, publisher prefix `cli`.
+A Power Apps PCF **virtual (React) control** that renders multiple read-only fields as a compact card on Dynamics 365 model-driven forms (primarily Field Service Mobile). Namespace `Sample`, constructor `InfoCard`, publisher prefix `smp`. Shipped as a **sample** — customers should re-namespace before production rollout (see README → "Re-namespacing for production").
 
-Two projects, one solution:
+Three projects:
 - `InfoCardControl/` — PCF control (TypeScript + React 16, Fluent UI 9 as platform libs)
-- `InfoCardSolution/` — Dataverse solution wrapper that packages the control into a `.zip`
+- `InfoCardSolution/` — clean shipping Dataverse solution wrapper (control-only, publisher `Sample` / prefix `smp`)
+- `InfoCardTestSolution/` — test wrapper with form bindings on `bookableresourcebooking` (development only, **not** for shipping)
 
 ## Commands
 
@@ -14,7 +15,7 @@ All from `InfoCardControl/` unless noted:
 
 ```bash
 npm install
-npm run build           # pcf-scripts build
+npm run build           # pcf-scripts build (also runs lint + typegen)
 npm run rebuild
 npm run start           # browser harness
 npm run lint            # eslint via pcf-scripts
@@ -27,20 +28,26 @@ npx jest -t "test name substring"                   # single test by name
 
 Solution build/deploy:
 ```bash
-cd InfoCardSolution && dotnet build --configuration Release
-pac solution import --path bin/Release/InfoCardSolution.zip --publish-changes
-# or push the control directly:
-pac pcf push --publisher-prefix cli
-```
+# Unmanaged (default — Solution.xml ships with <Managed>0</Managed>)
+cd InfoCardSolution && dotnet build /p:SolutionPackageType=Unmanaged
+#   → InfoCardSolution/bin/Debug/InfoCardSolution.zip
 
-`pac` auth profile in use: `jaduples@DynamicsFastTrack.onmicrosoft.com` → `jaduplesft.crm11.dynamics.com`.
+# Managed: flip <Managed>0</Managed> → <Managed>1</Managed> in src/Other/Solution.xml first
+dotnet build /p:SolutionPackageType=Managed
+
+# Or push the control directly during dev
+pac pcf push --publisher-prefix smp
+
+# Import to a Dataverse environment
+pac solution import --path bin/Debug/InfoCardSolution.zip --publish-changes
+```
 
 **Always bump `version` in `ControlManifest.Input.xml` before `pac pcf push`** — Field Service Mobile caches aggressively.
 
 ## Architecture (the parts you must read multiple files to grok)
 
 ### Slot system
-`ControlManifest.Input.xml` is the source of truth. It declares ~27 typed property slots in groups (header, contact, address, details, grid, tags) plus config props (`layout`, `hideEmptyFields`, `showCardBorder`, `showVersionInfo`). Makers bind columns to slots in the form designer — slot **name** determines rendering role. All zones auto-hide when empty. `layout` selects one of three React renderers (`SmartCardLayout`, `ContactCardLayout`, `CompactFormLayout`) in `InfoCard.tsx` — they share the same five zones with different visual treatment.
+`ControlManifest.Input.xml` is the source of truth. It declares 23 typed property slots in groups (header, contact, address, details, grid, tags) plus 6 config props (`layout`, `hideEmptyFields`, `showCardBorder`, `showVersionInfo`, `startExpanded`, `showTitle`). Makers bind columns to slots in the form designer — slot **name** determines rendering role. All zones auto-hide when empty. `layout` selects one of three React renderers (`SmartCardLayout`, `ContactCardLayout`, `CompactFormLayout`) in `InfoCard.tsx` — they share the same five zones with different visual treatment.
 
 ### Data flow (Form XML → React)
 1. `Customizations.xml` configures each property either column-bound (`<slot type="…">column</slot>`) or static (`<slot type="…" static="true">literal</slot>`).

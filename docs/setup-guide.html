@@ -395,14 +395,15 @@
   <h3 style="font-size: 15px; margin-top: 16px;">Option A &mdash; Direct push (development)</h3>
   <div class="code-block"><span class="cmt"># From the InfoCardControl directory</span>
 <span class="kw">cd</span> InfoCardControl
-<span class="fn">pac pcf push</span> <span class="str">--publisher-prefix cli</span></div>
-  <p>This pushes the control directly to your connected Dataverse environment. Use <code>pac auth list</code> to verify your target org.</p>
+<span class="fn">pac pcf push</span> <span class="str">--publisher-prefix smp</span></div>
+  <p>This pushes the control directly to your connected Dataverse environment. Use <code>pac auth list</code> to verify your target org. Replace <code>smp</code> with your own publisher prefix when re-namespacing for production.</p>
 
   <h3 style="font-size: 15px; margin-top: 16px;">Option B &mdash; Solution import (production)</h3>
   <ol class="steps">
-    <li>Build the solution: <code>msbuild /t:build /restore /p:configuration=Release</code> from the <code>InfoCardSolution</code> directory.</li>
+    <li>Build the unmanaged zip: <code>dotnet build /p:SolutionPackageType=Unmanaged</code> from the <code>InfoCardSolution</code> directory. Output: <code>InfoCardSolution/bin/Debug/InfoCardSolution.zip</code>.</li>
+    <li>For a managed zip, flip <code>&lt;Managed&gt;0&lt;/Managed&gt;</code> to <code>1</code> in <code>src/Other/Solution.xml</code>, then rerun with <code>/p:SolutionPackageType=Managed</code>.</li>
     <li>Navigate to <strong>make.powerapps.com</strong> &rarr; Solutions &rarr; Import.</li>
-    <li>Upload the <code>.zip</code> from <code>InfoCardSolution/bin/Release/</code>.</li>
+    <li>Upload the <code>.zip</code> from <code>InfoCardSolution/bin/Debug/</code>.</li>
     <li>Publish all customizations after import completes.</li>
   </ol>
 

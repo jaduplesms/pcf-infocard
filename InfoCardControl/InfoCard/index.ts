@@ -1454,7 +1454,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     /** Convert Dataverse logical name to readable label: "msdyn_workordertype" → "Work Order Type" */
     private formatLogicalName(logicalName: string): string {
         return logicalName
-            .replace(/^(msdyn_|new_|cr[a-z0-9]+_|ukf_|jdp_|cli_)/, "")
+            .replace(/^(msdyn_|new_|cr[a-z0-9]+_|ukf_|jdp_|cli_|smp_)/, "")
             .replace(/_/g, " ")
             .replace(/([a-z])([A-Z])/g, "$1 $2")
             .replace(/\b\w/g, c => c.toUpperCase())
