@@ -18,6 +18,15 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 
 ---
 
+## Layouts at a glance
+
+| Smart Card | Contact Card | Compact Form |
+|:---:|:---:|:---:|
+| <img src="docs/images/layout-smart.png" alt="Smart Card layout" width="260"> | <img src="docs/images/layout-contact.png" alt="Contact Card layout" width="260"> | <img src="docs/images/layout-compact.png" alt="Compact Form layout" width="260"> |
+| Collapsible card with action bar, 2-col grid and detail rows | Default. Icon action buttons, icon+text detail rows, tag chips | Section labels and label:value rows that preserve the form feel |
+
+---
+
 ## Key Features
 
 - **3 layout modes** -- Smart Card (collapsible), Contact Card (full), and Compact Form (dense grid)
