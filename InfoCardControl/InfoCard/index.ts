@@ -79,7 +79,7 @@ const GRID_KEYS = [
 ] as const;
 const TAG_KEYS = ["tagField1", "tagField2", "tagField3"] as const;
 const ALL_SLOT_KEYS = [
-    "titleField", ...SUBTITLE_KEYS, ...PHONE_KEYS, "emailField", "webField",
+    "titleField", "imageField", ...SUBTITLE_KEYS, ...PHONE_KEYS, "emailField", "webField",
     "addressField", "latitudeField", "longitudeField",
     ...DETAIL_KEYS, ...GRID_KEYS, ...TAG_KEYS,
 ];
@@ -105,6 +105,7 @@ const SAMPLE_DATE = new Date(2026, 0, 15, 9, 30, 0, 0);
 // PCF type so the maker preview looks like a real card, not a row of "42"s.
 const SAMPLE_BY_SLOT: Record<string, string> = {
     titleField: "Adventure Works",
+    imageField: "",
     subtitleField1: "Primary Contact",
     subtitleField2: "Active",
     subtitleField3: "Premium",
@@ -148,6 +149,7 @@ const SAMPLE_BY_TYPE: Record<string, { value: string; raw: unknown }> = {
 // Friendly names for slot keys in diagnostics
 const SLOT_LABELS: Record<string, string> = {
     titleField: "Title", subtitleField1: "Subtitle 1", subtitleField2: "Subtitle 2", subtitleField3: "Subtitle 3",
+    imageField: "Image / Avatar",
     phoneField1: "Phone 1", phoneField2: "Phone 2", emailField: "Email", webField: "Website",
     addressField: "Address", latitudeField: "Latitude", longitudeField: "Longitude",
     detailField1: "Detail 1", detailField2: "Detail 2", detailField3: "Detail 3",
@@ -192,6 +194,7 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
     account: {
         subtitleField1: "primarycontactid",
         subtitleField2: "industrycode",
+        imageField: "entityimage_url",
         phoneField1: "telephone1",
         phoneField2: "telephone2",
         emailField: "emailaddress1",
@@ -202,6 +205,7 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
     contact: {
         subtitleField1: "jobtitle",
         subtitleField2: "parentcustomerid",
+        imageField: "entityimage_url",
         phoneField1: "mobilephone",
         phoneField2: "telephone1",
         emailField: "emailaddress1",
@@ -458,6 +462,11 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const lat = latSlot && !latSlot.isEmpty ? Number(latSlot.rawValue) : null;
         const lng = lngSlot && !lngSlot.isEmpty ? Number(lngSlot.rawValue) : null;
 
+        const imageSlot = this.readSlot(context, "imageField");
+        const imageUrl = (imageSlot && !imageSlot.isEmpty && typeof imageSlot.rawValue === "string" && imageSlot.rawValue.length > 0)
+            ? imageSlot.rawValue
+            : null;
+
         const data: InfoCardData = {
             title: this.readSlot(context, "titleField"),
             subtitles: this.readSlotGroup(context, SUBTITLE_KEYS),
@@ -470,7 +479,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             details: this.readSlotGroup(context, DETAIL_KEYS),
             gridFields: this.readSlotGroup(context, GRID_KEYS),
             tags: this.readSlotGroup(context, TAG_KEYS),
-            imageUrl: null,
+            imageUrl,
         };
 
         // Apply standard layout preset for the form entity (if known) to slots the

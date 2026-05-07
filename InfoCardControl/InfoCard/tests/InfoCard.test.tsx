@@ -987,6 +987,65 @@ describe("InfoCardComponent", () => {
       expect(img).not.toBeNull();
       expect(img!.getAttribute("src")).toBe("https://example.com/photo.jpg");
     });
+
+    it("renders initials fallback when imageUrl is null (smart layout)", () => {
+      const data = makeData({
+        title: { label: "Name", value: "Adventure Works", rawValue: "Adventure Works", isEmpty: false },
+        imageUrl: null,
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      expect(container.querySelector("img")).toBeNull();
+      // Initials "AW" computed from first + last word
+      expect(container.textContent).toContain("AW");
+    });
+
+    it("renders initials fallback in contact layout", () => {
+      const data = makeData({
+        title: { label: "Name", value: "Jane Doe", rawValue: "Jane Doe", isEmpty: false },
+        imageUrl: null,
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
+      );
+      expect(container.querySelector("img")).toBeNull();
+      expect(container.textContent).toContain("JD");
+    });
+
+    it("does not render avatar in compact layout", () => {
+      const data = makeData({
+        title: { label: "Name", value: "Adventure Works", rawValue: "Adventure Works", isEmpty: false },
+        imageUrl: "https://example.com/photo.jpg",
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact" })} />,
+      );
+      expect(container.querySelector("img")).toBeNull();
+    });
+
+    it("uses title text as alt attribute on avatar img", () => {
+      const data = makeData({
+        title: { label: "Name", value: "Acme Corp", rawValue: "Acme Corp", isEmpty: false },
+        imageUrl: "https://example.com/photo.jpg",
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      const img = container.querySelector("img");
+      expect(img!.getAttribute("alt")).toBe("Acme Corp");
+    });
+
+    it("uses first two characters when title is a single word", () => {
+      const data = makeData({
+        title: { label: "Name", value: "Microsoft", rawValue: "Microsoft", isEmpty: false },
+        imageUrl: null,
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      expect(container.textContent).toContain("MI");
+    });
   });
 
   // ── Compact layout specifics ──────────

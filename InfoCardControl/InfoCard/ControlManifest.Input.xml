@@ -59,10 +59,13 @@
               description-key="Separator rendered between subtitle parts in the card header. Defaults to a middle dot (·). Set to e.g. ' | ' or ' — ' to taste."
               of-type="SingleLine.Text" usage="input" required="false" />
 
-    <!-- HEADER (1 bound + 3 subtitles) -->
+    <!-- HEADER (1 bound + 3 subtitles + 1 image) -->
     <property name="titleField" display-name-key="Title"
               description-key="Main heading. Bind to the record's primary name column (e.g. account.name, msdyn_workorder.msdyn_name). When bound to a lookup column, related-field syntax (@column) on other slots fetches from the lookup target."
               of-type-group="fieldTypes" usage="bound" required="true" />
+    <property name="imageField" display-name-key="Image / Avatar"
+              description-key="Optional avatar shown left of the title (Smart and Contact layouts). Bind to a column that returns an image URL — typically entityimage_url, or @entityimage_url to pull from a related lookup. When empty or unbound, falls back to initials computed from the title."
+              of-type="SingleLine.Text" usage="input" required="false" />
     <property name="subtitleField1" display-name-key="Subtitle 1"
               description-key="Shown under title, dot-separated. Bind a column (e.g. jobtitle) or use @column to pull from the title's lookup target (e.g. @msdyn_serviceaccount)."
               of-type-group="fieldTypes" usage="input" required="false" />

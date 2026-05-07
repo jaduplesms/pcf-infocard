@@ -642,6 +642,13 @@ export function mergeRelatedFields(
 
         if (target === "addressField") {
             merged.address = fetchedWithKey;
+        } else if (target === "imageField") {
+            const url = (typeof fetchedWithKey.rawValue === "string" && fetchedWithKey.rawValue.length > 0)
+                ? fetchedWithKey.rawValue
+                : (typeof fetchedWithKey.value === "string" && fetchedWithKey.value.length > 0 && fetchedWithKey.value !== "---")
+                    ? fetchedWithKey.value
+                    : null;
+            if (url) merged.imageUrl = url;
         } else if (target === "phoneField1" || target === "phoneField2") {
             placeBySlotKey(merged.phones, target, "phoneField", fetchedWithKey);
         } else if (target === "emailField") {
@@ -1107,22 +1114,64 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
 interface ImageProps {
     imageUrl: string | null;
     title: string;
+    theme: InfoCardTheme;
+    showInitialsFallback?: boolean;
 }
 
-const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title }) => {
-    if (!imageUrl) return null;
+function getInitials(title: string): string {
+    if (!title) return "";
+    const parts = title.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitialsFallback }) => {
+    const [imgError, setImgError] = React.useState(false);
+    const onError = React.useCallback(() => setImgError(true), []);
+    React.useEffect(() => { setImgError(false); }, [imageUrl]);
+
+    const showImage = !!imageUrl && !imgError;
+    const initials = getInitials(title);
+    const showFallback = !showImage && !!showInitialsFallback && initials.length > 0;
+
+    if (!showImage && !showFallback) return null;
+
+    const baseStyle: React.CSSProperties = {
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        flexShrink: 0,
+    };
+
+    if (showImage) {
+        return (
+            <img
+                src={imageUrl as string}
+                alt={title || ""}
+                onError={onError}
+                style={{ ...baseStyle, objectFit: "cover" }}
+            />
+        );
+    }
+
     return (
-        <img
-            src={imageUrl}
-            alt={title}
+        <div
+            aria-hidden="true"
             style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                objectFit: "cover",
-                flexShrink: 0,
+                ...baseStyle,
+                background: theme.brand,
+                color: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: 600,
+                letterSpacing: 0.5,
             }}
-        />
+        >
+            {initials}
+        </div>
     );
 };
 
@@ -1203,7 +1252,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
         <div>
             {/* Header row with image, title, subtitles, and chevron */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
+                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
                 </div>
@@ -1276,7 +1325,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
         <div>
             {/* Header row with image */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
+                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
                 </div>
@@ -1355,13 +1404,8 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
     return (
         <div>
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
-                </div>
-            </div>
+            {/* Header — Compact omits avatar to preserve dense form-feel */}
+            <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
 
             {/* Contact section */}
             {hasContact && (
@@ -1723,6 +1767,10 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                 };
             }),
         };
+        const imageOv = recordOverrides["imageField"];
+        if (imageOv && imageOv.value && !displayData.imageUrl) {
+            displayData = { ...displayData, imageUrl: imageOv.value };
+        }
     }
 
     // Hide preset-populated slots that remain empty after the override pass — they

@@ -26,6 +26,7 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
   - Decorative entity icons inside subtitle rows marked `aria-hidden="true"`.
 - **CI workflow** (`.github/workflows/ci.yml`) — every PR and push to `main` runs `npm ci`, lint, build, and the full Jest suite on Node 18.
 - 15 new unit tests covering localized strings, locale-aware duration, keyboard a11y, the configurable subtitle separator, and copy-to-clipboard behaviour across form factors.
+- **Image / Avatar slot** in the card header. New `imageField` (`SingleLine.Text`, optional input) accepts an entity image URL (`entityimage_url`), a regular URL column, or `@`-syntax to pull from a related lookup. Renders as a 40 px circular avatar to the left of the title in Smart and Contact layouts; falls back to initials computed from the title when the URL is empty or fails to load. Compact layout omits the avatar to preserve dense form-feel. `account` and `contact` presets now bind `imageField → entityimage_url` automatically.
 
 ### Changed
 - `CONTROL_VERSION` constant in `index.ts` bumped from `4.0.0` to `4.1.0` to match the manifest.
