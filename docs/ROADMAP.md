@@ -30,6 +30,17 @@ Features anticipated from typical Field Service / model-driven app feedback.
 | 7 | **Copy-to-clipboard** affordance on phone / email / address rows (desktop). | S | ✅ done |
 | 8 | **Configurable subtitle separator** (currently hardcoded `·`). | XS | ✅ done |
 | 9 | **Telemetry hook** — optional callback prop so customers can wire fetch failures and render-time metrics to Application Insights. | M | |
+| 17 | **Distance to record (URS-aware)** — show how far the technician (or project resource) is from the record's address. Layered provider: when online and Universal Resource Scheduling is installed, call `msdyn_RetrieveDistanceMatrix` for true routing distance + ETA from the org's configured geospatial provider (Bing / Azure Maps / customer-registered plugin per [URS docs](https://learn.microsoft.com/en-us/dynamics365/common-scheduler/developer/use-preferred-geospatial-data-provider)); fall back to client-side haversine straight-line when offline, when URS isn't installed (e.g. Sales / Customer Service / Power Pages tenants), or when `webAPI.execute` is unavailable (canvas apps). Origin = technician device geolocation via `context.device.getCurrentPosition()` (with `navigator.geolocation` fallback for harness). Destination = existing `latitudeField` / `longitudeField` slots — no new slots needed. New config props: `showDistance` (TwoOptions), `distanceMode` (auto / straight-line / routing-only), `distanceUnit` (auto / km / mi). Display: small chip next to the map link in the contact bar — `🚗 12 km · 18 min` (routing) vs `📍 ~ 8 km away` (straight-line) so users can tell which signal they're seeing. Caches geolocation 2 min and routing results 5 min (keyed on origin/destination coord pair, module-scoped so multiple cards on a form share results). Hides silently on permission denied, missing destination coords, or service-protection limit hit. New resx keys (`Distance_Driving`, `Distance_StraightLine`, `Distance_Unit_Km`, `Distance_Unit_Mi`, `Distance_Unit_Min`) across all 7 locales. | M | |
+
+## v4.3 — Distance follow-ups
+
+Built on v4.2 #17 once shipped.
+
+| # | Item | Effort | Status |
+|---|------|--------|--------|
+| 18 | **Static origin** — optional `originLatitudeField` / `originLongitudeField` slots so the origin can be a depot / dispatch hub / project resource home location instead of (or alongside) the technician's device geolocation. | S | |
+| 19 | **Geocode destination from address text** — when `latitudeField` / `longitudeField` are unbound but `addressField` is, call `msdyn_GeocodeAddress` (URS companion to `msdyn_RetrieveDistanceMatrix`, same provider abstraction) to resolve coordinates server-side. Removes the dependency on customers pre-populating lat/lng. | S | |
+| 20 | **Live distance update on move** — `watchPosition` instead of one-shot, with a battery-friendly throttle (refresh only when the technician has moved >100 m). | M | |
 
 ## v5 — Architectural
 
