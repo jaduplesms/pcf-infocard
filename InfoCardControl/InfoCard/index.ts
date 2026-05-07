@@ -374,6 +374,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const showTitle = context.parameters.showTitle?.raw !== false; // default true
         const startExpanded = context.parameters.startExpanded?.raw !== false; // default true
         const subtitleSeparator = context.parameters.subtitleSeparator?.raw || undefined;
+        const titlePrefix = context.parameters.titlePrefix?.raw || undefined;
+        const imageShape = (context.parameters.imageShape?.raw as "rounded" | "circle" | "square" | null) || "rounded";
+        const collapsibleSections = (context.parameters.collapsibleSections?.raw as "none" | "body" | "body-tags" | "all" | null) || "body";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const clientAny = (context as any).client;
         const formFactor: number | undefined = (() => {
@@ -422,6 +425,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             showTitle,
             startExpanded,
             subtitleSeparator,
+            titlePrefix,
+            imageShape,
+            collapsibleSections,
             formFactor,
             designTime,
             theme,

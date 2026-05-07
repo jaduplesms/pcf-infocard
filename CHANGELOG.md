@@ -4,6 +4,18 @@ All notable changes to the InfoCard PCF control are documented in this file.
 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased — v4.2.0 (in progress on `main`)
+
+### Added
+- **Configurable collapsible sections** — new `collapsibleSections` enum config property lets makers choose what disappears when the card collapses: `none` (collapse disabled, no chevron), `body` (details + grid — default, preserves prior Smart-layout behaviour), `body-tags` (details + grid + tags), or `all` (everything below the header — contact rows, body, and tags). Applies to all three layouts; Contact and Compact layouts gain the chevron + whole-card click-to-toggle for the first time when set to anything other than `none`.
+- **Title prefix** — new `titlePrefix` config property (`SingleLine.Text`). Renders a muted-colour literal before the title text (e.g. `Case: ACME-001`, `Work Order: WO-12345`). Useful when the form section header doesn't already announce the record type. Plain literal — no template syntax.
+- **Image shape** — new `imageShape` enum config property (`rounded` | `circle` | `square`, default `rounded`). Default changed from circle to rounded rectangle (8 px radius), which preserves entity logos (account, asset) and people photos equally well. Initials fallback follows the same shape.
+- 12 new unit tests covering the three v4.2 features (titlePrefix, imageShape variants, collapsibleSections across all three layouts and all four modes).
+
+### Changed
+- **Avatar default shape**: rounded rectangle (8 px) instead of circle. Set `imageShape="circle"` to restore prior look.
+- **No initials placeholder when `imageField` is unbound or empty.** Previously, leaving `imageField` blank rendered a coloured square with the record's initials. Now: no avatar renders at all unless an image URL is supplied. Initials still serve as the **fallback** when a supplied URL fails to load (e.g. 404). This matches customer expectation that "no image configured = no avatar."
+
 ## Unreleased — v4.1.0 (in progress on `main`)
 
 ### Added

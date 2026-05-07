@@ -138,6 +138,12 @@ export interface InfoCardProps {
     startExpanded: boolean;
     /** Separator string rendered between subtitle parts. Default "·" (middle dot). */
     subtitleSeparator?: string;
+    /** Optional muted-colour prefix rendered before the title (e.g. "Case: ", "Work Order: "). */
+    titlePrefix?: string;
+    /** Avatar / image shape. Default "rounded" (rounded rect). */
+    imageShape?: "rounded" | "circle" | "square";
+    /** Which sections collapse when the chevron is tapped. Default "body" (details + grid). "none" disables collapse entirely. */
+    collapsibleSections?: "none" | "body" | "body-tags" | "all";
     /** Form factor from context.client.getFormFactor(): 0=mobile, 1=tablet, 2=web. Used to gate desktop-only affordances. */
     formFactor?: number;
     designTime?: boolean;
@@ -685,9 +691,11 @@ interface HeaderProps {
     strings: InfoCardStrings;
     /** Separator string rendered between subtitle parts. Default "·" (middle dot). */
     subtitleSeparator?: string;
+    /** Muted-colour prefix rendered immediately before the title text (e.g. "Case: "). */
+    titlePrefix?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator }) => {
+const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator, titlePrefix }) => {
     const title = data.title;
     if (!title || (!designTime && title.isEmpty)) return null;
 
@@ -721,6 +729,9 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                     aria-label={titleCanOpen ? formatTemplate(strings.actionOpenRecord, String(title.value)) : undefined}
                     title={title.label}
                 >
+                    {titlePrefix && (
+                        <span style={{ color: theme.textMuted, fontWeight: 500 }}>{titlePrefix}</span>
+                    )}
                     {title.value}
                 </div>
             )}
@@ -1116,6 +1127,18 @@ interface ImageProps {
     title: string;
     theme: InfoCardTheme;
     showInitialsFallback?: boolean;
+    /** Avatar shape. Default "rounded" (rounded rect). */
+    shape?: "rounded" | "circle" | "square";
+}
+
+/** Border radius for the avatar container per shape preference. */
+function avatarBorderRadius(shape: "rounded" | "circle" | "square" | undefined): string | number {
+    switch (shape) {
+        case "circle": return "50%";
+        case "square": return 0;
+        case "rounded":
+        default: return 8;
+    }
 }
 
 function getInitials(title: string): string {
@@ -1126,21 +1149,23 @@ function getInitials(title: string): string {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitialsFallback }) => {
+const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitialsFallback, shape }) => {
     const [imgError, setImgError] = React.useState(false);
     const onError = React.useCallback(() => setImgError(true), []);
     React.useEffect(() => { setImgError(false); }, [imageUrl]);
 
     const showImage = !!imageUrl && !imgError;
     const initials = getInitials(title);
-    const showFallback = !showImage && !!showInitialsFallback && initials.length > 0;
+    // Only show initials fallback when an image URL was supplied but failed to load.
+    // If no image URL at all, render nothing — don't fabricate a placeholder.
+    const showFallback = !!imageUrl && imgError && !!showInitialsFallback && initials.length > 0;
 
     if (!showImage && !showFallback) return null;
 
     const baseStyle: React.CSSProperties = {
         width: 40,
         height: 40,
-        borderRadius: "50%",
+        borderRadius: avatarBorderRadius(shape),
         flexShrink: 0,
     };
 
@@ -1231,32 +1256,55 @@ interface LayoutProps {
     startExpanded?: boolean;
     designTime?: boolean;
     onOpenRecord?: (entityType: string, id: string) => void;
-    /** Smart-layout collapse state, controlled by parent so the whole card surface can toggle. */
+    /** Card collapse state, controlled by parent so the whole card surface can toggle. */
     collapsed?: boolean;
+    /** True when the card should render the chevron + clickable surface for this layout. */
+    isCollapsible?: boolean;
+    /** Which sections actually disappear when collapsed. Default "body". */
+    collapsibleSections?: "none" | "body" | "body-tags" | "all";
     strings: InfoCardStrings;
     subtitleSeparator?: string;
+    /** Muted-colour title prefix passed through to Header. */
+    titlePrefix?: string;
+    /** Avatar shape passed through to ImageAvatar. */
+    imageShape?: "rounded" | "circle" | "square";
     /** Form factor: 0=mobile, 1=tablet, 2=web. Plumbed to ContactRows for desktop-only copy buttons. */
     formFactor?: number;
 }
 
-const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, strings, subtitleSeparator, formFactor }) => {
+/** Returns true when `section` should disappear when the card is collapsed, given the maker setting. */
+function shouldCollapseSection(
+    setting: "none" | "body" | "body-tags" | "all" | undefined,
+    section: "contact" | "body" | "tags",
+): boolean {
+    switch (setting ?? "body") {
+        case "none": return false;
+        case "body": return section === "body";
+        case "body-tags": return section === "body" || section === "tags";
+        case "all": return true;
+    }
+}
+
+const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
     const tags = filterEmpty(data.tags, effectiveHideEmpty);
 
     const hasBody = details.length > 0 || gridFields.length > 0;
-    const hasCollapsible = hasBody;
+    const hideContact = collapsed && shouldCollapseSection(collapsibleSections, "contact");
+    const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
+    const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
 
     return (
         <div>
             {/* Header row with image, title, subtitles, and chevron */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} />
+                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} shape={imageShape} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
                 </div>
-                {hasCollapsible && (
+                {isCollapsible && (
                     <div
                         style={{
                             padding: 4,
@@ -1272,13 +1320,14 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                 )}
             </div>
 
-            {/* Contact section — ALWAYS visible */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
+            {/* Contact section */}
+            {!hideContact && (
+                <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
+            )}
 
-            {/* Collapsible body */}
-            {!collapsed && hasBody && (
+            {/* Body (details + grid) */}
+            {!hideBody && hasBody && (
                 <div style={{ marginTop: 8 }}>
-                    {/* Detail rows */}
                     {details.length > 0 && (
                         <div style={{ marginBottom: gridFields.length > 0 ? 8 : 0 }}>
                             <DetailRows
@@ -1291,8 +1340,6 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                             />
                         </div>
                     )}
-
-                    {/* Grid fields */}
                     {gridFields.length > 0 && (
                         <div style={{ marginTop: details.length > 0 ? 0 : 0 }}>
                             <GridFields fields={data.gridFields} theme={theme} hideEmpty={hideEmpty} />
@@ -1301,8 +1348,8 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
                 </div>
             )}
 
-            {/* Tags — ALWAYS visible */}
-            {tags.length > 0 && (
+            {/* Tags */}
+            {!hideTags && tags.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                     <Tags tags={data.tags} theme={theme} hideEmpty={hideEmpty} />
                 </div>
@@ -1315,27 +1362,47 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
 // Contact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator, formFactor }) => {
+const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
     const tags = filterEmpty(data.tags, effectiveHideEmpty);
 
+    const hideContact = collapsed && shouldCollapseSection(collapsibleSections, "contact");
+    const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
+    const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
+
     return (
         <div>
             {/* Header row with image */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} />
+                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} shape={imageShape} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
+                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
                 </div>
+                {isCollapsible && (
+                    <div
+                        style={{
+                            padding: 4,
+                            flexShrink: 0,
+                            transition: "transform 0.2s ease",
+                            transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                            pointerEvents: "none",
+                        }}
+                        aria-hidden="true"
+                    >
+                        <ChevronDown size={12} color={theme.textMuted} />
+                    </div>
+                )}
             </div>
 
             {/* Contact section */}
-            <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
+            {!hideContact && (
+                <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
+            )}
 
             {/* Detail rows */}
-            {details.length > 0 && (
+            {!hideBody && details.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                     <DetailRows
                         details={data.details}
@@ -1349,14 +1416,14 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             )}
 
             {/* Grid fields */}
-            {gridFields.length > 0 && (
+            {!hideBody && gridFields.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                     <GridFields fields={data.gridFields} theme={theme} hideEmpty={hideEmpty} />
                 </div>
             )}
 
             {/* Tags */}
-            {tags.length > 0 && (
+            {!hideTags && tags.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                     <Tags tags={data.tags} theme={theme} hideEmpty={hideEmpty} />
                 </div>
@@ -1369,7 +1436,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 // Compact Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, strings, subtitleSeparator, formFactor }) => {
+const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const phones = filterEmpty(data.phones, effectiveHideEmpty);
     const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
@@ -1382,6 +1449,13 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     const hasContact = phones.length > 0 || email || web || address;
     const hasDetails = gridFields.length > 0;
     const hasInfo = details.length > 0;
+
+    const hideContact = collapsed && shouldCollapseSection(collapsibleSections, "contact");
+    const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
+    const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
+
+    // formFactor not used by Compact today, but kept in signature for parity.
+    void formFactor;
 
     const sectionHeaderStyle: React.CSSProperties = {
         fontSize: 10,
@@ -1404,11 +1478,32 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
     return (
         <div>
-            {/* Header — Compact omits avatar to preserve dense form-feel */}
-            <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} />
+            {/* Header — Compact omits avatar to preserve dense form-feel.
+                When collapsible, wrap header + chevron in a flex row. */}
+            {isCollapsible ? (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
+                    </div>
+                    <div
+                        style={{
+                            padding: 4,
+                            flexShrink: 0,
+                            transition: "transform 0.2s ease",
+                            transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                            pointerEvents: "none",
+                        }}
+                        aria-hidden="true"
+                    >
+                        <ChevronDown size={12} color={theme.textMuted} />
+                    </div>
+                </div>
+            ) : (
+                <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
+            )}
 
             {/* Contact section */}
-            {hasContact && (
+            {!hideContact && hasContact && (
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionContact}</div>
                     {address && (
@@ -1479,7 +1574,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             )}
 
             {/* Details section (grid fields) */}
-            {hasDetails && (
+            {!hideBody && hasDetails && (
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionDetails}</div>
                     {gridFields.map((field, i) => (
@@ -1494,7 +1589,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             )}
 
             {/* Info section (detail fields) */}
-            {hasInfo && (
+            {!hideBody && hasInfo && (
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionInfo}</div>
                     {details.map((field, i) => (
@@ -1509,7 +1604,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             )}
 
             {/* Tags */}
-            {tags.length > 0 && (
+            {!hideTags && tags.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                     <Tags tags={data.tags} theme={theme} hideEmpty={hideEmpty} />
                 </div>
@@ -1877,6 +1972,24 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         );
     }
 
+    // Determine which sections collapse based on the maker's setting.
+    // Each section needs populated content for the collapse to be meaningful.
+    const collapseSetting = props.collapsibleSections ?? "body";
+    const populatedSections = {
+        contact: displayData.phones.some(f => !f.isEmpty || f.isPending) ||
+            (!!displayData.email && (!displayData.email.isEmpty || displayData.email.isPending)) ||
+            (!!displayData.web && (!displayData.web.isEmpty || displayData.web.isPending)) ||
+            (!!displayData.address && (!displayData.address.isEmpty || displayData.address.isPending)),
+        body: displayData.details.some(f => !f.isEmpty || f.isPending) ||
+            displayData.gridFields.some(f => !f.isEmpty || f.isPending),
+        tags: displayData.tags.some(f => !f.isEmpty || f.isPending),
+    };
+    const isCardCollapsible =
+        collapseSetting !== "none" &&
+        ((shouldCollapseSection(collapseSetting, "contact") && populatedSections.contact) ||
+            (shouldCollapseSection(collapseSetting, "body") && populatedSections.body) ||
+            (shouldCollapseSection(collapseSetting, "tags") && populatedSections.tags));
+
     // Render the appropriate layout
     const layoutProps: LayoutProps = {
         data: displayData,
@@ -1887,19 +2000,18 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         designTime: props.designTime,
         onOpenRecord,
         collapsed,
+        isCollapsible: isCardCollapsible,
+        collapsibleSections: collapseSetting,
         strings,
         subtitleSeparator: props.subtitleSeparator,
+        titlePrefix: props.titlePrefix,
+        imageShape: props.imageShape,
         formFactor: props.formFactor,
     };
 
-    // Whole-card click-to-toggle (Smart layout only). Active hit zones (anchors,
-    // lookup nav handlers) call stopPropagation so they don't toggle the card.
-    const isSmartCollapsible =
-        layout === "smart" &&
-        (displayData.details.some(f => !f.isEmpty || f.isPending) ||
-            displayData.gridFields.some(f => !f.isEmpty || f.isPending));
-
-    const interactiveCardProps: React.HTMLAttributes<HTMLDivElement> = isSmartCollapsible ? {
+    // Whole-card click-to-toggle. Active hit zones (anchors, lookup nav handlers)
+    // call stopPropagation so they don't toggle the card.
+    const interactiveCardProps: React.HTMLAttributes<HTMLDivElement> = isCardCollapsible ? {
         onClick: toggleCollapsed,
         onKeyDown: (e) => {
             if (e.target !== e.currentTarget) return;
@@ -1914,7 +2026,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         "aria-label": collapsed ? strings.cardExpand : strings.cardCollapse,
     } : {};
 
-    const finalCardStyle: React.CSSProperties = isSmartCollapsible
+    const finalCardStyle: React.CSSProperties = isCardCollapsible
         ? { ...cardStyle, cursor: "pointer", outline: "none" }
         : cardStyle;
 

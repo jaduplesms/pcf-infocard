@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 // React 16 compatible: flush microtasks to let promise-based effects settle
@@ -89,6 +89,9 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
     resolveRecordFields: overrides.resolveRecordFields,
     onOpenRecord: overrides.onOpenRecord,
     subtitleSeparator: overrides.subtitleSeparator,
+    titlePrefix: overrides.titlePrefix,
+    imageShape: overrides.imageShape,
+    collapsibleSections: overrides.collapsibleSections,
     formFactor: overrides.formFactor,
   };
 }
@@ -988,7 +991,7 @@ describe("InfoCardComponent", () => {
       expect(img!.getAttribute("src")).toBe("https://example.com/photo.jpg");
     });
 
-    it("renders initials fallback when imageUrl is null (smart layout)", () => {
+    it("renders no avatar when imageUrl is null (smart layout)", () => {
       const data = makeData({
         title: { label: "Name", value: "Adventure Works", rawValue: "Adventure Works", isEmpty: false },
         imageUrl: null,
@@ -997,11 +1000,11 @@ describe("InfoCardComponent", () => {
         <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
       );
       expect(container.querySelector("img")).toBeNull();
-      // Initials "AW" computed from first + last word
-      expect(container.textContent).toContain("AW");
+      // No initials placeholder when no image URL was supplied
+      expect(container.textContent).not.toContain("AW");
     });
 
-    it("renders initials fallback in contact layout", () => {
+    it("renders no avatar when imageUrl is null (contact layout)", () => {
       const data = makeData({
         title: { label: "Name", value: "Jane Doe", rawValue: "Jane Doe", isEmpty: false },
         imageUrl: null,
@@ -1010,7 +1013,7 @@ describe("InfoCardComponent", () => {
         <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
       );
       expect(container.querySelector("img")).toBeNull();
-      expect(container.textContent).toContain("JD");
+      expect(container.textContent).not.toContain("JD");
     });
 
     it("does not render avatar in compact layout", () => {
@@ -1036,15 +1039,23 @@ describe("InfoCardComponent", () => {
       expect(img!.getAttribute("alt")).toBe("Acme Corp");
     });
 
-    it("uses first two characters when title is a single word", () => {
+    it("falls back to initials when image fails to load", () => {
       const data = makeData({
         title: { label: "Name", value: "Microsoft", rawValue: "Microsoft", isEmpty: false },
-        imageUrl: null,
+        imageUrl: "https://example.com/broken.jpg",
       });
       const { container } = render(
         <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
       );
+      const img = container.querySelector("img");
+      expect(img).not.toBeNull();
+      // Trigger the onError handler — simulates a broken image load
+      act(() => {
+        img!.dispatchEvent(new Event("error"));
+      });
+      // Single-word title → first two characters
       expect(container.textContent).toContain("MI");
+      expect(container.querySelector("img")).toBeNull();
     });
   });
 
@@ -1248,6 +1259,173 @@ describe("InfoCardComponent", () => {
         s => s.textContent === "Scheduled"
       );
       expect(chips.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ── v4.2 features: titlePrefix, imageShape, collapsibleSections ─────
+
+  describe("titlePrefix", () => {
+    it("renders the prefix immediately before the title text", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "WO-12345" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", titlePrefix: "Work Order: " })} />,
+      );
+      expect(container.textContent).toContain("Work Order: WO-12345");
+    });
+
+    it("does not render any prefix span when titlePrefix is empty", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "WO-12345" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      expect(container.textContent).toContain("WO-12345");
+      expect(container.textContent).not.toContain("Work Order:");
+    });
+
+    it("works in compact layout too", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "ACME-001" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact", titlePrefix: "Case: " })} />,
+      );
+      expect(container.textContent).toContain("Case: ACME-001");
+    });
+  });
+
+  describe("imageShape", () => {
+    it("defaults to rounded rectangle (8px border-radius)", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        imageUrl: "https://example.com/p.jpg",
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      const img = container.querySelector("img");
+      expect(img!.style.borderRadius).toBe("8px");
+    });
+
+    it("renders a circle when imageShape='circle'", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        imageUrl: "https://example.com/p.jpg",
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", imageShape: "circle" })} />,
+      );
+      const img = container.querySelector("img");
+      expect(img!.style.borderRadius).toBe("50%");
+    });
+
+    it("renders a square (no rounding) when imageShape='square'", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        imageUrl: "https://example.com/p.jpg",
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", imageShape: "square" })} />,
+      );
+      const img = container.querySelector("img");
+      // Browsers can serialise 0 as either "0px" or "0" — accept both.
+      expect(["0px", "0"]).toContain(img!.style.borderRadius);
+    });
+  });
+
+  describe("collapsibleSections", () => {
+    it("default 'body' collapses details + grid but keeps contact and tags visible", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        phones: [makeField({ label: "Phone", value: "+1555" })],
+        details: [makeField({ label: "Notes", value: "Body content" })],
+        gridFields: [makeField({ label: "Status", value: "Open" })],
+        tags: [makeField({ label: "Priority", value: "TagText" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", startExpanded: false })} />,
+      );
+      // Body collapsed → details + grid hidden
+      expect(container.textContent).not.toContain("Body content");
+      expect(container.textContent).not.toContain("Open");
+      // Contact + tags still visible
+      expect(container.textContent).toContain("+1555");
+      expect(container.textContent).toContain("TagText");
+    });
+
+    it("'all' collapses contact, body, and tags simultaneously", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        phones: [makeField({ label: "Phone", value: "+1555" })],
+        details: [makeField({ label: "Notes", value: "Body content" })],
+        tags: [makeField({ label: "Priority", value: "TagText" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", startExpanded: false, collapsibleSections: "all" })} />,
+      );
+      expect(container.textContent).not.toContain("+1555");
+      expect(container.textContent).not.toContain("Body content");
+      expect(container.textContent).not.toContain("TagText");
+      // Title still visible
+      expect(container.textContent).toContain("Acme");
+    });
+
+    it("'body-tags' collapses body and tags but keeps contact visible", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        phones: [makeField({ label: "Phone", value: "+1555" })],
+        details: [makeField({ label: "Notes", value: "Body content" })],
+        tags: [makeField({ label: "Priority", value: "TagText" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", startExpanded: false, collapsibleSections: "body-tags" })} />,
+      );
+      expect(container.textContent).toContain("+1555");
+      expect(container.textContent).not.toContain("Body content");
+      expect(container.textContent).not.toContain("TagText");
+    });
+
+    it("'none' disables collapse entirely — no chevron, no aria-expanded", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Acme" }),
+        details: [makeField({ label: "Notes", value: "Body content" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart", startExpanded: false, collapsibleSections: "none" })} />,
+      );
+      // 'none' → not collapsible → body still visible regardless of startExpanded
+      expect(container.textContent).toContain("Body content");
+      // No aria-expanded button at the card root
+      const interactiveRoot = container.querySelector("[aria-expanded]");
+      expect(interactiveRoot).toBeNull();
+    });
+
+    it("works in contact layout (gains chevron when collapsibleSections != none)", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Sarah" }),
+        details: [makeField({ label: "Notes", value: "Body content" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", startExpanded: false, collapsibleSections: "body" })} />,
+      );
+      expect(container.textContent).not.toContain("Body content");
+      // aria-expanded false present somewhere on the card root
+      const interactiveRoot = container.querySelector("[aria-expanded='false']");
+      expect(interactiveRoot).not.toBeNull();
+    });
+
+    it("works in compact layout (gains chevron when collapsibleSections != none)", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Sarah" }),
+        gridFields: [makeField({ label: "Status", value: "Open" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact", startExpanded: false, collapsibleSections: "body" })} />,
+      );
+      expect(container.textContent).not.toContain("Open");
     });
   });
 
