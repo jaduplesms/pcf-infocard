@@ -431,6 +431,10 @@
         "displayName": "Instructions",
         "type": "Multiple"
       },
+      "msdyn_workordersummary": {
+        "displayName": "Work Order Summary",
+        "type": "Multiple"
+      },
       "telephone1": {
         "displayName": "Phone",
         "type": "SingleLine.Phone"
@@ -548,6 +552,38 @@
       "emailaddress1": {
         "displayName": "Email",
         "type": "SingleLine.Email"
+      },
+      "websiteurl": {
+        "displayName": "Website",
+        "type": "SingleLine.URL"
+      },
+      "_parentcustomerid_value": {
+        "displayName": "Company Name",
+        "type": "Lookup.Simple"
+      },
+      "address1_line1": {
+        "displayName": "Street 1",
+        "type": "SingleLine.Text"
+      },
+      "address1_city": {
+        "displayName": "City",
+        "type": "SingleLine.Text"
+      },
+      "address1_postalcode": {
+        "displayName": "Postal Code",
+        "type": "SingleLine.Text"
+      },
+      "address1_country": {
+        "displayName": "Country",
+        "type": "SingleLine.Text"
+      },
+      "address1_latitude": {
+        "displayName": "Latitude",
+        "type": "FP"
+      },
+      "address1_longitude": {
+        "displayName": "Longitude",
+        "type": "FP"
       }
     }
   }
