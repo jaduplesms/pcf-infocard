@@ -10,6 +10,15 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - **Show / hide detail icons** — new `showDetailIcons` config property (TwoOptions, default `true`). When `false`, the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, 📅 dates, etc.) on Smart and Contact detail rows is suppressed and only the value text renders. No effect on Compact layout (which uses label:value format).
 - **Detail label style** — new `detailLabelStyle` config property (Enum: `none` / `inline-bold` / `above`, default `none`). Lets the maker render the field's display name on Smart and Contact detail rows: `inline-bold` prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) so the row reads like prose; `above` renders the display name as a small caps heading on its own line above the value. Combine with `showDetailIcons=false` for plain-text section-style content. No effect on Compact layout.
 - 9 new unit tests covering icon suppression and all three label-style modes across Smart, Contact, and Compact layouts (plus the combined "prose-style" case with both options enabled).
+- Per-folder `README.md` for `InfoCardSolution/` (shipping wrapper) and `InfoCardSampleForm/` (dev sandbox) clarifying which solution is which.
+
+### Changed
+- **Folder rename:** `InfoCardTestSolution/` → `InfoCardSampleForm/` (with matching `.cdsproj`, `Solution.xml` `UniqueName`, and display name updates) so it's obvious from the folder name that this is a development reference, not a shipping artifact.
+- Both solutions bumped to version `4.3.0` to track the control manifest.
+
+### Removed
+- `InfoCardControl/InfoCard/metadata.json` is no longer tracked. It is harness-only (PCF Workbench display labels), is not imported by tests, and tended to leak environment-specific custom-prefix columns. Generate one locally if you want richer labels in the workbench; an entry in `.gitignore` keeps any local copy out of commits.
+- `InfoCardControl/InfoCard/EntityDefinitions_*.json` — unused dev-time exports — removed from the repo and added to `.gitignore`.
 
 ## Unreleased — v4.2.0 (in progress on `main`)
 
@@ -59,7 +68,7 @@ First public **sample** release.
 
 ### Breaking changes
 - **Namespace renamed**: `Contoso.InfoCard` → `Sample.InfoCard`. The control is now registered as `smp_Sample.InfoCard` (publisher prefix `smp`). Existing form bindings that referenced `cli_Contoso.InfoCard` must be updated.
-- New shipping solution `InfoCardSolution/` (control-only, publisher `Sample` / prefix `smp`) replaces the previous `InfoCardSolution/` test wrapper. The old test-form solution has been renamed to `InfoCardTestSolution/` and is **not** intended for shipping.
+- New shipping solution `InfoCardSolution/` (control-only, publisher `Sample` / prefix `smp`) replaces the previous `InfoCardSolution/` test wrapper. The old test-form solution has been renamed to `InfoCardSampleForm/` and is **not** intended for shipping.
 
 ### Added
 - Clean shipping `InfoCardSolution/` cdsproj that produces both unmanaged and managed solution zips containing only the control (no test entity bindings).
@@ -69,7 +78,7 @@ First public **sample** release.
 
 ### Changed
 - All internal documentation (`docs/*.html`, `.github/copilot-instructions.md`, README) updated to reflect the `Sample` namespace and v4.0.0 versioning.
-- `InfoCardTestSolution` publisher renamed from `Jdp` (prefix `jdp`) to `Sample` (prefix `smp`); unique name changed from `MobileInfoCardTest` to `InfoCardTestSolution`.
+- Test-form solution publisher and prefix standardised to `Sample` / `smp`; folder renamed to `InfoCardSampleForm/` to reflect that it is a development reference, not a shipping artifact.
 - `tools/infocard-config.ts` regex updated to recognise `smp_Sample.InfoCard` form bindings.
 
 ### Fixed

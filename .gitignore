@@ -31,8 +31,10 @@ debug_*.png
 # Solution zips (build artifacts)
 *.zip
 
-# Dataverse API exports (user-specific)
+# Dataverse API exports / harness-local schemas (user-specific)
+EntityDefinitions_*.json
 EntityDefinitions_*.customization
+InfoCardControl/InfoCard/metadata.json
 *.docx
 CLAUDE.md
 

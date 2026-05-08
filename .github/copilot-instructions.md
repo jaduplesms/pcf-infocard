@@ -7,7 +7,7 @@ A Power Apps PCF **virtual (React) control** that renders multiple read-only fie
 Three projects:
 - `InfoCardControl/` — PCF control (TypeScript + React 16, Fluent UI 9 as platform libs)
 - `InfoCardSolution/` — clean shipping Dataverse solution wrapper (control-only, publisher `Sample` / prefix `smp`)
-- `InfoCardTestSolution/` — test wrapper with form bindings on `bookableresourcebooking` (development only, **not** for shipping)
+- `InfoCardSampleForm/` — test wrapper with form bindings on `bookableresourcebooking` (development only, **not** for shipping)
 
 ## Commands
 

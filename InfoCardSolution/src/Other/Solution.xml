@@ -8,7 +8,7 @@
     <Descriptions>
       <Description description="InfoCard PCF control (Sample) — a compact read-only info card for Dynamics 365 / Power Apps model-driven forms. Sample artifact, not a supported product. Re-namespace before production use." languagecode="1033" />
     </Descriptions>
-    <Version>4.0.0.0</Version>
+    <Version>4.3.0.0</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>Sample</UniqueName>

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ImportExportXml version="9.2.26034.167" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <SolutionManifest>
-    <UniqueName>InfoCardTestSolution</UniqueName>
+    <UniqueName>InfoCardSampleForm</UniqueName>
     <LocalizedNames>
-      <LocalizedName description="InfoCard Test Solution" languagecode="1033" />
+      <LocalizedName description="InfoCard Sample Form" languagecode="1033" />
     </LocalizedNames>
     <Descriptions>
-      <Description description="Test solution for the InfoCard PCF control on the Bookable Resource Booking form. Sample artifact — not for production use." languagecode="1033" />
+      <Description description="Reference Bookable Resource Booking form configuration for the InfoCard PCF control. Development sandbox — not for production use." languagecode="1033" />
     </Descriptions>
-    <Version>4.0.0</Version>
+    <Version>4.3.0</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>Sample</UniqueName>

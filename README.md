@@ -268,7 +268,7 @@ cd PCFBuilderFramework/harness
 PCF_CONTROL_PATH="../PowerApps/PCFGallery/InfoCard/InfoCardControl/InfoCard" npx vite --port 8181
 ```
 
-The workbench loads the control's `data.json`, `test-scenarios.json`, and `metadata.json` files automatically.
+The workbench loads the control's `data.json` and `test-scenarios.json` files automatically. An optional `metadata.json` (Dataverse-style entity metadata, not checked in) can be placed alongside them to enrich the harness with display names and option-set labels — generate it from your own dev environment if you want richer labels in the workbench.
 
 ### Previewing authoring (designer) mode locally
 
@@ -288,10 +288,8 @@ InfoCard ships with mock data files that power both the PCF Workbench and the te
 
 | File | Purpose |
 |------|---------|
-| `data.json` | Mock entity records (contacts, accounts, bookings) for WebAPI simulation |
-| `test-scenarios.json` | Pre-configured property value sets for different form configurations (e.g., "Account - Mobile Form", "Work Order - Field Service") |
-| `metadata.json` | Entity metadata in Dataverse API format -- enables the workbench to resolve field display names, option set labels, and lookup targets |
-| `EntityDefinitions_bookableresourcebooking.json` | Full Dataverse entity definition export for the booking entity |
+| `data.json` | Mock entity records (contacts, accounts, bookings) for WebAPI simulation. Imported by the test suite. |
+| `test-scenarios.json` | Pre-configured property value sets for different form configurations (e.g., "Account - Mobile Form", "Work Order - Field Service"). Imported by the test suite. |
 
 Property values in test scenarios use the `$columnName` convention to indicate bound fields (e.g., `$telephone1` binds to the `telephone1` column).
 
@@ -333,9 +331,8 @@ InfoCard/
       ControlManifest.Input.xml          # Property definitions (source of truth)
       index.ts                           # PCF lifecycle class
       InfoCard.tsx                       # React component (3 layout renderers)
-      data.json                          # Mock entity data for harness
-      test-scenarios.json                # Pre-configured test scenarios
-      metadata.json                      # Entity metadata for harness
+      data.json                          # Mock entity data for harness + tests
+      test-scenarios.json                # Pre-configured test scenarios for harness + tests
       thumbnail.jpg                      # Gallery thumbnail
       generated/
         ManifestTypes.d.ts               # Auto-generated types (do not edit)
