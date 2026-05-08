@@ -8,7 +8,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.3.2";
+const CONTROL_VERSION = "4.3.3";
 
 // Minimal shape of context.formatting we use. The PCF typings don't expose
 // formatInteger consistently across hosts, so we narrow it ourselves and
@@ -594,19 +594,28 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         // Skip unconfigured properties (no type, no data, and no attributes)
         const hasAttributes = param.attributes && (param.attributes.DisplayName || param.attributes.LogicalName
             || param.attributes.displayName || param.attributes.logicalName);
-        if (!param.type && !hasAttributes && (param.raw === null || param.raw === undefined)) {
-            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (unconfigured)");
-            return null;
-        }
+        // type === "Unknown" is the explicit "this slot is not configured" signal — always honor it
         if (param.type === "Unknown") {
             if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (type=Unknown)");
             return null;
         }
-        // Attributes exist but have no identifying metadata and no type — field is not properly configured
-        // Static input properties (static="true" in form XML) may have attributes={} but valid type and data
-        if (param.attributes && !hasAttributes && !param.type) {
-            if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (attrs without metadata, no type)");
-            return null;
+
+        // Skip unconfigured properties (no type, no data, and no attributes)
+        // EXCEPTION: in authoring mode (form designer), param.type is `undefined` and
+        // attributes are empty for declared-but-unbound slots — we still want to render
+        // sample data for them so the maker sees a populated preview. Skip these guards
+        // entirely under authoring mode and let getDesignTimeSample drive the output.
+        if (!this._isAuthoringMode) {
+            if (!param.type && !hasAttributes && (param.raw === null || param.raw === undefined)) {
+                if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (unconfigured)");
+                return null;
+            }
+            // Attributes exist but have no identifying metadata and no type — field is not properly configured
+            // Static input properties (static="true" in form XML) may have attributes={} but valid type and data
+            if (param.attributes && !hasAttributes && !param.type) {
+                if (isSlotDebugEnabled()) console.log("[InfoCard.readSlot]", key, "→ null (attrs without metadata, no type)");
+                return null;
+            }
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -661,11 +670,14 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         // placeholder that won't resolve without a real record). Returns early to
         // bypass the rest of the formatting pipeline; no lookupId/lookupEntityType
         // is set so useEffect won't fire WebAPI requests.
-        if (this._isAuthoringMode && param.type && param.type !== "Unknown") {
+        // NOTE: param.type is often `undefined` (not "Unknown") in the real form designer
+        // even for declared slots, so we don't gate on it here — getDesignTimeSample falls
+        // back to slot-name-based samples first and only consults type as a secondary lookup.
+        if (this._isAuthoringMode && param.type !== "Unknown") {
             const isPlaceholder = raw === null || raw === undefined ||
                 (typeof raw === "string" && raw.startsWith("@"));
             if (isPlaceholder) {
-                const sample = this.getDesignTimeSample(key, String(param.type));
+                const sample = this.getDesignTimeSample(key, String(param.type ?? ""));
                 if (sample) {
                     return {
                         slotKey: key,

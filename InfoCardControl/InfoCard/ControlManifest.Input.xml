@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard" version="4.3.2"
+  <control namespace="Sample" constructor="InfoCard" version="4.3.3"
            display-name-key="InfoCard (Sample)"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
