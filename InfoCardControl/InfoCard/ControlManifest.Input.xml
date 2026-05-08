@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard" version="4.3.0"
+  <control namespace="Sample" constructor="InfoCard" version="4.3.1"
            display-name-key="InfoCard"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -41,7 +41,7 @@
       <value name="compact" display-name-key="Compact Form">compact</value>
     </property>
     <property name="hideEmptyFields" display-name-key="Hide Empty Fields"
-              description-key="Hide rows whose value is blank or '---'. Recommended ON for mobile to keep cards tight. Default true."
+              description-key="Hide rows whose value is blank or ---. Recommended ON for mobile to keep cards tight. Default true."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="showCardBorder" display-name-key="Show Card Border"
               description-key="Wrap the card in a border + shadow. Turn off when embedding inside another container that already provides chrome. Default true."
@@ -56,10 +56,10 @@
               description-key="Show the title field in the card header. Set to false when the form section header already provides the title. Default true."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="subtitleSeparator" display-name-key="Subtitle Separator"
-              description-key="Separator rendered between subtitle parts in the card header. Defaults to a middle dot (·). Set to e.g. ' | ' or ' — ' to taste."
+              description-key="Separator rendered between subtitle parts in the card header. Defaults to a middle dot (·). Set to e.g.  |  or  —  to taste."
               of-type="SingleLine.Text" usage="input" required="false" />
     <property name="titlePrefix" display-name-key="Title Prefix"
-              description-key="Optional muted-colour prefix rendered before the title (e.g. 'Case: ', 'Work Order: '). Useful when the form section header doesn't already announce the record type. Plain literal — no template syntax."
+              description-key="Optional muted-colour prefix rendered before the title (e.g. Case: , Work Order: ). Useful when the form section header doesnt already announce the record type. Plain literal — no template syntax."
               of-type="SingleLine.Text" usage="input" required="false" />
     <property name="imageShape" display-name-key="Image Shape"
               description-key="Shape of the avatar / entity image in the header. Rounded rectangle (default) preserves logos and people photos equally well; circle is more avatar-like for contact / user records; square has no rounding. No effect when imageField is unbound and initials fallback is showing — initials follow the same shape."
@@ -69,7 +69,7 @@
       <value name="square"  display-name-key="Square">square</value>
     </property>
     <property name="collapsibleSections" display-name-key="Collapsible Sections"
-              description-key="Which card sections collapse when the maker / user taps the header. 'None' disables collapse entirely (always fully visible). 'Body' (default) collapses Detail rows + Grid fields — current Smart-layout behaviour. 'Body + Tags' also hides tag chips. 'All' hides everything below the header — contact rows, body, tags. Applies to all three layouts; Contact and Compact gain collapse for the first time when set to anything other than 'None'."
+              description-key="Which card sections collapse when the maker / user taps the header. None disables collapse entirely (always fully visible). Body (default) collapses Detail rows + Grid fields — current Smart-layout behaviour. Body + Tags also hides tag chips. All hides everything below the header — contact rows, body, tags. Applies to all three layouts; Contact and Compact gain collapse for the first time when set to anything other than None."
               of-type="Enum" usage="input" required="false">
       <value name="none"      display-name-key="None">none</value>
       <value name="body"      display-name-key="Body (Details + Grid)">body</value>
@@ -80,7 +80,7 @@
               description-key="Show the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, etc.) on Smart and Contact detail rows. Set to false when the maker prefers plain text rows or has chosen to show field labels via Detail Label Style. Default true. No effect on Compact layout (which uses label:value format)."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="detailLabelStyle" display-name-key="Detail Label Style"
-              description-key="How to render the field's display name on Smart and Contact detail rows. 'None' (default) shows only the value — current behaviour. 'Inline Bold' prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) — reads like prose. 'Above' renders the display name as a small caps heading on its own line above the value. No effect on Compact layout (which already shows labels)."
+              description-key="How to render the fields display name on Smart and Contact detail rows. None (default) shows only the value — current behaviour. Inline Bold prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) — reads like prose. Above renders the display name as a small caps heading on its own line above the value. No effect on Compact layout (which already shows labels)."
               of-type="Enum" usage="input" required="false">
       <value name="none"        display-name-key="None (Value Only)">none</value>
       <value name="inline-bold" display-name-key="Inline Bold">inline-bold</value>
@@ -89,13 +89,13 @@
 
     <!-- HEADER (1 bound + 3 subtitles + 1 image) -->
     <property name="titleField" display-name-key="Title"
-              description-key="Main heading. Bind to the record's primary name column (e.g. account.name, msdyn_workorder.msdyn_name). When bound to a lookup column, related-field syntax (@column) on other slots fetches from the lookup target."
+              description-key="Main heading. Bind to the records primary name column (e.g. account.name, msdyn_workorder.msdyn_name). When bound to a lookup column, related-field syntax (@column) on other slots fetches from the lookup target."
               of-type-group="fieldTypes" usage="bound" required="true" />
     <property name="imageField" display-name-key="Image / Avatar"
               description-key="Optional avatar shown left of the title (Smart and Contact layouts). Bind to a column that returns an image URL — typically entityimage_url, or @entityimage_url to pull from a related lookup. When empty or unbound, falls back to initials computed from the title."
               of-type="SingleLine.Text" usage="input" required="false" />
     <property name="subtitleField1" display-name-key="Subtitle 1"
-              description-key="Shown under title, dot-separated. Bind a column (e.g. jobtitle) or use @column to pull from the title's lookup target (e.g. @msdyn_serviceaccount)."
+              description-key="Shown under title, dot-separated. Bind a column (e.g. jobtitle) or use @column to pull from the titles lookup target (e.g. @msdyn_serviceaccount)."
               of-type-group="fieldTypes" usage="input" required="false" />
     <property name="subtitleField2" display-name-key="Subtitle 2"
               description-key="Secondary subtitle. Same syntax as Subtitle 1. Tip: use status or category columns here for at-a-glance context."

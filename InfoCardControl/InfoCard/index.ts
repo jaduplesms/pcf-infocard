@@ -8,7 +8,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.3.0";
+const CONTROL_VERSION = "4.3.1";
 
 // Minimal shape of context.formatting we use. The PCF typings don't expose
 // formatInteger consistently across hosts, so we narrow it ourselves and
