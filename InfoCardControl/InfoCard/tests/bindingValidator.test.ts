@@ -182,13 +182,28 @@ describe("validateBindings()", () => {
             expect(results[0].error).toContain("Lookup 'nonexistent' not found");
         });
 
-        it("warns about single-hop @. that should use $ binding", () => {
+        it("warns about single-hop @. that should use $ binding (for bindable types)", () => {
             const results = validateBindings(
                 { gridField1: "@.starttime" },
                 schemas, "bookableresourcebooking",
             );
             expect(results).toHaveLength(1);
-            expect(results[0].warning).toContain("consider using $starttime");
+            expect(results[0].warning).toContain("consider $starttime binding");
+        });
+
+        it("does NOT warn for unbindable column types (Whole.Duration, Status)", () => {
+            // bookableresourcebooking schema has `duration` and `statecode`. Both
+            // are unbindable in the form designer, so no "consider $-binding" warning.
+            const results = validateBindings(
+                {
+                    gridField1: "@.duration",
+                    gridField2: "@.statecode",
+                },
+                schemas, "bookableresourcebooking",
+            );
+            for (const r of results) {
+                expect(r.warning).toBeUndefined();
+            }
         });
 
         it("flags empty @. reference", () => {

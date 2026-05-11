@@ -11,6 +11,29 @@
  * 4. Syntax: @ must be followed by a field name, @. must be followed by nav.field
  */
 
+/**
+ * Common Dataverse columns whose `of-type` is NOT supported by the PCF manifest
+ * (https://learn.microsoft.com/.../property#value-elements-that-arent-supported).
+ * For these columns @./@ syntax is the *correct* path — the form designer's
+ * column picker won't expose them for direct binding. Used to suppress the
+ * "consider $-binding" warning so we don't mislead makers.
+ */
+export function isUnbindableColumn(col: string): boolean {
+    if (!col) return false;
+    const c = col.toLowerCase();
+    // Exact name matches (Customer/Owner/Status/Regarding lookups, language/timezone)
+    if (["customerid", "ownerid", "owninguser", "owningteam", "owningbusinessunit",
+         "statecode", "statuscode", "regardingobjectid", "transactioncurrencyid"].includes(c)) {
+        return true;
+    }
+    // Whole.Duration: any column ending in "duration" or "durationminutes"
+    if (/(^|_)duration(minutes)?$/.test(c)) return true;
+    // Whole.Language / Whole.TimeZone heuristics
+    if (/(^|_)languagecode$/.test(c)) return true;
+    if (/(^|_)timezonecode$/.test(c)) return true;
+    return false;
+}
+
 export interface BindingValidation {
     slotKey: string;
     expression: string;
@@ -104,13 +127,19 @@ export function validateBindings(
 
             const dotIdx = path.indexOf(".");
             if (dotIdx <= 0) {
-                // Single-hop on current record — should use $ binding instead
+                // Single-hop on current record — usually $-binding is faster, but
+                // skip the warning entirely for known unbindable column types
+                // (Whole.Duration / Status / Customer / Owner / Regarding / etc.)
+                // where @. is the *required* path.
                 const schema = schemas[formEntity];
                 const exists = schema ? schema.columns.includes(path) : false;
+                const unbindable = isUnbindableColumn(path);
                 results.push({
                     slotKey, expression: value, type: "current-related",
                     valid: exists,
-                    warning: exists ? `'${path}' is a direct column — consider using $${path} binding instead of @.${path}` : undefined,
+                    warning: (exists && !unbindable)
+                        ? `'${path}' is a direct column — consider $${path} binding (faster, design-time validation). Stay with @.${path} if the column type isn't bindable.`
+                        : undefined,
                     error: !exists ? `Column '${path}' not found on ${formEntity}` : undefined,
                 });
                 continue;

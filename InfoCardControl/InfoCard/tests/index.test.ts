@@ -35,6 +35,8 @@ interface ContextOverrides {
   webAPIMock?: jest.Mock;
   /** Custom metadata mock — overrides the default empty getEntityMetadata */
   metadataMock?: jest.Mock;
+  /** Custom userSettings (e.g. dateFormattingInfo for time-format tests) */
+  userSettings?: Partial<ComponentFramework.UserSettings>;
 }
 
 /**
@@ -119,7 +121,7 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
       openForm: jest.fn().mockResolvedValue(undefined),
     } as unknown as ComponentFramework.Navigation,
     resources: { getString: jest.fn((k: string) => k) } as unknown as ComponentFramework.Resources,
-    userSettings: {} as ComponentFramework.UserSettings,
+    userSettings: (overrides.userSettings ?? {}) as ComponentFramework.UserSettings,
     utils: {
       getEntityMetadata: overrides.metadataMock ?? jest.fn().mockResolvedValue({
         Attributes: { getAll: () => [] },
@@ -547,6 +549,69 @@ describe("InfoCard PCF Lifecycle", () => {
   });
 
   // ── readSlot ──────────────────────────
+
+  describe("readField() — fetched-record value parser", () => {
+    function getReadField(ctrl: InfoCard) {
+      return asAny(ctrl).readField.bind(ctrl) as (
+        record: ComponentFramework.WebApi.Entity, col: string,
+      ) => { value: string; label: string; lookupId?: string; lookupEntityType?: string } | null;
+    }
+
+    it("seeds label with formatted logical name fallback (no leading 'msdyn_' prefix)", () => {
+      // formatLogicalName strips known publisher prefixes and snake_case-splits.
+      // Run-together words (e.g. "workorderinstructions") aren't word-split here —
+      // entity-metadata DisplayName ("Instructions") replaces the seed in step 6a
+      // when the metadata fetch succeeds. The point of this test is the FALLBACK:
+      // make sure we don't render the raw "msdyn_workorderinstructions" anymore.
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const readField = getReadField(control);
+      const result = readField(
+        { msdyn_workorderinstructions: "Replace filter" } as ComponentFramework.WebApi.Entity,
+        "msdyn_workorderinstructions"
+      );
+      expect(result).not.toBeNull();
+      expect(result?.value).toBe("Replace filter");
+      expect(result?.label).not.toMatch(/^msdyn_/);
+      expect(result?.label).toBe("Workorderinstructions");
+    });
+
+    it("seed label snake_case-splits and capitalizes (msdyn_work_order_type → 'Work Order Type')", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const readField = getReadField(control);
+      const result = readField(
+        { msdyn_work_order_type: "Standard" } as ComponentFramework.WebApi.Entity,
+        "msdyn_work_order_type"
+      );
+      expect(result?.label).toBe("Work Order Type");
+    });
+
+    it("returns null instead of '[object Object]' when an OData $select hands back an embedded navigation object with no recoverable name", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const readField = getReadField(control);
+      const result = readField(
+        // Object response with no `name` / `fullname` — happens when $select returns
+        // the navigation property as an empty stub.
+        { msdyn_serviceaccount: { someInternalProp: 1 } } as unknown as ComponentFramework.WebApi.Entity,
+        "msdyn_serviceaccount"
+      );
+      expect(result).toBeNull();
+    });
+
+    it("recovers a display name from common name fields when an embedded entity is returned", () => {
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const readField = getReadField(control);
+      const result = readField(
+        { msdyn_serviceaccount: { name: "Adams Equipment" } } as unknown as ComponentFramework.WebApi.Entity,
+        "msdyn_serviceaccount"
+      );
+      expect(result?.value).toBe("Adams Equipment");
+      expect(result?.value).not.toBe("[object Object]");
+    });
+  });
 
   describe("readSlot()", () => {
     function getReadSlot(ctrl: InfoCard) {
@@ -1567,6 +1632,38 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(overrides.gridField3.value).toBe("Solid");
     });
 
+    it("resolves real DisplayName when host emits lowercase logicalName casing (regression: v4.4.4 grid labels showed 'Grid 1/2/3' on Field Service Mobile)", async () => {
+      const webAPIMock = jest.fn().mockResolvedValue(BOOKING_RECORD);
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "bookingtype", DisplayName: "Booking Type", options: [
+          { Value: 1, Label: "Solid" },
+        ]},
+        { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+      ]));
+
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "bookableresourcebooking", entityId: "bb111111-1111-1111-1111-111111111111" },
+        webAPIMock,
+        metadataMock,
+        slots: {
+          titleField: {
+            raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO-00047", entityType: "msdyn_workorder" }],
+            attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
+          },
+          // Same column-bound slot but with lowercase `logicalName` — matches the
+          // shape some Dataverse runtimes / Field Service Mobile emit. Without the
+          // override-pass casing fix, hasMakerBinding=false → label="Grid 3".
+          gridField3: { raw: 1, type: "OptionSet", attributes: { logicalName: "bookingtype", displayName: "Booking Type" } },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.gridField3).toBeDefined();
+      expect(overrides.gridField3.label).toBe("Booking Type");
+    });
+
     it("matches datetime param to WebAPI column", async () => {
       const startDate = new Date("2026-03-30T09:00:00Z");
       const webAPIMock = jest.fn().mockResolvedValue(makeWebAPIRecord({
@@ -1595,6 +1692,12 @@ describe("InfoCard PCF Lifecycle", () => {
 
       const overrides = await getResolve(control)(ctx);
       expect(overrides.gridField1).toBeDefined();
+      // Value-matched slots surface the real column DisplayName when entity
+      // metadata has one — usage="input" props (grids/tags/details) get
+      // attributes={} from the platform regardless of binding, so the
+      // value-matcher + metadata fetch is the only path to a real label.
+      // (Pre-v4.4.6 this returned "Grid 1" via a deliberate gate that turned
+      // out to break every grid slot in the wild — see useRealLabel comment.)
       expect(overrides.gridField1.label).toBe("Start Time");
       expect(overrides.gridField1.value).toBe("3/30/2026 9:00 AM");
     });
@@ -1849,7 +1952,7 @@ describe("InfoCard PCF Lifecycle", () => {
       control.init(ctx, notifyOutputChanged);
       control.updateView(ctx);
       const data = asAny(control).collectData(ctx) as { title: { value: string; isEmpty: boolean } };
-      expect(data.title.value).toBe("Adventure Works");
+      expect(data.title.value).toBe("Title appears here");
       expect(data.title.isEmpty).toBe(false);
     });
 
@@ -1879,10 +1982,10 @@ describe("InfoCard PCF Lifecycle", () => {
         web: { value: string };
         address: { value: string };
       };
-      expect(data.phones[0].value).toBe("+1 (555) 123-4567");
-      expect(data.email.value).toBe("contact@contoso.com");
-      expect(data.web.value).toBe("https://contoso.com");
-      expect(data.address.value).toBe("1 Microsoft Way, Redmond, WA 98052");
+      expect(data.phones[0].value).toBe("Phone number 1");
+      expect(data.email.value).toBe("Email address");
+      expect(data.web.value).toBe("Website URL");
+      expect(data.address.value).toBe("Street address, city, region");
     });
 
     test("falls back to type-based sample for grid slots without semantic override", () => {
@@ -1898,9 +2001,9 @@ describe("InfoCard PCF Lifecycle", () => {
         gridFields: Array<{ value: string }>;
       };
       const values = data.gridFields.map(f => f.value);
-      expect(values).toContain("$1,234.56");
-      expect(values).toContain("Jan 15, 2026 09:30");
-      expect(values).toContain("42");
+      expect(values).toContain("$0.00");
+      expect(values).toContain("Jan 1, 2026 09:00");
+      expect(values).toContain("123");
       expect(values).toContain("Yes");
     });
 
@@ -1914,7 +2017,7 @@ describe("InfoCard PCF Lifecycle", () => {
         subtitles: Array<{ value: string; isEmpty: boolean }>;
       };
       expect(data.subtitles[0].isEmpty).toBe(false);
-      expect(data.subtitles[0].value).toBe("Primary Contact");
+      expect(data.subtitles[0].value).toBe("Subtitle 1");
       expect(data.subtitles[0].value.startsWith("@")).toBe(false);
     });
 
@@ -1954,7 +2057,7 @@ describe("InfoCard PCF Lifecycle", () => {
         control.init(ctx, notifyOutputChanged);
         control.updateView(ctx);
         const data = asAny(control).collectData(ctx) as { title: { value: string } };
-        expect(data.title.value).toBe("Adventure Works");
+        expect(data.title.value).toBe("Title appears here");
       } finally {
         if (originalDescriptor) {
           Object.defineProperty(window.location, "ancestorOrigins", originalDescriptor);
@@ -2012,6 +2115,37 @@ describe("InfoCard PCF Lifecycle", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window.location as any).hash = originalHash;
       }
+    });
+
+    test("preset preview: title-only binding on a known entity surfaces preset slots with sample content + real labels", () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "acc-1" },
+        slots: {
+          titleField: {
+            type: "SingleLine.Text",
+            raw: null,
+            attributes: { LogicalName: "name", DisplayName: "Account Name" },
+          },
+        },
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (ctx.mode as any).isAuthoringMode = true;
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const data = asAny(control).collectData(ctx) as {
+        phones: Array<{ slotKey?: string; label: string; value: string; isEmpty: boolean; isPreset?: boolean }>;
+        email?: { slotKey?: string; label: string; value: string; isEmpty: boolean; isPreset?: boolean };
+      };
+      const phone1 = data.phones.find(s => s.slotKey === "phoneField1");
+      expect(phone1).toBeDefined();
+      expect(phone1?.isPreset).toBe(true);
+      expect(phone1?.isEmpty).toBe(false);
+      expect(phone1?.value).toBe("Phone number 1");
+      // Label uses formatted column logical name (telephone1 → "Telephone1") so
+      // the maker can see which preset column the slot would surface at runtime.
+      expect(phone1?.label).toBe("Telephone1");
+      expect(data.email?.isPreset).toBe(true);
+      expect(data.email?.isEmpty).toBe(false);
     });
   });
 });

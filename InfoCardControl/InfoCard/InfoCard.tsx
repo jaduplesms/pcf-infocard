@@ -86,6 +86,26 @@ export interface InfoCardData {
     imageUrl: string | null;
 }
 
+export interface TypographyToken {
+    fontSize: string;
+    fontWeight: number;
+    lineHeight: string;
+    textTransform?: "uppercase" | "none";
+    letterSpacing?: string;
+}
+
+export interface InfoCardTypography {
+    title: TypographyToken;
+    subtitle: TypographyToken;
+    body: TypographyToken;
+    groupLabel: TypographyToken;
+    fieldLabel: TypographyToken;
+    inlineBoldLabel: TypographyToken;
+    tag: TypographyToken;
+    avatarInitials: TypographyToken;
+    versionBadge: TypographyToken;
+}
+
 export interface InfoCardTheme {
     cardBg: string;
     textPrimary: string;
@@ -98,7 +118,20 @@ export interface InfoCardTheme {
     radius: string;
     shadow: string;
     fontFamily: string;
+    typography: InfoCardTypography;
 }
+
+export const defaultTypography: InfoCardTypography = {
+    title:           { fontSize: "16px", fontWeight: 600, lineHeight: "22px" },
+    subtitle:        { fontSize: "14px", fontWeight: 400, lineHeight: "20px" },
+    body:            { fontSize: "14px", fontWeight: 400, lineHeight: "20px" },
+    groupLabel:      { fontSize: "12px", fontWeight: 600, lineHeight: "16px", textTransform: "uppercase", letterSpacing: "0.04em" },
+    fieldLabel:      { fontSize: "12px", fontWeight: 400, lineHeight: "16px" },
+    inlineBoldLabel: { fontSize: "14px", fontWeight: 600, lineHeight: "20px" },
+    tag:             { fontSize: "12px", fontWeight: 500, lineHeight: "16px" },
+    avatarInitials:  { fontSize: "14px", fontWeight: 600, lineHeight: "20px" },
+    versionBadge:    { fontSize: "10px", fontWeight: 400, lineHeight: "14px" },
+};
 
 export const defaultTheme: InfoCardTheme = {
     cardBg: "#ffffff",
@@ -112,6 +145,7 @@ export const defaultTheme: InfoCardTheme = {
     radius: "8px",
     shadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)",
     fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+    typography: defaultTypography,
 };
 
 export interface RelatedFieldMapping {
@@ -468,10 +502,12 @@ function ValueOrShimmer(props: {
     }
     const { dateText, timeText } = props.field;
     if (dateText && timeText) {
+        // Time on top (most actionable when working through a day), date below
+        // in muted styling so the row reads "2:30 PM / 5/1/2026".
         return (
             <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.2 }}>
-                <span>{dateText}</span>
-                <span style={{ color: props.theme.textMuted, fontSize: "0.9em" }}>{timeText}</span>
+                <span>{timeText}</span>
+                <span style={{ fontSize: "0.9em" }}>{dateText}</span>
             </span>
         );
     }
@@ -714,11 +750,11 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
             {showTitle && (
                 <div
                     style={{
-                        fontSize: 16,
-                        fontWeight: 600,
+                        fontSize: theme.typography.title.fontSize,
+                        fontWeight: theme.typography.title.fontWeight,
+                        lineHeight: theme.typography.title.lineHeight,
                         color: isLookup ? theme.brand : theme.textPrimary,
                         cursor: titleCanOpen ? "pointer" : "default",
-                        lineHeight: "22px",
                     }}
                     onClick={titleCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(title.lookupEntityType!, title.lookupId!); } : undefined}
                     onKeyDown={titleCanOpen ? (e) => {
@@ -740,7 +776,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                 </div>
             )}
             {subtitles.length > 0 && (
-                <div style={{ fontSize: 13, color: theme.textSecondary, lineHeight: "18px", marginTop: showTitle ? 2 : 0 }}>
+                <div style={{ fontSize: theme.typography.subtitle.fontSize, fontWeight: theme.typography.subtitle.fontWeight, lineHeight: theme.typography.subtitle.lineHeight, color: theme.textSecondary, marginTop: showTitle ? 2 : 0 }}>
                     {subtitles.map((sub, i) => {
                         const isSubLookup = !!(sub.lookupEntityType && sub.lookupId);
                         const subCanOpen = isSubLookup && !!onOpenRecord;
@@ -750,7 +786,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                                 {i > 0 && (
                                     <span style={{ margin: "0 6px", color: theme.textMuted }}>{subtitleSeparator || "\u00b7"}</span>
                                 )}
-                                {icon && <span style={{ marginRight: 3, verticalAlign: "middle", display: "inline-flex" }} aria-hidden="true">{icon}</span>}
+                                {icon && <span style={{ marginRight: 4, verticalAlign: "middle", display: "inline-flex", position: "relative", top: -1 }} aria-hidden="true">{icon}</span>}
                                 <span
                                     style={{
                                         color: isSubLookup ? theme.brand : theme.textSecondary,
@@ -818,17 +854,19 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
         alignItems: "flex-start",
         gap: 8,
         padding: "4px 0",
-        fontSize: 13,
+        fontSize: theme.typography.body.fontSize,
+        fontWeight: theme.typography.body.fontWeight,
+        lineHeight: theme.typography.body.lineHeight,
         color: theme.textSecondary,
-        lineHeight: "18px",
     };
 
     const chipStyle: React.CSSProperties = {
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
-        padding: "6px 10px",
-        fontSize: 13,
+        padding: "6px 10px 6px 0",
+        fontSize: theme.typography.body.fontSize,
+        fontWeight: theme.typography.body.fontWeight,
         color: theme.textPrimary,
         textDecoration: "none",
         borderRadius: 6,
@@ -843,8 +881,8 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
             gap: 0,
             borderTop: `1px solid ${theme.borderLight}`,
             borderBottom: `1px solid ${theme.borderLight}`,
-            padding: "0 6px",
-            margin: "8px 0 0",
+            padding: 0,
+            margin: "4px 0 0",
         }}>
             {/* Address */}
             {address && (!address.isEmpty || address.isPending) && (
@@ -1023,9 +1061,10 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                                 alignItems: "flex-start",
                                 gap: 8,
                                 padding: "4px 0",
-                                fontSize: 13,
+                                fontSize: theme.typography.body.fontSize,
+                                fontWeight: theme.typography.body.fontWeight,
+                                lineHeight: theme.typography.body.lineHeight,
                                 color: theme.textSecondary,
-                                lineHeight: "18px",
                             }}
                             title={field.label}
                         >
@@ -1036,10 +1075,11 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                                 {hasLabel && (
                                     <div
                                         style={{
-                                            fontSize: 11,
-                                            fontWeight: 600,
-                                            textTransform: "uppercase",
-                                            letterSpacing: "0.04em",
+                                            fontSize: theme.typography.groupLabel.fontSize,
+                                            fontWeight: theme.typography.groupLabel.fontWeight,
+                                            lineHeight: theme.typography.groupLabel.lineHeight,
+                                            textTransform: theme.typography.groupLabel.textTransform,
+                                            letterSpacing: theme.typography.groupLabel.letterSpacing,
                                             color: theme.textMuted,
                                             marginBottom: 2,
                                         }}
@@ -1063,9 +1103,10 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                             alignItems: "flex-start",
                             gap: 8,
                             padding: "4px 0",
-                            fontSize: 13,
+                            fontSize: theme.typography.body.fontSize,
+                            fontWeight: theme.typography.body.fontWeight,
+                            lineHeight: theme.typography.body.lineHeight,
                             color: theme.textSecondary,
-                            lineHeight: "18px",
                         }}
                         title={field.label}
                     >
@@ -1075,7 +1116,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                         {showMapLink ? (
                             <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                                 {labelStyle === "inline-bold" && hasLabel && (
-                                    <span style={{ fontWeight: 600, color: theme.textPrimary }}>
+                                    <span style={{ fontWeight: theme.typography.inlineBoldLabel.fontWeight, color: theme.textPrimary }}>
                                         {field.label}:{" "}
                                     </span>
                                 )}
@@ -1084,7 +1125,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                         ) : (
                             <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                                 {labelStyle === "inline-bold" && hasLabel && (
-                                    <span style={{ fontWeight: 600, color: theme.textPrimary }}>
+                                    <span style={{ fontWeight: theme.typography.inlineBoldLabel.fontWeight, color: theme.textPrimary }}>
                                         {field.label}:{" "}
                                     </span>
                                 )}
@@ -1122,14 +1163,15 @@ const GridFields: React.FC<GridFieldsProps> = ({ fields, theme, hideEmpty }) => 
         >
             {filtered.map((field, i) => (
                 <div key={i} style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 11, color: theme.textMuted, lineHeight: "14px", marginBottom: 2 }}>
+                    <div style={{ fontSize: theme.typography.fieldLabel.fontSize, fontWeight: theme.typography.fieldLabel.fontWeight, lineHeight: theme.typography.fieldLabel.lineHeight, color: theme.textMuted, marginBottom: 2 }}>
                         {field.label}
                     </div>
                     <div
                         style={{
-                            fontSize: 13,
+                            fontSize: theme.typography.body.fontSize,
+                            fontWeight: theme.typography.body.fontWeight,
+                            lineHeight: theme.typography.body.lineHeight,
                             color: theme.textPrimary,
-                            lineHeight: "18px",
                             whiteSpace: "normal",
                             wordBreak: "break-word",
                             overflowWrap: "anywhere",
@@ -1170,12 +1212,12 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
                         style={{
                             display: "inline-block",
                             padding: "2px 8px",
-                            fontSize: 11,
-                            fontWeight: 500,
+                            fontSize: theme.typography.tag.fontSize,
+                            fontWeight: theme.typography.tag.fontWeight,
+                            lineHeight: theme.typography.tag.lineHeight,
                             color: textColor,
                             background: bgColor,
                             borderRadius: "10px",
-                            lineHeight: "16px",
                             whiteSpace: "nowrap",
                         }}
                         title={tag.label}
@@ -1258,8 +1300,8 @@ const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitial
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 14,
-                fontWeight: 600,
+                fontSize: theme.typography.avatarInitials.fontSize,
+                fontWeight: theme.typography.avatarInitials.fontWeight,
                 letterSpacing: 0.5,
             }}
         >
@@ -1295,7 +1337,7 @@ const VersionBadge: React.FC<VersionBadgeProps> = ({ version, theme }) => {
             {showTooltip && (
                 <span
                     style={{
-                        fontSize: 10,
+                        fontSize: theme.typography.versionBadge.fontSize,
                         color: theme.textMuted,
                         background: theme.cardBg,
                         padding: "1px 4px",
@@ -1534,11 +1576,12 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     void formFactor;
 
     const sectionHeaderStyle: React.CSSProperties = {
-        fontSize: 10,
-        fontWeight: 600,
+        fontSize: theme.typography.groupLabel.fontSize,
+        fontWeight: theme.typography.groupLabel.fontWeight,
+        lineHeight: theme.typography.groupLabel.lineHeight,
         color: theme.textMuted,
-        textTransform: "uppercase" as const,
-        letterSpacing: "0.5px",
+        textTransform: theme.typography.groupLabel.textTransform,
+        letterSpacing: theme.typography.groupLabel.letterSpacing,
         marginBottom: 4,
         marginTop: 8,
     };
@@ -1548,7 +1591,9 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
         justifyContent: "space-between",
         alignItems: "baseline",
         padding: "2px 0",
-        fontSize: 12,
+        fontSize: theme.typography.body.fontSize,
+        fontWeight: theme.typography.body.fontWeight,
+        lineHeight: theme.typography.body.lineHeight,
         gap: 8,
     };
 
@@ -1818,10 +1863,19 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     const [collapsed, setCollapsed] = React.useState(!props.startExpanded);
     const toggleCollapsed = React.useCallback(() => setCollapsed(c => !c), []);
 
-    // Resolve bound field labels/values/colors via record fetch
+    // Resolve bound field labels/values/colors via record fetch.
+    // Multiple resolveRecordFields calls can occur per render cycle (callback
+    // identity may change). Each call may return a SUBSET of the full override
+    // map (e.g. when a later pass re-resolves only the slots whose source data
+    // changed). Merge into prior state — never replace — otherwise a sparse
+    // late-arriving result wipes overrides resolved by an earlier richer call
+    // (observed: gridField1 "Start Time" override clobbered when a later
+    //  pass returned only gridField2 + tagField1).
     React.useEffect(() => {
         if (!props.resolveRecordFields) return;
-        props.resolveRecordFields().then(setRecordOverrides).catch(() => { /* optional */ });
+        props.resolveRecordFields()
+            .then((next) => setRecordOverrides((prev) => ({ ...prev, ...next })))
+            .catch(() => { /* optional */ });
     }, [props.resolveRecordFields]);
 
     // Fetch title-entity related data
@@ -2033,7 +2087,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                         justifyContent: "center",
                         padding: "16px 0",
                         color: theme.textMuted,
-                        fontSize: 13,
+                        fontSize: theme.typography.body.fontSize,
                         gap: 6,
                     }}
                 >

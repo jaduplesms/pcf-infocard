@@ -66,7 +66,6 @@
                       <titleField type="Lookup.Simple">msdyn_workorder</titleField>
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
-                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
                       <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
                       <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
                       <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>
@@ -95,7 +94,6 @@
                       <titleField type="Lookup.Simple">msdyn_workorder</titleField>
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField2>
-                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
                       <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
                       <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
                       <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>
@@ -125,7 +123,6 @@
                       <subtitleField1 type="Lookup.Simple">resource</subtitleField1>
                       <subtitleField2 type="Lookup.Simple">bookingstatus</subtitleField2>
                       <subtitleField3 type="SingleLine.Text" static="true">@msdyn_serviceaccount</subtitleField3>
-                      <phoneField1 type="SingleLine.Text" static="true">@msdyn_phonenumber</phoneField1>
                       <phoneField2 type="SingleLine.Text" static="true">@msdyn_serviceaccount.telephone1</phoneField2>
                       <emailField type="SingleLine.Text" static="true">@msdyn_serviceaccount.emailaddress1</emailField>
                       <addressField type="SingleLine.Text" static="true">@msdyn_address1</addressField>

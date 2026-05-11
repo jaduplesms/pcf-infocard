@@ -4,11 +4,27 @@ import {
     DEFAULT_STRINGS, formatLocalizedDuration,
 } from "./InfoCard";
 import type { RelatedFieldMapping, BindingDiagnostic, InfoCardStrings } from "./InfoCard";
+import { isUnbindableColumn } from "./bindingValidator";
 import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.3.3";
+const CONTROL_VERSION = "4.4.15";
+
+/**
+ * Column-name heuristic for Whole.Duration columns. Some Dataverse hosts don't
+ * expose the IntegerAttributeMetadata.Format property under any documented key,
+ * so metadata-based detection is unreliable. Falls back to recognizing common
+ * column-name patterns: literal "duration", anything ending in "duration" or
+ * "durationminutes" (e.g. msdyn_estimateddurationminutes, msdyn_actualduration).
+ */
+function isLikelyDurationColumn(colName: string | undefined): boolean {
+    if (!colName) return false;
+    const lc = colName.toLowerCase();
+    return lc === "duration"
+        || lc.endsWith("duration")
+        || lc.endsWith("durationminutes");
+}
 
 // Minimal shape of context.formatting we use. The PCF typings don't expose
 // formatInteger consistently across hosts, so we narrow it ourselves and
@@ -103,47 +119,51 @@ const SAMPLE_DATE = new Date(2026, 0, 15, 9, 30, 0, 0);
 // Slot-name semantic overrides (preferred over type lookup).
 // Uses the slot's intent (e.g. phone, email, address) rather than its underlying
 // PCF type so the maker preview looks like a real card, not a row of "42"s.
+// Design-time sample text. Deliberately reads as obvious placeholder copy (not realistic
+// record data) so the maker can tell at a glance that nothing is bound to a real record yet.
+// Each entry hints at the slot's purpose to help with authoring.
 const SAMPLE_BY_SLOT: Record<string, string> = {
-    titleField: "Adventure Works",
+    titleField: "Title appears here",
     imageField: "",
-    subtitleField1: "Primary Contact",
-    subtitleField2: "Active",
-    subtitleField3: "Premium",
-    phoneField1: "+1 (555) 123-4567",
-    phoneField2: "+1 (555) 987-6543",
-    emailField: "contact@contoso.com",
-    webField: "https://contoso.com",
-    addressField: "1 Microsoft Way, Redmond, WA 98052",
-    latitudeField: "47.6395",
-    longitudeField: "-122.1283",
-    detailField1: "Customer reports issue with main unit. Service history shows last visit 6 months ago.",
-    detailField2: "Access via side gate. Key with neighbor at #14.",
-    detailField3: "Bring replacement filter and pressure gauge.",
-    tagField1: "Active",
-    tagField2: "High",
-    tagField3: "Premium",
+    subtitleField1: "Subtitle 1",
+    subtitleField2: "Subtitle 2",
+    subtitleField3: "Subtitle 3",
+    phoneField1: "Phone number 1",
+    phoneField2: "Phone number 2",
+    emailField: "Email address",
+    webField: "Website URL",
+    addressField: "Street address, city, region",
+    latitudeField: "Latitude",
+    longitudeField: "Longitude",
+    detailField1: "Detail 1 will appear here — long-form text from the bound column such as instructions, description or summary.",
+    detailField2: "Detail 2 will appear here — long-form text from the bound column.",
+    detailField3: "Detail 3 will appear here — long-form text from the bound column.",
+    tagField1: "Tag 1",
+    tagField2: "Tag 2",
+    tagField3: "Tag 3",
     // gridField1..6 fall through to SAMPLE_BY_TYPE so date/currency/number columns
     // render with type-appropriate sample values in the grid.
 };
 
 // Per-PCF-type fallback when slot has no semantic sample (e.g. gridField*).
+// All values reuse obvious placeholder copy for the same reason as SAMPLE_BY_SLOT.
 const SAMPLE_BY_TYPE: Record<string, { value: string; raw: unknown }> = {
     "SingleLine.Text": { value: "Sample text", raw: "Sample text" },
-    "SingleLine.TextArea": { value: "Sample multi-line description.", raw: "Sample multi-line description." },
-    "Multiple": { value: "Sample multi-line description.", raw: "Sample multi-line description." },
-    "SingleLine.Email": { value: "sample@contoso.com", raw: "sample@contoso.com" },
-    "SingleLine.Phone": { value: "+1 (555) 123-4567", raw: "+1 (555) 123-4567" },
-    "SingleLine.URL": { value: "https://contoso.com", raw: "https://contoso.com" },
-    "Whole.None": { value: "42", raw: 42 },
-    "Currency": { value: "$1,234.56", raw: 1234.56 },
-    "Decimal": { value: "1.23", raw: 1.23 },
-    "FP": { value: "1.23", raw: 1.23 },
-    "DateAndTime.DateOnly": { value: "Jan 15, 2026", raw: SAMPLE_DATE },
-    "DateAndTime.DateAndTime": { value: "Jan 15, 2026 09:30", raw: SAMPLE_DATE },
-    "OptionSet": { value: "Active", raw: "Active" },
-    "MultiSelectOptionSet": { value: "Option A, Option B", raw: "Option A, Option B" },
+    "SingleLine.TextArea": { value: "Sample text — bound column value appears here.", raw: "Sample text — bound column value appears here." },
+    "Multiple": { value: "Sample text — bound column value appears here.", raw: "Sample text — bound column value appears here." },
+    "SingleLine.Email": { value: "name@example.com", raw: "name@example.com" },
+    "SingleLine.Phone": { value: "+1 (555) 000-0000", raw: "+1 (555) 000-0000" },
+    "SingleLine.URL": { value: "https://example.com", raw: "https://example.com" },
+    "Whole.None": { value: "123", raw: 123 },
+    "Currency": { value: "$0.00", raw: 0 },
+    "Decimal": { value: "0.00", raw: 0 },
+    "FP": { value: "0.00", raw: 0 },
+    "DateAndTime.DateOnly": { value: "Jan 1, 2026", raw: SAMPLE_DATE },
+    "DateAndTime.DateAndTime": { value: "Jan 1, 2026 09:00", raw: SAMPLE_DATE },
+    "OptionSet": { value: "Choice", raw: "Choice" },
+    "MultiSelectOptionSet": { value: "Choice 1, Choice 2", raw: "Choice 1, Choice 2" },
     "TwoOptions": { value: "Yes", raw: true },
-    "Lookup.Simple": { value: "Sample Record", raw: "Sample Record" },
+    "Lookup.Simple": { value: "Lookup value", raw: "Lookup value" },
 };
 
 // Friendly names for slot keys in diagnostics
@@ -176,7 +196,7 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
     msdyn_workorder: {
         subtitleField1: "msdyn_serviceaccount",
         subtitleField2: "msdyn_primaryincidenttype",
-        addressField: "msdyn_addressline1_composite",
+        addressField: "msdyn_displayaddress",
         detailField1: "msdyn_workordersummary",
         gridField1: "msdyn_systemstatus",
         gridField2: "msdyn_subtotalamount",
@@ -267,6 +287,8 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
 interface ColumnMeta {
     displayName: string;
     logicalName: string;
+    /** Format hint from metadata (e.g. "duration", "phone", "email"). Lowercased. */
+    format?: string;
     options?: Array<{ value: number; label: string; color?: string }>;
 }
 
@@ -293,6 +315,13 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     private _columnMetadata: Record<string, ColumnMeta> = {};
     private _slotToColumn: Record<string, string> = {};
     private _resolvedValues: Record<string, string> = {};
+    // Tracks slots whose column mapping originated from SLOT_PRESETS (vs. maker
+    // binding via attributes.LogicalName, vs. value-matching at runtime). Used by
+    // the override-merger to decide whether to surface the real column DisplayName
+    // ("Start Time") or fall back to a generic slot label ("Grid 1") — value-matched
+    // slots get generic labels so the row labels stay consistent across slots that
+    // happen to match vs. ones that don't.
+    private _presetSlots: Set<string> = new Set();
     // Colors resolved from lookup entity records
     private _resolvedColors: Record<string, string> = {};
     // True when rendering inside the Power Apps form designer. When set, readSlot
@@ -391,7 +420,11 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
         // Detect all related field mappings, split by source
         const allMappings = this.detectRelatedFields(context);
-        const titleMappings = allMappings.filter(m => m.sourceSlot === "titleField");
+        // If titleField is a lookup whose target entity has a SLOT_PRESETS entry,
+        // synthesize @-prefixed mappings for slots the maker didn't bind so the
+        // existing related-field pipeline auto-fills them from the lookup record.
+        const titleLookupMappings = this.applyTitleLookupPreset(context, data, allMappings);
+        const titleMappings = [...allMappings.filter(m => m.sourceSlot === "titleField"), ...titleLookupMappings];
         const currentRecordMappings = allMappings.filter(m => m.sourceSlot === "__currentRecord__");
 
         // Design-time detection: titleField is configured (valid type) but has no record data
@@ -466,6 +499,12 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         formatting?: MaybeFormatting,
         strings?: InfoCardStrings,
     ): InfoCardData {
+        // Pre-register preset slot→column mappings BEFORE readSlot runs so its label
+        // chain picks up the preset column name (e.g. msdyn_serviceaccount → "Service
+        // Account") when no maker binding/displayName is available. At runtime these
+        // mappings are also used by resolveRecordFieldsAsync to fetch real values.
+        this.registerPresetMappings(context);
+
         // Read lat/lng as numbers
         const latSlot = this.readSlot(context, "latitudeField");
         const lngSlot = this.readSlot(context, "longitudeField");
@@ -495,13 +534,42 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         // Apply standard layout preset for the form entity (if known) to slots the
         // maker did not bind. Inserts placeholders into the data and registers the
         // slot→column mapping so resolveRecordFieldsAsync resolves the value via the
-        // record fetch already in flight. Does not run in authoring mode (samples
-        // already cover unbound slots there).
-        if (!this._isAuthoringMode) {
-            this.applyPreset(context, data);
-        }
+        // record fetch already in flight. In authoring mode the placeholder carries
+        // a sample value + preset-derived label so the maker sees a populated preview.
+        this.applyPreset(context, data);
 
         return data;
+    }
+
+    /**
+     * Register slot→column mappings from SLOT_PRESETS for the current form entity.
+     * Must run before readSlot so the label resolution chain in readSlot picks up the
+     * preset's column name (e.g. msdyn_serviceaccount → "Service Account") when no
+     * maker binding is set. Only registers slots the maker has not configured.
+     */
+    private registerPresetMappings(
+        context: ComponentFramework.Context<IInputs>,
+    ): void {
+        // Skip presets entirely in the form designer — sample data injection in
+        // readSlot already covers unconfigured slots, and presets would cause
+        // generic-labelled slots to render as if column-bound (confusing the maker
+        // about what is actually configured vs. inferred).
+        if (this._isAuthoringMode) return;
+        const formEntity = this._formEntityName;
+        if (!formEntity) return;
+        const preset = SLOT_PRESETS[formEntity];
+        if (!preset) return;
+
+        for (const [slotKey, columnName] of Object.entries(preset)) {
+            if (!columnName) continue;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const param = (context.parameters as Record<string, any>)[slotKey];
+            const isMakerConfigured = !!(param && param.type && param.type !== "Unknown");
+            if (isMakerConfigured) continue;
+            if (this._slotToColumn[slotKey]) continue;
+            this._slotToColumn[slotKey] = columnName;
+            this._presetSlots.add(slotKey);
+        }
     }
 
     /**
@@ -536,10 +604,95 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             // when hideEmpty=false (preset slots are speculative; don't show "---" rows
             // for columns that turn out to have no data on this record).
             this._slotToColumn[slotKey] = columnName;
+            this._presetSlots.add(slotKey);
 
+            // In authoring mode the maker has no record bound, so the override pass
+            // never runs. Build a fully-rendered preview placeholder using the preset
+            // column name as the label and a slot-appropriate sample as the value, so
+            // the designer surfaces what the preset will populate at runtime when only
+            // the title is bound.
+            const presetLabel = this.formatLogicalName(columnName);
+            const placeholder: SlotField = this._isAuthoringMode
+                ? {
+                    slotKey,
+                    label: presetLabel,
+                    value: SAMPLE_BY_SLOT[slotKey] ?? presetLabel,
+                    rawValue: SAMPLE_BY_SLOT[slotKey] ?? presetLabel,
+                    isEmpty: false,
+                    isPreset: true,
+                }
+                : {
+                    slotKey,
+                    // Generic label here; the override pass will swap in the real
+                    // DisplayName ("Start Time") once entity metadata loads.
+                    label: this.formatPropertyKey(slotKey),
+                    value: "---",
+                    rawValue: null,
+                    isEmpty: true,
+                    isPreset: true,
+                };
+
+            if (slotKey.startsWith("subtitleField")) {
+                if (!data.subtitles.some(s => s.slotKey === slotKey)) data.subtitles.push(placeholder);
+            } else if (slotKey.startsWith("phoneField")) {
+                if (!data.phones.some(s => s.slotKey === slotKey)) data.phones.push(placeholder);
+            } else if (slotKey.startsWith("detailField")) {
+                if (!data.details.some(s => s.slotKey === slotKey)) data.details.push(placeholder);
+            } else if (slotKey.startsWith("gridField")) {
+                if (!data.gridFields.some(s => s.slotKey === slotKey)) data.gridFields.push(placeholder);
+            } else if (slotKey.startsWith("tagField")) {
+                if (!data.tags.some(s => s.slotKey === slotKey)) data.tags.push(placeholder);
+            } else if (slotKey === "emailField" && !data.email) {
+                data.email = placeholder;
+            } else if (slotKey === "webField" && !data.web) {
+                data.web = placeholder;
+            } else if (slotKey === "addressField" && !data.address) {
+                data.address = placeholder;
+            }
+        }
+    }
+
+    /**
+     * When titleField is a lookup AND the lookup's target entity has a SLOT_PRESETS
+     * entry, synthesize @-prefixed related-field mappings for any slot the maker did
+     * not bind and that the host preset did not already claim. Lets a control on a
+     * Booking form with only titleField=msdyn_workorder render a full Work Order
+     * summary card without explicit @msdyn_serviceaccount/@msdyn_address1 bindings.
+     *
+     * Returns the synthesized mappings to be appended to `titleMappings` so they're
+     * fetched and merged through the existing related-field pipeline.
+     */
+    private applyTitleLookupPreset(
+        context: ComponentFramework.Context<IInputs>,
+        data: InfoCardData,
+        existingMappings: RelatedFieldMapping[],
+    ): RelatedFieldMapping[] {
+        if (this._isAuthoringMode) return [];
+        const lookupEntity = data.title?.lookupEntityType;
+        if (!lookupEntity) return [];
+        const preset = SLOT_PRESETS[lookupEntity];
+        if (!preset) return [];
+
+        const synthesized: RelatedFieldMapping[] = [];
+        const claimedTargets = new Set(existingMappings.map(m => m.targetSlot));
+
+        for (const [slotKey, columnName] of Object.entries(preset)) {
+            if (!columnName) continue;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const param = (context.parameters as Record<string, any>)[slotKey];
+            const isMakerConfigured = !!(param && param.type && param.type !== "Unknown");
+            if (isMakerConfigured) continue;
+            if (this._slotToColumn[slotKey]) continue; // host preset already claimed it
+            if (claimedTargets.has(slotKey)) continue;  // explicit @-mapping already targets it
+            if (slotKey === "titleField") continue;     // never overwrite the title itself
+
+            this._presetSlots.add(slotKey);
+
+            // Placeholder so the slot has a render position before the fetch resolves.
+            // Real label + value land via mergeRelatedFields once fetchRelatedFields returns.
             const placeholder: SlotField = {
                 slotKey,
-                label: this.formatLogicalName(columnName),
+                label: this.formatPropertyKey(slotKey),
                 value: "---",
                 rawValue: null,
                 isEmpty: true,
@@ -563,7 +716,19 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             } else if (slotKey === "addressField" && !data.address) {
                 data.address = placeholder;
             }
+
+            synthesized.push({
+                sourceSlot: "titleField",
+                fetchField: columnName,
+                targetSlot: slotKey,
+            });
         }
+
+        if (synthesized.length > 0) {
+            console.log(`[InfoCard] Title-lookup preset (${lookupEntity}) added ${synthesized.length} mappings:`,
+                synthesized.map(m => `${m.targetSlot}→${m.fetchField}`).join(", "));
+        }
+        return synthesized;
     }
 
     private readSlotGroup(
@@ -654,11 +819,18 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
 
         const raw = param.raw;
 
-        // Label fallback chain: displayName → metadata cache → formatted column name → formatted slot key
+        // Label fallback chain: displayName (from attrs) → metadata cache → formatted
+        // logicalName from attrs → generic slot key. We deliberately do NOT use
+        // _slotToColumn[key] for the formatLogicalName fallback: that map is also
+        // populated by SLOT_PRESETS and runtime value-matching, and surfacing those
+        // column names as labels causes inconsistency (some slots show real column
+        // DisplayNames, others show generic "Grid 1"). Preset/value-matched slots
+        // get their real DisplayName via the metadata cache once it loads, or fall
+        // through to the generic formatPropertyKey label.
         const cachedMeta = resolvedColumn ? this._columnMetadata[resolvedColumn] : null;
         const label = displayName
             ?? cachedMeta?.displayName
-            ?? (resolvedColumn ? this.formatLogicalName(resolvedColumn) : null)
+            ?? (logicalName ? this.formatLogicalName(logicalName) : null)
             ?? this.formatPropertyKey(key);
 
         const formatted = param.formatted;
@@ -787,10 +959,26 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                     dateText = raw.toLocaleDateString();
                 }
                 if (isDateAndTime) {
+                    // Don't use context.formatting.formatTime here: on some Dataverse
+                    // hosts it returns the full date+time string regardless of the
+                    // behavior arg, which produces a duplicated date row in the UI.
+                    // Intl.DateTimeFormat is consistent across hosts.
+                    //
+                    // Honor the user's Dataverse short-time pattern for 12/24h:
+                    // shortTimePattern uses .NET tokens — "tt" indicates an AM/PM
+                    // designator (12-hour); uppercase "HH" indicates 24-hour.
+                    // Without this, browsers in en-GB/de-DE locales render 14:30
+                    // even when the Dataverse user setting is "h:mm tt".
+                    const us = (this.context as unknown as { userSettings?: { dateFormattingInfo?: { shortTimePattern?: string } } }).userSettings;
+                    const stp = us?.dateFormattingInfo?.shortTimePattern ?? "";
+                    let hour12: boolean | undefined = undefined;
+                    if (stp.includes("tt")) hour12 = true;
+                    else if (/\bH+\b/.test(stp)) hour12 = false;
                     try {
-                        timeText = fmt?.formatTime
-                            ? fmt.formatTime(raw, 1 /* DateTimeFieldBehavior.UserLocal */)
-                            : raw.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+                        timeText = new Intl.DateTimeFormat(undefined, {
+                            hour: "numeric", minute: "2-digit",
+                            ...(hour12 !== undefined ? { hour12 } : {}),
+                        }).format(raw);
                     } catch {
                         timeText = raw.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
                     }
@@ -814,6 +1002,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         if (isSlotDebugEnabled()) {
             // Uniform per-slot trace covering every group (header/contact/address/details/grid/tags).
             // Keep payload small — full param dumps are noisy in mobile logs.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const attrs = (param as any).attributes;
             console.log("[InfoCard.readSlot]", key, {
                 type: param.type,
                 rawType: typeof raw,
@@ -823,6 +1013,9 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 lookupId: result.lookupId,
                 hasFormatted: formatted != null,
                 hasResolved: resolvedValue != null,
+                attrs: attrs ? Object.keys(attrs) : null,
+                attrLogicalName: attrs?.LogicalName ?? attrs?.logicalName ?? null,
+                attrDisplayName: attrs?.DisplayName ?? attrs?.displayName ?? null,
             });
         }
 
@@ -964,6 +1157,45 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                         this._resolvedValues[key] = String(fmtVal);
                     }
                 } else if (candidates.length > 1) {
+                    // Ambiguous match — common for date/datetime values on Bookings
+                    // (starttime/scheduledstart/actualstart often share the same value
+                    // by default). Tie-break ONLY by formatted-value comparison: if
+                    // exactly one candidate's FormattedValue equals param.formatted,
+                    // commit it; otherwise refuse rather than guess.
+                    const paramFormatted = (param as Record<string, unknown>).formatted;
+                    if (typeof paramFormatted === "string" && paramFormatted) {
+                        const fmtMatches = candidates.filter(c => {
+                            const fmt = rec[`${c}@OData.Community.Display.V1.FormattedValue`]
+                                ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(c) : null);
+                            return fmt === paramFormatted;
+                        });
+                        if (fmtMatches.length === 1) {
+                            const colName = fmtMatches[0];
+                            this._slotToColumn[key] = colName;
+                            this._resolvedValues[key] = paramFormatted;
+                            continue;
+                        }
+                    }
+                    // Last-resort tie-break (LABEL ONLY): when the maker bound a slot
+                    // (param.type set, value is rendered directly from param.raw), the
+                    // platform doesn't expose the column's LogicalName for usage="input"
+                    // properties. We can't determine which column was bound. If this slot
+                    // has a SLOT_PRESETS entry for the current entity AND that preset
+                    // column is one of the candidates, commit it so the slot gets the
+                    // correct DisplayName. The displayed VALUE is unaffected — it's
+                    // already rendered from param.raw — only the label is disambiguated.
+                    const presetCol: string | undefined = this._formEntityName
+                        ? (SLOT_PRESETS[this._formEntityName] as Record<string, string> | undefined)?.[key]
+                        : undefined;
+                    if (presetCol && candidates.includes(presetCol)) {
+                        this._slotToColumn[key] = presetCol;
+                        const fmtKey = `${presetCol}@OData.Community.Display.V1.FormattedValue`;
+                        const fmtVal = rec[fmtKey]
+                            ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(presetCol) : null);
+                        if (fmtVal) this._resolvedValues[key] = String(fmtVal);
+                        console.log(`[InfoCard] Ambiguous match for ${key} (${candidates.join(", ")}) — using preset hint "${presetCol}" for label only.`);
+                        continue;
+                    }
                     console.warn(`[InfoCard] Ambiguous value match for slot ${key} (matched ${candidates.join(", ")}); not committing — bind the slot to a column directly to disambiguate.`);
                 }
             }
@@ -985,7 +1217,34 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                                 displayName: this.extractDisplayNameFromMeta(attr.DisplayName) ?? this.formatLogicalName(logName),
                             };
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const attrDesc = (attr as Record<string, any>).attributeDescriptor;
+                            const attrAny = attr as Record<string, any>;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const attrDesc = attrAny.attributeDescriptor as Record<string, any> | undefined;
+                            // Capture Format ("duration", "phone", "email", etc.) so unbound
+                            // preset slots — where param.type==="Unknown" — can still detect
+                            // duration columns and format minutes as "Xd Xh Xm" instead of
+                            // surfacing the raw integer. Different host versions expose this
+                            // under different property names and as either string or numeric
+                            // enum (1=Duration for IntegerAttributeMetadata).
+                            let fmt: unknown = attrAny.Format ?? attrAny.FormatName
+                                ?? attrDesc?.Format ?? attrDesc?.format
+                                ?? attrDesc?.FormatName ?? attrDesc?.formatName;
+                            if (typeof fmt === "number") {
+                                // IntegerFormat enum: 0=None, 1=Duration, 2=DateAndTime, 3=TimeZone, 4=Language, 5=Locale
+                                const intFormatMap: Record<number, string> = {
+                                    1: "duration", 2: "datetime", 3: "timezone", 4: "language", 5: "locale",
+                                };
+                                fmt = intFormatMap[fmt];
+                            }
+                            if (typeof fmt === "string" && fmt.length > 0) {
+                                entry.format = fmt.toLowerCase();
+                            }
+                            // Diagnostic: for duration columns (logName ends with "duration"
+                            // or known Dataverse duration columns), dump the attr keys when
+                            // we couldn't resolve a format. Helps identify the right key.
+                            if (!entry.format && /duration$/i.test(logName) && isSlotDebugEnabled()) {
+                                console.log(`[InfoCard.metadata] no Format for ${logName}; attr keys:`, Object.keys(attrAny), "attrDesc keys:", attrDesc ? Object.keys(attrDesc) : null);
+                            }
                             const optionSet = attrDesc?.OptionSet ?? attrDesc?.optionSet;
                             if (optionSet?.Options) {
                                 entry.options = [];
@@ -1011,6 +1270,24 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             // slots produce empty override values even though the record carried the label.
             for (const [slotKey, colName] of Object.entries(this._slotToColumn)) {
                 if (this._resolvedValues[slotKey]) continue;
+                // Whole.Duration columns: Dataverse returns the raw integer in
+                // minutes and the OData FormattedValue is unreliable across hosts
+                // (some return "10,110" instead of "168h 30m"). Always re-format
+                // from the raw integer when we recognize the slot as a duration.
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const param = (context.parameters as Record<string, any>)[slotKey];
+                const paramType = String(param?.type ?? "");
+                const isDuration = paramType === "Whole.Duration"
+                    || String(param?.attributes?.Format ?? "").toLowerCase() === "duration"
+                    || this._columnMetadata[colName]?.format === "duration"
+                    || isLikelyDurationColumn(colName);
+                if (isDuration) {
+                    const rawMinutes = rec[colName];
+                    if (typeof rawMinutes === "number") {
+                        this._resolvedValues[slotKey] = this.formatDuration(rawMinutes, this._formatting, this._strings);
+                        continue;
+                    }
+                }
                 const fmtKey = `${colName}@OData.Community.Display.V1.FormattedValue`;
                 const fmtVal = rec[fmtKey]
                     ?? (typeof rec.getFormattedValue === "function" ? rec.getFormattedValue(colName) : null);
@@ -1040,9 +1317,36 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 const meta = this._columnMetadata[colName];
                 const fmtValue = this._resolvedValues[slotKey];
                 const color = this._resolvedColors[slotKey];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const param = (context.parameters as Record<string, any>)[slotKey];
+                const attrs = param?.attributes;
+                const hasMakerBinding = !!(attrs?.LogicalName ?? attrs?.logicalName);
+                // Surface the real column DisplayName when (a) the maker bound
+                // the slot directly, (b) it came from a SLOT_PRESETS entry, OR
+                // (c) entity metadata gave us a real DisplayName for the resolved
+                // column. Case (c) covers value-matched slots — usage="input"
+                // properties (grids, tags, details, subtitles) get attributes={}
+                // from the platform regardless of binding, so the value-matcher
+                // is the only way to learn the column. Without surfacing the
+                // metadata DisplayName here, every grid slot renders as
+                // "Grid 1/2/3" instead of "Start Time/End Time/Duration".
+                const hasMetadataDisplayName = !!meta?.displayName
+                    && meta.displayName !== this.formatLogicalName(colName);
+                const useRealLabel = hasMakerBinding
+                    || this._presetSlots.has(slotKey)
+                    || hasMetadataDisplayName;
                 if (meta || fmtValue || color) {
+                    // Only emit a label when we have a "real" one. The generic fallback
+                    // (formatPropertyKey -> "Grid 1") is no improvement over the UI's
+                    // own default and — because override merge is shallow per-slot — a
+                    // sparse late pass emitting "Grid 1" would clobber a real label
+                    // ("Start Time") set by an earlier richer pass. When useRealLabel
+                    // is false, omit label and let the React applyOverride keep the
+                    // existing slot label (`ov.label || f.label`).
                     overrides[slotKey] = {
-                        label: meta?.displayName ?? this.formatLogicalName(colName),
+                        label: useRealLabel
+                            ? (meta?.displayName ?? this.formatLogicalName(colName))
+                            : "",
                         value: fmtValue ?? "",
                         color,
                     };
@@ -1164,6 +1468,10 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const getFormatted = typeof rec.getFormattedValue === "function"
             ? (key: string) => rec.getFormattedValue(key) as string | null
             : () => null;
+        // Readable seed for `label` — gets overridden by entity metadata in step 6a
+        // when available, but stays human-friendly ("Work Order Instructions") if
+        // the metadata fetch is skipped or fails silently.
+        const seedLabel = this.formatLogicalName(col);
 
         // Image columns
         if (col === "entityimage" || col.endsWith("image") || col.endsWith("_image")) {
@@ -1194,22 +1502,48 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             const etnKey = `${lookupKey}@Microsoft.Dynamics.CRM.lookuplogicalname`;
             return {
                 value: String(lookupFormatted),
-                label: col,
+                label: seedLabel,
                 lookupId: lookupVal ? String(lookupVal) : undefined,
                 lookupEntityType: rec[etnKey] ? String(rec[etnKey]) : undefined,
             };
         }
         if (lookupVal != null) {
-            return { value: String(lookupVal), label: col, lookupId: String(lookupVal) };
+            return { value: String(lookupVal), label: seedLabel, lookupId: String(lookupVal) };
         }
 
         // Direct field with formatted value
         const formatted = rec[`${col}@OData.Community.Display.V1.FormattedValue`]
             ?? getFormatted(col);
-        if (formatted) return { value: String(formatted), label: col };
-        if (rec[col] != null) return { value: String(rec[col]), label: col };
+        if (formatted) return { value: String(formatted), label: seedLabel };
 
-        return null;
+        const direct = rec[col];
+        if (direct == null) return null;
+
+        // Reject non-primitive direct values — happens when OData $select returns an
+        // expanded navigation object (e.g. `$select=msdyn_serviceaccount` yielding the
+        // related entity) rather than a flat primitive. `String({...})` would render
+        // "[object Object]". Try to recover a display name from common fields, else
+        // skip so the lookup-primitive path can take over.
+        if (typeof direct === "object") {
+            const obj = direct as Record<string, unknown>;
+            const candidate = obj.name ?? obj.fullname ?? obj.title ?? obj.subject;
+            if (typeof candidate === "string" && candidate.length > 0) {
+                return { value: candidate, label: seedLabel };
+            }
+            // Fallback: scan for any `*name` / `*Name` string property
+            // (e.g. accountname, primarycontactname). Skip annotation keys
+            // and odata metadata.
+            for (const key of Object.keys(obj)) {
+                if (key.includes("@") || key.startsWith("_")) continue;
+                if (!/name$/i.test(key)) continue;
+                const v = obj[key];
+                if (typeof v === "string" && v.length > 0) {
+                    return { value: v, label: seedLabel };
+                }
+            }
+            return null;
+        }
+        return { value: String(direct), label: seedLabel };
     }
 
     /**
@@ -1286,7 +1620,10 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                         try {
                             const r = await context.webAPI.retrieveRecord(entityType, id, `?$select=${selectCol}`);
                             for (const k of Object.keys(r)) { record[k] = r[k]; }
-                        } catch { /* column doesn't exist in this form */ }
+                        } catch (e) {
+                            // Expected for non-lookup `_xxx_value` and unknown columns; debug-only.
+                            if (isSlotDebugEnabled()) console.log(`[InfoCard] per-column fetch ${selectCol} failed:`, (e as Error)?.message);
+                        }
                     }
                 }
 
@@ -1316,12 +1653,26 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             }
 
             // ── 3b. Follow-up: ensure lookup primitives are fetched ──────
+            // Chase the `_col_value` form for columns that came back with NO
+            // entry in the response, OR that came back as a sparse expanded
+            // navigation object (Dataverse sometimes returns `{ "@odata.id": ... }`
+            // for `?$select=navProp` instead of the lookup primitive). Without
+            // this, `@msdyn_serviceaccount` resolves to an object readField can't
+            // recover a display name from, and the slot renders empty.
+            //
+            // Guard: if `col in record` AS A PRIMITIVE (string/number/etc) or
+            // `_col_value` is already present, skip — fetching `_xxx_value` for
+            // a non-lookup column produces an OData 400.
             if (!usedFallback) {
                 const missingLookupCols = directCols.filter(col => {
-                    const val = record[col];
-                    const lookupVal = record[`_${col}_value`];
-                    return lookupVal === undefined &&
-                        (val === undefined || val === null || (typeof val === "object" && val !== null));
+                    const lookupKeyPresent = Object.prototype.hasOwnProperty.call(record, `_${col}_value`);
+                    if (lookupKeyPresent) return false;
+                    const keyPresent = Object.prototype.hasOwnProperty.call(record, col);
+                    if (!keyPresent) return true;
+                    // Key present but value is a non-null object (sparse expand) —
+                    // we still need the lookup primitive for FormattedValue.
+                    const v = record[col];
+                    return v !== null && typeof v === "object";
                 });
 
                 if (missingLookupCols.length > 0) {
@@ -1448,14 +1799,52 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                     if (entityMeta?.Attributes) {
                         for (const attr of entityMeta.Attributes.getAll()) {
                             const logicalName = attr.LogicalName;
+                            if (!logicalName || !results[logicalName]) continue;
                             const dn = this.extractDisplayNameFromMeta(attr.DisplayName);
-                            if (logicalName && dn && results[logicalName]) {
-                                results[logicalName].label = dn;
+                            if (dn) results[logicalName].label = dn;
+                            // Detect Whole.Duration columns and re-format the value from the
+                            // raw integer in `record`. The OData FormattedValue is unreliable
+                            // for duration columns (often returns the locale-grouped integer
+                            // "10,110" instead of "168h 30m"), so we override with our own
+                            // formatter when metadata confirms the column is a duration.
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const attrAny = attr as Record<string, any>;
+                            const attrDesc = attrAny.attributeDescriptor ?? attrAny.AttributeDescriptor ?? attrAny;
+                            const fmt = String(attrDesc?.Format ?? attrDesc?.format ?? "").toLowerCase();
+                            if (fmt === "duration") {
+                                const rawMin = (record as Record<string, unknown>)[logicalName];
+                                if (typeof rawMin === "number" && Number.isFinite(rawMin)) {
+                                    results[logicalName].value = this.formatDuration(rawMin, this._formatting, this._strings);
+                                }
                             }
                         }
                     }
                 }
             } catch { /* metadata fetch is optional */ }
+
+            // 6a-fallback: Heuristic duration detection when metadata didn't fire (or
+            // didn't expose Format). Catches `duration`, `msdyn_duration`, etc. so the
+            // fetched value renders as "Xh Ym" instead of "10,110".
+            for (const col of Object.keys(results)) {
+                if (col.startsWith("__") || col.includes(".")) continue;
+                if (!isUnbindableColumn(col)) continue;
+                if (!/(^|_)duration(minutes)?$/i.test(col)) continue;
+                const current = results[col];
+                if (!current) continue;
+                // Already looks like a formatted duration ("Xh Ym" / "X hours") — leave alone.
+                if (/[a-z]/i.test(current.value) && !/^[\d,.\s-]+$/.test(current.value)) continue;
+                const rawMin = (record as Record<string, unknown>)[col];
+                let minutes: number | null = null;
+                if (typeof rawMin === "number" && Number.isFinite(rawMin)) {
+                    minutes = rawMin;
+                } else {
+                    const parsed = parseInt(String(current.value).replace(/[^\d-]/g, ""), 10);
+                    if (Number.isFinite(parsed)) minutes = parsed;
+                }
+                if (minutes !== null) {
+                    current.value = this.formatDuration(minutes, this._formatting, this._strings);
+                }
+            }
 
             // 6b. Dotted-path fields: resolve from the target entity
             const allDottedGroups = { ...expandGroups, ...hop2Groups };
@@ -1533,8 +1922,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 const path = raw.substring(2).trim();
                 if (!path) {
                     entry.warning = "Empty path after @. — expected @.navProp.field";
-                } else if (!path.includes(".")) {
-                    entry.warning = `Direct field '${path}' on current record — use column binding instead of @. for single-hop`;
+                } else if (!path.includes(".") && !isUnbindableColumn(path)) {
+                    entry.warning = `Direct field '${path}' on current record — consider $-binding (faster, design-time validation). Keep @.${path} if the column type isn't bindable.`;
                 }
             } else if (typeof raw === "string" && raw.startsWith("@")) {
                 entry.bindingType = "title-related";
@@ -1633,6 +2022,19 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const fdl = (context as Record<string, any>).fluentDesignLanguage;
         if (fdl?.tokenTheme) {
             const t = fdl.tokenTheme;
+            const dt = defaultTheme.typography;
+            // Fluent v9 ramp tokens — sizes/lineHeights are CSS strings ("14px"); weights are numbers.
+            const sizeBase100 = t.fontSizeBase100 ?? dt.versionBadge.fontSize;
+            const sizeBase200 = t.fontSizeBase200 ?? dt.fieldLabel.fontSize;
+            const sizeBase300 = t.fontSizeBase300 ?? dt.body.fontSize;
+            const sizeBase400 = t.fontSizeBase400 ?? dt.title.fontSize;
+            const lhBase100 = t.lineHeightBase100 ?? dt.versionBadge.lineHeight;
+            const lhBase200 = t.lineHeightBase200 ?? dt.fieldLabel.lineHeight;
+            const lhBase300 = t.lineHeightBase300 ?? dt.body.lineHeight;
+            const lhBase400 = t.lineHeightBase400 ?? dt.title.lineHeight;
+            const wRegular = Number(t.fontWeightRegular ?? dt.body.fontWeight);
+            const wMedium = Number(t.fontWeightMedium ?? dt.tag.fontWeight);
+            const wSemibold = Number(t.fontWeightSemibold ?? dt.title.fontWeight);
             return {
                 cardBg: t.colorNeutralBackground1 ?? defaultTheme.cardBg,
                 textPrimary: t.colorNeutralForeground1 ?? defaultTheme.textPrimary,
@@ -1644,7 +2046,18 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 brandLight: t.colorBrandBackground2 ?? defaultTheme.brandLight,
                 radius: t.borderRadiusMedium ?? defaultTheme.radius,
                 shadow: t.shadow4 ?? defaultTheme.shadow,
-                fontFamily: defaultTheme.fontFamily,
+                fontFamily: t.fontFamilyBase ?? defaultTheme.fontFamily,
+                typography: {
+                    title:           { fontSize: sizeBase400, fontWeight: wSemibold, lineHeight: lhBase400 },
+                    subtitle:        { fontSize: sizeBase300, fontWeight: wRegular,  lineHeight: lhBase300 },
+                    body:            { fontSize: sizeBase300, fontWeight: wRegular,  lineHeight: lhBase300 },
+                    groupLabel:      { fontSize: sizeBase200, fontWeight: wSemibold, lineHeight: lhBase200, textTransform: "uppercase", letterSpacing: "0.04em" },
+                    fieldLabel:      { fontSize: sizeBase200, fontWeight: wRegular,  lineHeight: lhBase200 },
+                    inlineBoldLabel: { fontSize: sizeBase300, fontWeight: wSemibold, lineHeight: lhBase300 },
+                    tag:             { fontSize: sizeBase200, fontWeight: wMedium,   lineHeight: lhBase200 },
+                    avatarInitials:  { fontSize: sizeBase300, fontWeight: wSemibold, lineHeight: lhBase300 },
+                    versionBadge:    { fontSize: sizeBase100, fontWeight: wRegular,  lineHeight: lhBase100 },
+                },
             };
         }
         return defaultTheme;

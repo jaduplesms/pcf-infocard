@@ -143,10 +143,24 @@ If the title field is bound to a lookup (e.g., `msdyn_serviceaccount` on a work 
 
 Two-hop chaining follows a lookup and then reads a specific field from the resolved entity. This fetches `telephone1` from the account record that `msdyn_serviceaccount` points to -- useful for showing a service account's phone number directly on a work order card.
 
+### Current-record (`@.fieldName`) — escape hatch for unbindable column types
+
+```
+@.duration
+@.statecode
+@.ownerid
+```
+
+The PCF manifest does not allow direct binding to several common column types (`Whole.Duration`, `Status`, `Status Reason`, `Lookup.Customer`, `Lookup.Owner`, `Lookup.Regarding`, `Lookup.PartyList`, `Whole.Language`, `Whole.TimeZone`, file columns — see [the official property reference](https://learn.microsoft.com/en-us/power-apps/developer/component-framework/manifest-schema-reference/property#value-elements-that-arent-supported)). The form designer's column picker simply will not surface them.
+
+For these columns, configure the slot as a **static input** (`type="SingleLine.Text" static="true"` in the form XML) with the value `@.columnname`. InfoCard fetches the column via WebAPI on mount and renders it just like a bound slot. This works for any column the user has read access to — `duration`, `statecode`, `customerid`, `ownerid`, etc. — and respects offline mode.
+
+Duration columns are auto-detected (by metadata `Format=Duration` and a column-name heuristic) and rendered as `Xh Ym` rather than the locale-grouped raw integer.
+
 ### How it works
 
 1. On `updateView`, the control scans all slot values for the `@` prefix
-2. It resolves the title field's lookup target (entity type + record ID)
+2. It resolves the title field's lookup target (entity type + record ID), or the current form record for `@.`
 3. It issues WebAPI `retrieveRecord` calls to fetch the requested fields
 4. Resolved values are merged into the card data and rendered
 
