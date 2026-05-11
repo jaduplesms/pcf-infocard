@@ -712,7 +712,7 @@ describe("InfoCardComponent", () => {
       const data = makeData({
         title: makeField({
           label: "Account",
-          value: "Adams",
+          value: "Contoso",
           rawValue: "abc-123",
           lookupEntityType: "account",
           lookupId: "abc-123",
@@ -752,7 +752,7 @@ describe("InfoCardComponent", () => {
 
     it("phone action chip has localized aria-label", () => {
       const data = makeData({
-        title: makeField({ label: "Account", value: "Adams" }),
+        title: makeField({ label: "Account", value: "Contoso" }),
         phones: [makeField({ label: "Phone", value: "555-1234" })],
       });
       const { container } = render(

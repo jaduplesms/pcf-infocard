@@ -49,7 +49,7 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - **Locale-aware duration formatting** — `formatDuration` now consults `context.formatting.formatInteger` (so `1h 30m` becomes locale-formatted digits where appropriate) and uses resx-driven unit suffixes (`Std/Min` for German, etc.). Falls back to plain ASCII digits if `formatInteger` is unavailable or throws.
 - **Accessibility (WCAG 2.1 AA)** —
   - Lookup title and subtitle rows are now keyboard-operable (`role="button"`, `tabIndex={0}`, Enter/Space handlers, `aria-label`).
-  - Action chips (phone, email, website, map link) get localized `aria-label` text (`"Call 555-1234"`, `"Open in Maps: 1 Adams Way"`, etc.).
+  - Action chips (phone, email, website, map link) get localized `aria-label` text (`"Call 555-1234"`, `"Open in Maps: 1 Sample Way"`, etc.).
   - Smart-card whole-card toggle exposes `aria-label` ("Expand card" / "Collapse card") in addition to the existing `aria-expanded`.
   - Decorative entity icons inside subtitle rows marked `aria-hidden="true"`.
 - **CI workflow** (`.github/workflows/ci.yml`) — every PR and push to `main` runs `npm ci`, lint, build, and the full Jest suite on Node 18.

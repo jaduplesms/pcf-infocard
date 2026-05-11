@@ -41,3 +41,6 @@ CLAUDE.md
 # Local Copilot CLI config
 agency.toml
 
+
+# Local PCF harness mock data (may contain real Dataverse records — keep local only)
+InfoCardControl/InfoCard/data.json

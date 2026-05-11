@@ -605,10 +605,10 @@ describe("InfoCard PCF Lifecycle", () => {
       control.init(ctx, notifyOutputChanged);
       const readField = getReadField(control);
       const result = readField(
-        { msdyn_serviceaccount: { name: "Adams Equipment" } } as unknown as ComponentFramework.WebApi.Entity,
+        { msdyn_serviceaccount: { name: "Contoso Equipment" } } as unknown as ComponentFramework.WebApi.Entity,
         "msdyn_serviceaccount"
       );
-      expect(result?.value).toBe("Adams Equipment");
+      expect(result?.value).toBe("Contoso Equipment");
       expect(result?.value).not.toBe("[object Object]");
     });
   });
