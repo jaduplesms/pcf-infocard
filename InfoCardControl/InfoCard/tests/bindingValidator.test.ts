@@ -3,7 +3,7 @@
  * Validates @/@. syntax against entity schemas derived from data.json.
  */
 
-import * as testData from "../data.json";
+import * as testData from "./test-data.json";
 import {
     buildSchemaFromData,
     validateBindings,

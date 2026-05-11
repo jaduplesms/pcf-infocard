@@ -34,7 +34,6 @@ debug_*.png
 # Dataverse API exports / harness-local schemas (user-specific)
 EntityDefinitions_*.json
 EntityDefinitions_*.customization
-InfoCardControl/InfoCard/metadata.json
 *.docx
 CLAUDE.md
 
@@ -42,5 +41,6 @@ CLAUDE.md
 agency.toml
 
 
-# Local PCF harness mock data (may contain real Dataverse records — keep local only)
+
+# PCF Workbench harness data — may contain real Dataverse records; tests use tests/test-data.json instead
 InfoCardControl/InfoCard/data.json

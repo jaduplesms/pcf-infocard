@@ -9,7 +9,7 @@
 import { InfoCard } from "../index";
 import { IInputs } from "../generated/ManifestTypes";
 import { defaultTheme } from "../InfoCard";
-import * as testData from "../data.json";
+import * as testData from "./test-data.json";
 
 // ────────────────────────────────────────
 // Mock context helper
