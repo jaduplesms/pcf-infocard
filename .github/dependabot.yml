@@ -1,0 +1,26 @@
+# Dependabot keeps npm deps + GitHub Actions up to date.
+# https://docs.github.com/code-security/dependabot
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /InfoCardControl
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - github-actions
