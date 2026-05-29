@@ -1530,73 +1530,141 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     const isLookup = !!(title?.lookupEntityType && title?.lookupId);
     const titleCanOpen = isLookup && !!onOpenRecord;
 
-    const actionBtnStyle: React.CSSProperties = {
+    // Compact icon-only action button. 36x36 visual, 44x44 hit area via padding.
+    const iconBtnStyle: React.CSSProperties = {
         display: "inline-flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minWidth: 64,
-        minHeight: 56,
-        padding: "8px 10px",
-        gap: 4,
+        width: 36,
+        height: 36,
+        padding: 4,
         background: theme.cardBg,
         border: `1px solid ${theme.border}`,
         borderRadius: theme.radius,
         color: theme.brand,
         textDecoration: "none",
         cursor: "pointer",
-        fontSize: theme.typography.body.fontSize,
-        fontWeight: theme.typography.body.fontWeight,
-        lineHeight: 1.1,
+        boxSizing: "border-box",
     };
 
-    // Split address into postal lines on commas; falls back to single line.
-    const renderAddressBlock = () => {
+    const renderActionButtons = () => {
+        if (!hasAnyAction) return null;
+        return (
+            <>
+                {hasCall && firstPhone && (
+                    <a
+                        href={`tel:${String(firstPhone.value).replace(/\s+/g, "")}`}
+                        style={iconBtnStyle}
+                        aria-label={formatTemplate(strings.actionCall, String(firstPhone.value))}
+                        title={strings.vcardActionCall}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <PhoneIcon size={18} color={theme.brand} />
+                    </a>
+                )}
+                {hasEmail && email && (
+                    <a
+                        href={`mailto:${email.value}`}
+                        style={iconBtnStyle}
+                        aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                        title={strings.vcardActionEmail}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <EmailIcon size={18} color={theme.brand} />
+                    </a>
+                )}
+                {hasMap && mapUrl && (
+                    <a
+                        href={mapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={iconBtnStyle}
+                        aria-label={formatTemplate(strings.actionOpenInMaps, address ? String(address.value) : "")}
+                        title={strings.vcardActionMap}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <PinIcon size={18} color={theme.brand} />
+                    </a>
+                )}
+                {hasWeb && safeWeb && web && (
+                    <a
+                        href={safeWeb}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={iconBtnStyle}
+                        aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
+                        title={strings.vcardActionWeb}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <WebIcon size={18} color={theme.brand} />
+                    </a>
+                )}
+            </>
+        );
+    };
+
+    // Render address block as stacked postal lines (split on commas).
+    const renderAddressLines = () => {
         if (!address) return null;
         if (address.isPending) {
-            return (
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
-                    <PinIcon size={16} color={theme.textMuted} />
-                    <Shimmer theme={theme} width="60%" />
-                </div>
-            );
+            return <Shimmer theme={theme} width="60%" />;
         }
         const raw = String(address.value);
         const lines = raw.split(",").map(s => s.trim()).filter(Boolean);
-        const content = (
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
-                <PinIcon size={16} color={mapUrl ? theme.brand : theme.textMuted} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 1, color: theme.textPrimary, fontSize: theme.typography.body.fontSize, lineHeight: theme.typography.body.lineHeight }}>
-                    {lines.length > 1
-                        ? lines.map((line, i) => <span key={i}>{line}</span>)
-                        : <span>{raw}</span>}
-                </div>
+        return (
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                color: theme.textPrimary,
+                fontSize: theme.typography.body.fontSize,
+                lineHeight: theme.typography.body.lineHeight,
+            }}>
+                {lines.length > 1
+                    ? lines.map((line, i) => <span key={i}>{line}</span>)
+                    : <span>{raw}</span>}
             </div>
         );
-        if (mapUrl) {
-            return (
-                <a href={mapUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}
-                    aria-label={formatTemplate(strings.actionOpenInMaps, raw)}
-                    onClick={(e) => e.stopPropagation()}>
-                    {content}
-                </a>
-            );
-        }
-        return content;
     };
+
+    const hasAvatar = !!data.imageUrl;
+    // Reserve right-side space when avatar OR chevron is in top-right
+    const headerPaddingRight = hasAvatar ? 56 : (isCollapsible ? 28 : 0);
 
     return (
         <div style={{ position: "relative" }}>
-            {/* Hero header (centered) */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "4px 0 8px" }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={titleValue} theme={theme} showInitialsFallback={false} shape={imageShape} size={64} />
+            {/* Avatar — top-right, only when imageUrl is provided */}
+            {hasAvatar && (
+                <div style={{ position: "absolute", top: 0, right: 0 }}>
+                    <ImageAvatar imageUrl={data.imageUrl} title={titleValue} theme={theme} showInitialsFallback={false} shape={imageShape} size={48} />
+                </div>
+            )}
+
+            {/* Chevron — top-right when no avatar, else hidden (collapse via title click area) */}
+            {isCollapsible && !hasAvatar && (
+                <div
+                    style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        padding: 4,
+                        transition: "transform 0.2s ease",
+                        transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
+                        pointerEvents: "none",
+                    }}
+                    aria-hidden="true"
+                >
+                    <ChevronDown size={12} color={theme.textMuted} />
+                </div>
+            )}
+
+            {/* Hero text block — left-aligned business-card style */}
+            <div style={{ paddingRight: headerPaddingRight }}>
                 {showTitle && title && (!designTime ? !title.isEmpty : true) && (
                     <div
                         style={{
-                            marginTop: data.imageUrl ? 10 : 0,
                             fontSize: theme.typography.title.fontSize,
-                            fontWeight: theme.typography.title.fontWeight,
+                            fontWeight: 600,
                             lineHeight: theme.typography.title.lineHeight,
                             color: isLookup ? theme.brand : theme.textPrimary,
                             cursor: titleCanOpen ? "pointer" : "default",
@@ -1620,110 +1688,68 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         {titleValue}
                     </div>
                 )}
+                {/* Subtitles stacked vertically — one per line (business-card style).
+                    Per-slot emphasis: subtitle1 = larger + bold (job title hero),
+                    subtitle3 = bold at normal size (e.g. account / dept callout). */}
                 {subtitles.length > 0 && (
-                    <div style={{ marginTop: 2, fontSize: theme.typography.subtitle.fontSize, fontWeight: theme.typography.subtitle.fontWeight, lineHeight: theme.typography.subtitle.lineHeight, color: theme.textSecondary }}>
+                    <div style={{
+                        marginTop: 2,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        fontSize: theme.typography.subtitle.fontSize,
+                        fontWeight: theme.typography.subtitle.fontWeight,
+                        lineHeight: theme.typography.subtitle.lineHeight,
+                        color: theme.textSecondary,
+                    }}>
                         {subtitles.map((sub, i) => {
                             const subIsLookup = !!(sub.lookupEntityType && sub.lookupId);
                             const subCanOpen = subIsLookup && !!onOpenRecord;
+                            const isSub2 = sub.slotKey === "subtitleField2";
+                            const perSlotStyle: React.CSSProperties = isSub2 ? { fontWeight: 600 } : {};
                             return (
-                                <React.Fragment key={i}>
-                                    {i > 0 && <span style={{ margin: "0 6px", color: theme.textMuted }}>{subtitleSeparator || "\u00b7"}</span>}
-                                    <span
-                                        style={{ color: subIsLookup ? theme.brand : theme.textSecondary, cursor: subCanOpen ? "pointer" : "default" }}
-                                        onClick={subCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(sub.lookupEntityType!, sub.lookupId!); } : undefined}
-                                        onKeyDown={subCanOpen ? (e) => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                onOpenRecord!(sub.lookupEntityType!, sub.lookupId!);
-                                            }
-                                        } : undefined}
-                                        role={subCanOpen ? "button" : undefined}
-                                        tabIndex={subCanOpen ? 0 : undefined}
-                                        aria-label={subCanOpen ? formatTemplate(strings.actionOpenRecord, String(sub.value)) : undefined}
-                                        title={sub.label}
-                                    >
-                                        <ValueOrShimmer field={sub} theme={theme} width="80px" />
-                                    </span>
-                                </React.Fragment>
+                                <span
+                                    key={i}
+                                    style={{ ...perSlotStyle, color: subIsLookup ? theme.brand : theme.textSecondary, cursor: subCanOpen ? "pointer" : "default" }}
+                                    onClick={subCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(sub.lookupEntityType!, sub.lookupId!); } : undefined}
+                                    onKeyDown={subCanOpen ? (e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            onOpenRecord!(sub.lookupEntityType!, sub.lookupId!);
+                                        }
+                                    } : undefined}
+                                    role={subCanOpen ? "button" : undefined}
+                                    tabIndex={subCanOpen ? 0 : undefined}
+                                    aria-label={subCanOpen ? formatTemplate(strings.actionOpenRecord, String(sub.value)) : undefined}
+                                    title={sub.label}
+                                >
+                                    <ValueOrShimmer field={sub} theme={theme} width="80px" />
+                                </span>
                             );
                         })}
                     </div>
                 )}
-                {isCollapsible && (
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: 8,
-                            right: 8,
-                            padding: 4,
-                            transition: "transform 0.2s ease",
-                            transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
-                            pointerEvents: "none",
-                        }}
-                        aria-hidden="true"
-                    >
-                        <ChevronDown size={12} color={theme.textMuted} />
-                    </div>
-                )}
             </div>
 
-            {/* Action buttons row */}
-            {!hideContact && hasAnyAction && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 4 }}>
-                    {hasCall && firstPhone && (
-                        <a
-                            href={`tel:${String(firstPhone.value).replace(/\s+/g, "")}`}
-                            style={actionBtnStyle}
-                            aria-label={formatTemplate(strings.actionCall, String(firstPhone.value))}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <PhoneIcon size={18} color={theme.brand} />
-                            <span>{strings.vcardActionCall}</span>
-                        </a>
-                    )}
-                    {hasEmail && email && (
-                        <a
-                            href={`mailto:${email.value}`}
-                            style={actionBtnStyle}
-                            aria-label={formatTemplate(strings.actionEmail, String(email.value))}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <EmailIcon size={18} color={theme.brand} />
-                            <span>{strings.vcardActionEmail}</span>
-                        </a>
-                    )}
-                    {hasMap && mapUrl && (
-                        <a
-                            href={mapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={actionBtnStyle}
-                            aria-label={formatTemplate(strings.actionOpenInMaps, address ? String(address.value) : "")}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <PinIcon size={18} color={theme.brand} />
-                            <span>{strings.vcardActionMap}</span>
-                        </a>
-                    )}
-                    {hasWeb && safeWeb && web && (
-                        <a
-                            href={safeWeb}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={actionBtnStyle}
-                            aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <WebIcon size={18} color={theme.brand} />
-                            <span>{strings.vcardActionWeb}</span>
-                        </a>
-                    )}
+            {/* Address block (full width, left-aligned) */}
+            {!hideContact && address && (
+                <div style={{ marginTop: 6 }}>
+                    {renderAddressLines()}
                 </div>
             )}
 
-            {/* Postal address block (only when address has value but no map url, OR when there are multiple lines worth showing) */}
-            {!hideContact && address && !mapUrl && renderAddressBlock()}
+            {/* Action icons — bottom-right of contact area, single row */}
+            {!hideContact && hasAnyAction && (
+                <div style={{
+                    marginTop: address ? 10 : 12,
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 6,
+                }}>
+                    {renderActionButtons()}
+                </div>
+            )}
 
             {/* Detail rows */}
             {!hideBody && details.length > 0 && (

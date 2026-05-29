@@ -140,7 +140,7 @@ describe("InfoCardComponent", () => {
       expect(container.textContent).toContain("High");
     });
 
-    it("renders dot separator between subtitles in contact layout", () => {
+    it("stacks subtitles vertically with no separator in contact (vCard) layout", () => {
       const data = makeData({
         subtitles: [
           makeField({ label: "Account", value: "Contoso" }),
@@ -150,11 +150,13 @@ describe("InfoCardComponent", () => {
       const { container } = render(
         <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
       );
-      // The dot separator is a middle dot character \u00b7
-      expect(container.textContent).toContain("\u00b7");
+      // vCard layout: subtitles are stacked vertically — no middle-dot or separator
+      expect(container.textContent).toContain("Contoso");
+      expect(container.textContent).toContain("High");
+      expect(container.textContent).not.toContain("\u00b7");
     });
 
-    it("uses custom subtitleSeparator when provided", () => {
+    it("ignores subtitleSeparator in contact (vCard) layout (subtitles stack vertically)", () => {
       const data = makeData({
         subtitles: [
           makeField({ label: "Account", value: "Contoso" }),
@@ -164,8 +166,8 @@ describe("InfoCardComponent", () => {
       const { container } = render(
         <InfoCardComponent {...makeProps({ data, layout: "contact", subtitleSeparator: " | " })} />,
       );
-      expect(container.textContent).toContain("|");
-      // Default middle dot is no longer present between subtitles when overridden
+      // separator is intentionally not rendered in vCard layout
+      expect(container.textContent).not.toContain("|");
       expect(container.textContent).not.toContain("\u00b7");
     });
   });

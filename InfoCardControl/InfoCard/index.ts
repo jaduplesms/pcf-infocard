@@ -9,7 +9,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.4.16";
+const CONTROL_VERSION = "4.4.17";
 
 /**
  * Column-name heuristic for Whole.Duration columns. Some Dataverse hosts don't
