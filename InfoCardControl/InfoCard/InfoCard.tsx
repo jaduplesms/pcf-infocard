@@ -230,6 +230,11 @@ export interface InfoCardStrings {
     durationHoursSuffix: string;
     durationMinutesSuffix: string;
     durationZero: string;
+    /** vCard (contact layout) action button captions — short verbs */
+    vcardActionCall: string;
+    vcardActionEmail: string;
+    vcardActionMap: string;
+    vcardActionWeb: string;
     /** Copy-to-clipboard button aria-label/title. {0} = value being copied */
     actionCopy: string;
     /** Live-region announcement after a successful copy */
@@ -258,6 +263,10 @@ export const DEFAULT_STRINGS: InfoCardStrings = {
     durationZero: "0m",
     actionCopy: "Copy {0}",
     actionCopied: "Copied",
+    vcardActionCall: "Call",
+    vcardActionEmail: "Email",
+    vcardActionMap: "Map",
+    vcardActionWeb: "Web",
 };
 
 /** Format a localized template string. Replaces {0} with `arg`. */
@@ -1239,6 +1248,8 @@ interface ImageProps {
     showInitialsFallback?: boolean;
     /** Avatar shape. Default "rounded" (rounded rect). */
     shape?: "rounded" | "circle" | "square";
+    /** Pixel size (square). Default 40. */
+    size?: number;
 }
 
 /** Border radius for the avatar container per shape preference. */
@@ -1259,7 +1270,7 @@ function getInitials(title: string): string {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitialsFallback, shape }) => {
+const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitialsFallback, shape, size }) => {
     const [imgError, setImgError] = React.useState(false);
     const onError = React.useCallback(() => setImgError(true), []);
     React.useEffect(() => { setImgError(false); }, [imageUrl]);
@@ -1272,9 +1283,10 @@ const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitial
 
     if (!showImage && !showFallback) return null;
 
+    const dim = size ?? 40;
     const baseStyle: React.CSSProperties = {
-        width: 40,
-        height: 40,
+        width: dim,
+        height: dim,
         borderRadius: avatarBorderRadius(shape),
         flexShrink: 0,
     };
@@ -1475,32 +1487,176 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
 };
 
 // ════════════════════════════════════════════════════════════════════
-// Contact Card Layout
+// Contact Card Layout — vCard / business-card style
 // ════════════════════════════════════════════════════════════════════
+//
+// Distinct from Smart: centered hero header (avatar above, title/subtitles
+// centered), large 44×44 tap-target action buttons (Call/Email/Map/Web)
+// instead of icon chips, postal-block address (multi-line on commas).
+// Avatar is hidden entirely when no imageUrl is bound (no initials fallback).
+// Details / Grid / Tags sections render the same as Smart.
 
 const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, imageShape, showDetailIcons, detailLabelStyle, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const details = filterEmpty(data.details, effectiveHideEmpty);
     const gridFields = filterEmpty(data.gridFields, effectiveHideEmpty);
     const tags = filterEmpty(data.tags, effectiveHideEmpty);
+    const subtitles = deduplicateSubtitles(filterEmpty(data.subtitles, effectiveHideEmpty));
+
+    const phones = filterEmpty(data.phones, effectiveHideEmpty);
+    const firstPhone = phones[0];
+    const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
+    const web = data.web && (designTime || !data.web.isEmpty || data.web.isPending) ? data.web : null;
+    const address = data.address && (designTime || !data.address.isEmpty || data.address.isPending) ? data.address : null;
+    const mapUrl = buildMapUrl(data.latitude, data.longitude);
+    const safeWeb = web && !web.isPending ? safeHttpUrl(web.value as string) : null;
 
     const hideContact = collapsed && shouldCollapseSection(collapsibleSections, "contact");
     const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
     const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
 
-    return (
-        <div>
-            {/* Header row with image */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} shape={imageShape} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
+    // formFactor reserved for future per-host tweaks; mark as intentionally unused.
+    void formFactor;
+
+    // Action buttons: render only when the underlying value exists
+    const hasCall = firstPhone && !firstPhone.isPending;
+    const hasEmail = email && !email.isPending;
+    const hasMap = (address && !address.isPending) || !!mapUrl;
+    const hasWeb = !!safeWeb;
+    const hasAnyAction = hasCall || hasEmail || hasMap || hasWeb;
+
+    const title = data.title;
+    const titleValue = title?.value ?? "";
+    const isLookup = !!(title?.lookupEntityType && title?.lookupId);
+    const titleCanOpen = isLookup && !!onOpenRecord;
+
+    const actionBtnStyle: React.CSSProperties = {
+        display: "inline-flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: 64,
+        minHeight: 56,
+        padding: "8px 10px",
+        gap: 4,
+        background: theme.cardBg,
+        border: `1px solid ${theme.border}`,
+        borderRadius: theme.radius,
+        color: theme.brand,
+        textDecoration: "none",
+        cursor: "pointer",
+        fontSize: theme.typography.body.fontSize,
+        fontWeight: theme.typography.body.fontWeight,
+        lineHeight: 1.1,
+    };
+
+    // Split address into postal lines on commas; falls back to single line.
+    const renderAddressBlock = () => {
+        if (!address) return null;
+        if (address.isPending) {
+            return (
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
+                    <PinIcon size={16} color={theme.textMuted} />
+                    <Shimmer theme={theme} width="60%" />
                 </div>
+            );
+        }
+        const raw = String(address.value);
+        const lines = raw.split(",").map(s => s.trim()).filter(Boolean);
+        const content = (
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
+                <PinIcon size={16} color={mapUrl ? theme.brand : theme.textMuted} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 1, color: theme.textPrimary, fontSize: theme.typography.body.fontSize, lineHeight: theme.typography.body.lineHeight }}>
+                    {lines.length > 1
+                        ? lines.map((line, i) => <span key={i}>{line}</span>)
+                        : <span>{raw}</span>}
+                </div>
+            </div>
+        );
+        if (mapUrl) {
+            return (
+                <a href={mapUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ textDecoration: "none" }}
+                    aria-label={formatTemplate(strings.actionOpenInMaps, raw)}
+                    onClick={(e) => e.stopPropagation()}>
+                    {content}
+                </a>
+            );
+        }
+        return content;
+    };
+
+    return (
+        <div style={{ position: "relative" }}>
+            {/* Hero header (centered) */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "4px 0 8px" }}>
+                <ImageAvatar imageUrl={data.imageUrl} title={titleValue} theme={theme} showInitialsFallback={false} shape={imageShape} size={64} />
+                {showTitle && title && (!designTime ? !title.isEmpty : true) && (
+                    <div
+                        style={{
+                            marginTop: data.imageUrl ? 10 : 0,
+                            fontSize: theme.typography.title.fontSize,
+                            fontWeight: theme.typography.title.fontWeight,
+                            lineHeight: theme.typography.title.lineHeight,
+                            color: isLookup ? theme.brand : theme.textPrimary,
+                            cursor: titleCanOpen ? "pointer" : "default",
+                            wordBreak: "normal",
+                            overflowWrap: "break-word",
+                        }}
+                        onClick={titleCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(title!.lookupEntityType!, title!.lookupId!); } : undefined}
+                        onKeyDown={titleCanOpen ? (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onOpenRecord!(title!.lookupEntityType!, title!.lookupId!);
+                            }
+                        } : undefined}
+                        role={titleCanOpen ? "button" : undefined}
+                        tabIndex={titleCanOpen ? 0 : undefined}
+                        aria-label={titleCanOpen ? formatTemplate(strings.actionOpenRecord, titleValue) : undefined}
+                        title={title.label}
+                    >
+                        {titlePrefix && <span style={{ color: theme.textMuted, fontWeight: 500 }}>{titlePrefix}</span>}
+                        {titleValue}
+                    </div>
+                )}
+                {subtitles.length > 0 && (
+                    <div style={{ marginTop: 2, fontSize: theme.typography.subtitle.fontSize, fontWeight: theme.typography.subtitle.fontWeight, lineHeight: theme.typography.subtitle.lineHeight, color: theme.textSecondary }}>
+                        {subtitles.map((sub, i) => {
+                            const subIsLookup = !!(sub.lookupEntityType && sub.lookupId);
+                            const subCanOpen = subIsLookup && !!onOpenRecord;
+                            return (
+                                <React.Fragment key={i}>
+                                    {i > 0 && <span style={{ margin: "0 6px", color: theme.textMuted }}>{subtitleSeparator || "\u00b7"}</span>}
+                                    <span
+                                        style={{ color: subIsLookup ? theme.brand : theme.textSecondary, cursor: subCanOpen ? "pointer" : "default" }}
+                                        onClick={subCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(sub.lookupEntityType!, sub.lookupId!); } : undefined}
+                                        onKeyDown={subCanOpen ? (e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                onOpenRecord!(sub.lookupEntityType!, sub.lookupId!);
+                                            }
+                                        } : undefined}
+                                        role={subCanOpen ? "button" : undefined}
+                                        tabIndex={subCanOpen ? 0 : undefined}
+                                        aria-label={subCanOpen ? formatTemplate(strings.actionOpenRecord, String(sub.value)) : undefined}
+                                        title={sub.label}
+                                    >
+                                        <ValueOrShimmer field={sub} theme={theme} width="80px" />
+                                    </span>
+                                </React.Fragment>
+                            );
+                        })}
+                    </div>
+                )}
                 {isCollapsible && (
                     <div
                         style={{
+                            position: "absolute",
+                            top: 8,
+                            right: 8,
                             padding: 4,
-                            flexShrink: 0,
                             transition: "transform 0.2s ease",
                             transform: collapsed ? "rotate(-90deg)" : "rotate(0deg)",
                             pointerEvents: "none",
@@ -1512,14 +1668,66 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                 )}
             </div>
 
-            {/* Contact section */}
-            {!hideContact && (
-                <ContactRows data={data} theme={theme} hideEmpty={effectiveHideEmpty} strings={strings} formFactor={formFactor} />
+            {/* Action buttons row */}
+            {!hideContact && hasAnyAction && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 4 }}>
+                    {hasCall && firstPhone && (
+                        <a
+                            href={`tel:${String(firstPhone.value).replace(/\s+/g, "")}`}
+                            style={actionBtnStyle}
+                            aria-label={formatTemplate(strings.actionCall, String(firstPhone.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <PhoneIcon size={18} color={theme.brand} />
+                            <span>{strings.vcardActionCall}</span>
+                        </a>
+                    )}
+                    {hasEmail && email && (
+                        <a
+                            href={`mailto:${email.value}`}
+                            style={actionBtnStyle}
+                            aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <EmailIcon size={18} color={theme.brand} />
+                            <span>{strings.vcardActionEmail}</span>
+                        </a>
+                    )}
+                    {hasMap && mapUrl && (
+                        <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={actionBtnStyle}
+                            aria-label={formatTemplate(strings.actionOpenInMaps, address ? String(address.value) : "")}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <PinIcon size={18} color={theme.brand} />
+                            <span>{strings.vcardActionMap}</span>
+                        </a>
+                    )}
+                    {hasWeb && safeWeb && web && (
+                        <a
+                            href={safeWeb}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={actionBtnStyle}
+                            aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <WebIcon size={18} color={theme.brand} />
+                            <span>{strings.vcardActionWeb}</span>
+                        </a>
+                    )}
+                </div>
             )}
+
+            {/* Postal address block (only when address has value but no map url, OR when there are multiple lines worth showing) */}
+            {!hideContact && address && !mapUrl && renderAddressBlock()}
 
             {/* Detail rows */}
             {!hideBody && details.length > 0 && (
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 12, borderTop: `1px solid ${theme.borderLight}`, paddingTop: 8 }}>
                     <DetailRows
                         details={data.details}
                         theme={theme}
@@ -1535,7 +1743,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
             {/* Grid fields */}
             {!hideBody && gridFields.length > 0 && (
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: details.length > 0 ? 8 : 12, ...(details.length === 0 ? { borderTop: `1px solid ${theme.borderLight}`, paddingTop: 8 } : {}) }}>
                     <GridFields fields={data.gridFields} theme={theme} hideEmpty={hideEmpty} />
                 </div>
             )}

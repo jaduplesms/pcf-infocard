@@ -9,7 +9,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.4.15";
+const CONTROL_VERSION = "4.4.16";
 
 /**
  * Column-name heuristic for Whole.Duration columns. Some Dataverse hosts don't
@@ -83,6 +83,10 @@ function getStrings(context: ComponentFramework.Context<IInputs>): InfoCardStrin
         durationZero: readResxString(context, "Duration_Zero", DEFAULT_STRINGS.durationZero),
         actionCopy: readResxString(context, "Action_Copy", DEFAULT_STRINGS.actionCopy),
         actionCopied: readResxString(context, "Action_Copied", DEFAULT_STRINGS.actionCopied),
+        vcardActionCall: readResxString(context, "Vcard_Action_Call", DEFAULT_STRINGS.vcardActionCall),
+        vcardActionEmail: readResxString(context, "Vcard_Action_Email", DEFAULT_STRINGS.vcardActionEmail),
+        vcardActionMap: readResxString(context, "Vcard_Action_Map", DEFAULT_STRINGS.vcardActionMap),
+        vcardActionWeb: readResxString(context, "Vcard_Action_Web", DEFAULT_STRINGS.vcardActionWeb),
     };
 }
 

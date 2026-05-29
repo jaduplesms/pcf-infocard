@@ -219,7 +219,21 @@ describe("InfoCardComponent", () => {
       expect(links[0].getAttribute("href")).toBe("tel:+15550123");
     });
 
-    it("renders multiple phone buttons", () => {
+    it("renders multiple phone buttons (smart layout shows all phones as chips)", () => {
+      const data = makeData({
+        phones: [
+          makeField({ label: "Mobile", value: "+1 555 0001", rawValue: "+1 555 0001" }),
+          makeField({ label: "Work", value: "+1 555 0002", rawValue: "+1 555 0002" }),
+        ],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      const links = container.querySelectorAll("a[href^='tel:']");
+      expect(links.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it("vCard layout renders single Call action button for first phone only", () => {
       const data = makeData({
         phones: [
           makeField({ label: "Mobile", value: "+1 555 0001", rawValue: "+1 555 0001" }),
@@ -230,7 +244,8 @@ describe("InfoCardComponent", () => {
         <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
       );
       const links = container.querySelectorAll("a[href^='tel:']");
-      expect(links.length).toBeGreaterThanOrEqual(2);
+      expect(links.length).toBe(1);
+      expect(links[0].getAttribute("href")).toBe("tel:+15550001");
     });
   });
 
@@ -328,14 +343,14 @@ describe("InfoCardComponent", () => {
       expect(container.querySelector("button[aria-label^='Copy ']")).toBeNull();
     });
 
-    it("renders copy buttons on web (formFactor=2)", () => {
+    it("renders copy buttons on web (formFactor=2) (smart layout)", () => {
       const data = makeData({
         phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
         email: makeField({ label: "Email", value: "a@b.co" }),
         address: makeField({ label: "Address", value: "1 Microsoft Way" }),
       });
       const { container } = render(
-        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+        <InfoCardComponent {...makeProps({ data, layout: "smart", formFactor: 2 })} />,
       );
       const copyButtons = container.querySelectorAll("button[aria-label^='Copy ']");
       expect(copyButtons.length).toBe(3); // phone, email, address
@@ -346,7 +361,7 @@ describe("InfoCardComponent", () => {
         phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
       });
       const { container } = render(
-        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+        <InfoCardComponent {...makeProps({ data, layout: "smart", formFactor: 2 })} />,
       );
       const copyBtn = container.querySelector("button[aria-label^='Copy ']") as HTMLButtonElement;
       expect(copyBtn).not.toBeNull();
@@ -362,7 +377,7 @@ describe("InfoCardComponent", () => {
         phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
       });
       const { container } = render(
-        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+        <InfoCardComponent {...makeProps({ data, layout: "smart", formFactor: 2 })} />,
       );
       expect(container.querySelector("button[aria-label^='Copy ']")).toBeNull();
     });
