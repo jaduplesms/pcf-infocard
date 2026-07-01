@@ -605,6 +605,27 @@ describe("InfoCardComponent", () => {
       const card = container.firstElementChild as HTMLElement;
       expect(card.style.background).toBe("rgb(255, 0, 0)");
     });
+
+    it("uses theme brand color for card accent and action icons", () => {
+      const customTheme: InfoCardTheme = {
+        ...defaultTheme,
+        brand: "#112233",
+        link: "#445566",
+      };
+      const data = makeData({
+        title: makeField({ label: "Contact", value: "Alex" }),
+        phones: [makeField({ label: "Phone", value: "555-9999" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", theme: customTheme })} />,
+      );
+
+      const card = container.firstElementChild as HTMLElement;
+      expect(card.style.borderLeftColor).toBe("rgb(17, 34, 51)");
+
+      const phoneIconPath = container.querySelector("a[href^='tel:'] svg path");
+      expect(phoneIconPath?.getAttribute("fill")).toBe("#445566");
+    });
   });
 
   // ── Layout modes ──────────────────────
@@ -779,6 +800,24 @@ describe("InfoCardComponent", () => {
       expect(phoneLink).toBeTruthy();
       expect(phoneLink!.getAttribute("aria-label")).toBe("Call 555-1234");
     });
+
+    it("contact action buttons meet 44x44 touch target minimum", () => {
+      const data = makeData({
+        title: makeField({ label: "Account", value: "Contoso" }),
+        phones: [makeField({ label: "Phone", value: "555-1234" })],
+        email: makeField({ label: "Email", value: "test@example.com" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact" })} />,
+      );
+      const actionLinks = container.querySelectorAll('a[href^="tel:"], a[href^="mailto:"]');
+      expect(actionLinks.length).toBeGreaterThan(0);
+      actionLinks.forEach((link) => {
+        const el = link as HTMLElement;
+        expect(el.style.width).toBe("44px");
+        expect(el.style.height).toBe("44px");
+      });
+    });
   });
 
   // ── Related fields ────────────────────
@@ -938,6 +977,76 @@ describe("InfoCardComponent", () => {
 
       await flushPromises();
       expect(fetchRelatedData).toHaveBeenCalled();
+    });
+
+    it("ignores stale related-fetch response after lookup changes", async () => {
+      const pendingByLookupId: Record<string, (value: Record<string, { value: string; label: string }>) => void> = {};
+      const fetchRelatedData = jest.fn().mockImplementation((_entity: string, id: string) => {
+        return new Promise<Record<string, { value: string; label: string }>>((resolve) => {
+          pendingByLookupId[id] = resolve;
+        });
+      });
+
+      const relatedMappings: RelatedFieldMapping[] = [
+        { sourceSlot: "titleField", fetchField: "msdyn_serviceaccount", targetSlot: "subtitleField1" },
+      ];
+
+        const oldData = makeData({
+          title: makeField({
+            label: "WO",
+            value: "WO-old",
+            lookupEntityType: "msdyn_workorder",
+            lookupId: "old-id",
+          }),
+          subtitles: [makeField({ label: "Account", value: "@msdyn_serviceaccount", isEmpty: true, slotKey: "subtitleField1" })],
+        });
+
+        const { container, rerender } = render(
+          <InfoCardComponent
+            {...makeProps({
+              data: oldData,
+              relatedMappings,
+              fetchRelatedData,
+            })}
+          />,
+        );
+
+        const newData = makeData({
+          title: makeField({
+            label: "WO",
+            value: "WO-new",
+            lookupEntityType: "msdyn_workorder",
+            lookupId: "new-id",
+          }),
+          subtitles: [makeField({ label: "Account", value: "@msdyn_serviceaccount", isEmpty: true, slotKey: "subtitleField1" })],
+        });
+
+        rerender(
+          <InfoCardComponent
+            {...makeProps({
+              data: newData,
+              relatedMappings,
+              fetchRelatedData,
+            })}
+          />,
+        );
+
+      expect(pendingByLookupId["old-id"]).toBeDefined();
+      expect(pendingByLookupId["new-id"]).toBeDefined();
+
+      pendingByLookupId["new-id"]({
+        msdyn_serviceaccount: { value: "New Contoso", label: "Service Account" },
+      });
+      await waitFor(() => {
+        expect(container.textContent).toContain("New Contoso");
+      });
+
+      pendingByLookupId["old-id"]({
+        msdyn_serviceaccount: { value: "Old Contoso", label: "Service Account" },
+      });
+      await flushPromises();
+      expect(container.textContent).toContain("New Contoso");
+      expect(container.textContent).not.toContain("Old Contoso");
     });
   });
 
@@ -1434,6 +1543,21 @@ describe("InfoCardComponent", () => {
       // aria-expanded false present somewhere on the card root
       const interactiveRoot = container.querySelector("[aria-expanded='false']");
       expect(interactiveRoot).not.toBeNull();
+    });
+
+    it("shows a visible focus ring when collapsible card receives keyboard focus", () => {
+      const data = makeData({
+        title: makeField({ label: "Name", value: "Sarah" }),
+        details: [makeField({ label: "Notes", value: "Body content" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", startExpanded: false, collapsibleSections: "body" })} />,
+      );
+      const interactiveRoot = container.querySelector("[aria-expanded='false']") as HTMLElement;
+      expect(interactiveRoot).not.toBeNull();
+      fireEvent.focus(interactiveRoot);
+      const styleAttr = interactiveRoot.getAttribute("style") ?? "";
+      expect(styleAttr).toContain("0 0 0 3px");
     });
 
     it("works in compact layout (gains chevron when collapsibleSections != none)", () => {

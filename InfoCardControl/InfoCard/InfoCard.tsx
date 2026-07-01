@@ -115,6 +115,7 @@ export interface InfoCardTheme {
     borderLight: string;
     brand: string;
     brandLight: string;
+    link: string;
     radius: string;
     shadow: string;
     fontFamily: string;
@@ -122,7 +123,7 @@ export interface InfoCardTheme {
 }
 
 export const defaultTypography: InfoCardTypography = {
-    title:           { fontSize: "16px", fontWeight: 600, lineHeight: "22px" },
+    title:           { fontSize: "15px", fontWeight: 600, lineHeight: "20px" },
     subtitle:        { fontSize: "14px", fontWeight: 400, lineHeight: "20px" },
     body:            { fontSize: "14px", fontWeight: 400, lineHeight: "20px" },
     groupLabel:      { fontSize: "12px", fontWeight: 600, lineHeight: "16px", textTransform: "uppercase", letterSpacing: "0.04em" },
@@ -137,11 +138,12 @@ export const defaultTheme: InfoCardTheme = {
     cardBg: "#ffffff",
     textPrimary: "#242424",
     textSecondary: "#616161",
-    textMuted: "#8a8a8a",
+    textMuted: "#9a9a9a",
     border: "#e0e0e0",
     borderLight: "#f0f0f0",
     brand: "#0f6cbd",
     brandLight: "#e8f1fa",
+    link: "#0f6cbd",
     radius: "8px",
     shadow: "0 1px 3px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.04)",
     fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -1210,11 +1212,10 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
     return (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {filtered.map((tag, i) => {
-                // Use OptionSet color if available, otherwise default brand blue
                 const hasColor = !!tag.optionColor;
                 const textColor = hasColor ? tag.optionColor! : theme.brand;
-                // Lighten the option color for background (10% opacity)
                 const bgColor = hasColor ? `${tag.optionColor}1a` : theme.brandLight;
+                const borderColor = hasColor ? `${tag.optionColor}4d` : theme.border;
                 return (
                     <span
                         key={i}
@@ -1226,6 +1227,7 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
                             lineHeight: theme.typography.tag.lineHeight,
                             color: textColor,
                             background: bgColor,
+                            border: `1px solid ${borderColor}`,
                             borderRadius: "10px",
                             whiteSpace: "nowrap",
                         }}
@@ -1307,8 +1309,9 @@ const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitial
             aria-hidden="true"
             style={{
                 ...baseStyle,
-                background: theme.brand,
-                color: "#FFFFFF",
+                background: theme.brandLight,
+                border: `1px solid ${theme.border}`,
+                color: theme.brand,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1530,14 +1533,14 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     const isLookup = !!(title?.lookupEntityType && title?.lookupId);
     const titleCanOpen = isLookup && !!onOpenRecord;
 
-    // Compact icon-only action button. 36x36 visual, 44x44 hit area via padding.
+    // Compact icon-only action button with a mobile-friendly 44x44 target.
     const iconBtnStyle: React.CSSProperties = {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 36,
-        height: 36,
-        padding: 4,
+        width: 44,
+        height: 44,
+        padding: 0,
         background: theme.cardBg,
         border: `1px solid ${theme.border}`,
         borderRadius: theme.radius,
@@ -1559,7 +1562,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         title={strings.vcardActionCall}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <PhoneIcon size={18} color={theme.brand} />
+                        <PhoneIcon size={18} color={theme.link} />
                     </a>
                 )}
                 {hasEmail && email && (
@@ -1570,7 +1573,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         title={strings.vcardActionEmail}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <EmailIcon size={18} color={theme.brand} />
+                        <EmailIcon size={18} color={theme.link} />
                     </a>
                 )}
                 {hasMap && mapUrl && (
@@ -1583,7 +1586,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         title={strings.vcardActionMap}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <PinIcon size={18} color={theme.brand} />
+                        <PinIcon size={18} color={theme.link} />
                     </a>
                 )}
                 {hasWeb && safeWeb && web && (
@@ -1596,7 +1599,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         title={strings.vcardActionWeb}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <WebIcon size={18} color={theme.brand} />
+                        <WebIcon size={18} color={theme.link} />
                     </a>
                 )}
             </>
@@ -1688,9 +1691,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         {titleValue}
                     </div>
                 )}
-                {/* Subtitles stacked vertically — one per line (business-card style).
-                    Per-slot emphasis: subtitle1 = larger + bold (job title hero),
-                    subtitle3 = bold at normal size (e.g. account / dept callout). */}
+                {/* Subtitles stacked vertically. subtitle2 (typically company/account) is bold. */}
                 {subtitles.length > 0 && (
                     <div style={{
                         marginTop: 2,
@@ -1974,9 +1975,9 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
 const DesignTimeBindingPanel: React.FC<{ diagnostics: BindingDiagnostic[]; theme: InfoCardTheme }> = ({ diagnostics, theme }) => {
     const typeColors: Record<string, string> = {
-        "bound": "#107c10",
-        "title-related": theme.brand,
-        "current-related": "#8764b8",
+        "bound": theme.brand,
+        "title-related": theme.textPrimary,
+        "current-related": theme.textSecondary,
         "unconfigured": theme.textMuted,
     };
     const typeLabels: Record<string, string> = {
@@ -2007,7 +2008,7 @@ const DesignTimeBindingPanel: React.FC<{ diagnostics: BindingDiagnostic[]; theme
                     {diagnostics.map((d) => (
                         <tr key={d.slotKey} style={{
                             borderBottom: `1px solid ${theme.borderLight}`,
-                            background: d.warning ? "#fff4ce" : "transparent",
+                            background: d.warning ? theme.brandLight : "transparent",
                         }}>
                             <td style={{ padding: "3px 4px", color: theme.textPrimary }}>{d.slotLabel}</td>
                             <td style={{
@@ -2020,7 +2021,7 @@ const DesignTimeBindingPanel: React.FC<{ diagnostics: BindingDiagnostic[]; theme
                             <td style={{ padding: "3px 4px", fontFamily: "monospace", fontSize: 10, color: theme.textSecondary }}>
                                 {d.rawExpression}
                                 {d.warning && (
-                                    <div style={{ color: "#d83b01", fontFamily: theme.fontFamily, marginTop: 1 }}>
+                                    <div style={{ color: theme.brand, fontFamily: theme.fontFamily, marginTop: 1 }}>
                                         {d.warning}
                                     </div>
                                 )}
@@ -2095,6 +2096,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     const [currentFetchDone, setCurrentFetchDone] = React.useState(false);
     // Smart-layout collapse state lives here so the whole card surface can toggle.
     const [collapsed, setCollapsed] = React.useState(!props.startExpanded);
+    const [isCardFocused, setIsCardFocused] = React.useState(false);
     const toggleCollapsed = React.useCallback(() => setCollapsed(c => !c), []);
 
     // Resolve bound field labels/values/colors via record fetch.
@@ -2107,24 +2109,33 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     //  pass returned only gridField2 + tagField1).
     React.useEffect(() => {
         if (!props.resolveRecordFields) return;
+        let cancelled = false;
         props.resolveRecordFields()
-            .then((next) => setRecordOverrides((prev) => ({ ...prev, ...next })))
+            .then((next) => {
+                if (cancelled) return;
+                setRecordOverrides((prev) => ({ ...prev, ...next }));
+            })
             .catch(() => { /* optional */ });
+        return () => { cancelled = true; };
     }, [props.resolveRecordFields]);
 
     // Fetch title-entity related data
     React.useEffect(() => {
         if (relatedMappings.length === 0 || !fetchRelatedData) {
+            setRelatedFields({});
             setTitleFetchDone(true);
             return;
         }
         setTitleFetchDone(false);
+        setRelatedFields({});
+        let cancelled = false;
 
         const sourceField = data.title;
         if (!sourceField || !sourceField.lookupEntityType || !sourceField.lookupId) {
             if (relatedMappings.length > 0 && sourceField) {
                 console.warn("[InfoCard] Title mappings exist but title has no lookup data.");
             }
+            setRelatedFields({});
             setTitleFetchDone(true);
             return;
         }
@@ -2132,12 +2143,18 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         const columns = relatedMappings.map(m => m.fetchField);
         fetchRelatedData(sourceField.lookupEntityType, sourceField.lookupId, columns)
             .then((results) => {
+                if (cancelled) return;
                 setRelatedFields(toSlotFields(results));
             })
             .catch((err) => {
+                if (cancelled) return;
                 console.error("[InfoCard] Title-entity fetch failed:", err);
             })
-            .finally(() => setTitleFetchDone(true));
+            .finally(() => {
+                if (cancelled) return;
+                setTitleFetchDone(true);
+            });
+        return () => { cancelled = true; };
     }, [
         data.title?.lookupId,
         relatedMappings.length,
@@ -2147,13 +2164,17 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     // Fetch current-record related data (@. syntax)
     React.useEffect(() => {
         if (!currentRecordMappings || currentRecordMappings.length === 0 || !fetchRelatedData) {
+            setCurrentRecordFields({});
             setCurrentFetchDone(true);
             return;
         }
         setCurrentFetchDone(false);
+        setCurrentRecordFields({});
+        let cancelled = false;
 
         if (!currentRecordEntityType || !currentRecordId) {
             console.warn("[InfoCard] @. mappings exist but no current record context available.");
+            setCurrentRecordFields({});
             setCurrentFetchDone(true);
             return;
         }
@@ -2161,12 +2182,18 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         const columns = currentRecordMappings.map(m => m.fetchField);
         fetchRelatedData(currentRecordEntityType, currentRecordId, columns)
             .then((results) => {
+                if (cancelled) return;
                 setCurrentRecordFields(toSlotFields(results));
             })
             .catch((err) => {
+                if (cancelled) return;
                 console.error("[InfoCard] Current-record fetch failed:", err);
             })
-            .finally(() => setCurrentFetchDone(true));
+            .finally(() => {
+                if (cancelled) return;
+                setCurrentFetchDone(true);
+            });
+        return () => { cancelled = true; };
     }, [
         currentRecordEntityType,
         currentRecordId,
@@ -2302,6 +2329,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         ...(showBorder
             ? {
                 border: `1px solid ${theme.border}`,
+                borderLeft: `3px solid ${theme.brand}`,
                 boxShadow: theme.shadow,
             }
             : {
@@ -2390,10 +2418,18 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         tabIndex: 0,
         "aria-expanded": !collapsed,
         "aria-label": collapsed ? strings.cardExpand : strings.cardCollapse,
+        onFocus: () => setIsCardFocused(true),
+        onBlur: () => setIsCardFocused(false),
     } : {};
 
     const finalCardStyle: React.CSSProperties = isCardCollapsible
-        ? { ...cardStyle, cursor: "pointer", outline: "none" }
+        ? {
+            ...cardStyle,
+            cursor: "pointer",
+            boxShadow: isCardFocused
+                ? `${showBorder ? `${theme.shadow}, ` : ""}0 0 0 2px ${theme.brandLight}, 0 0 0 3px ${theme.brand}`
+                : cardStyle.boxShadow,
+        }
         : cardStyle;
 
     return (

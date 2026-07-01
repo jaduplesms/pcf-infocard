@@ -2048,6 +2048,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 borderLight: t.colorNeutralStroke2 ?? defaultTheme.borderLight,
                 brand: t.colorBrandForeground1 ?? defaultTheme.brand,
                 brandLight: t.colorBrandBackground2 ?? defaultTheme.brandLight,
+                link: t.colorBrandForegroundLink ?? t.colorBrandForeground1 ?? defaultTheme.link,
                 radius: t.borderRadiusMedium ?? defaultTheme.radius,
                 shadow: t.shadow4 ?? defaultTheme.shadow,
                 fontFamily: t.fontFamilyBase ?? defaultTheme.fontFamily,
