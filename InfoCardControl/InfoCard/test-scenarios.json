@@ -1,8 +1,8 @@
 [
   {
+    "schemaVersion": 2,
     "name": "LIVE: Booking and Work Order Form",
-    "description": "Booking form: title=WO lookup, subtitle1=resource, subtitle2=service account (related). Contact bar: phone from WO, address from WO. Grid: start/end/duration. Tags: status, incident type, priority.",
-    "savedAt": "2026-04-13T00:00:00Z",
+    "savedAt": "2026-05-29T16:24:45.747Z",
     "propertyValues": {
       "layout": "smart",
       "hideEmptyFields": true,
@@ -34,13 +34,445 @@
       "tagField2": "@msdyn_primaryincidenttype",
       "tagField3": "@msdyn_priority"
     },
-    "pageEntityId": "bb111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "bookableresourcebooking",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "bb111111-1111-1111-1111-111111111111",
+      "typeName": "bookableresourcebooking"
+    },
+    "network": {
+      "mode": "online",
+      "customLatencyMs": 1000
+    },
+    "device": {
+      "preset": "iphone-14",
+      "containerWidth": null,
+      "containerHeight": null,
+      "host": "Web",
+      "isFullBleed": false
+    },
+    "userSettings": {
+      "languageId": 1033,
+      "isRTL": false,
+      "timeZoneOffsetMinutes": 60,
+      "userId": "{00000000-0000-0000-0000-000000000001}",
+      "userName": "Harness User",
+      "securityRoles": [
+        "system-administrator"
+      ]
+    },
+    "dataRecords": {
+      "contact": [
+        {
+          "contactid": "c1111111-1111-1111-1111-111111111111",
+          "firstname": "Sarah",
+          "lastname": "Connor",
+          "fullname": "Sarah Connor",
+          "jobtitle": "Field Service Engineer",
+          "mobilephone": "+44-7700-900123",
+          "telephone1": "+44-20-7946-0958",
+          "emailaddress1": "sarah.connor@contoso.com",
+          "websiteurl": "https://contoso.com/team/sconnor",
+          "address1_line1": "10 Downing Street",
+          "address1_city": "London",
+          "address1_postalcode": "SW1A 2AA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.5034,
+          "address1_longitude": -0.1276,
+          "address1_line2": "Westminster",
+          "address1_line3": "",
+          "address1_stateorprovince": "Greater London",
+          "address1_county": "London",
+          "address1_composite": "10 Downing Street\r\nWestminster\r\nLondon, Greater London SW1A 2AA\r\nUnited Kingdom",
+          "address1_telephone1": "+44-20-7946-0958",
+          "address1_addresstypecode": 3,
+          "address1_addresstypecode@OData.Community.Display.V1.FormattedValue": "Primary",
+          "address2_line1": "1 Infinite Loop",
+          "address2_city": "Cupertino",
+          "address2_stateorprovince": "California",
+          "address2_postalcode": "95014",
+          "address2_country": "United States",
+          "address2_composite": "1 Infinite Loop\r\nCupertino, California 95014\r\nUnited States",
+          "salutation": "Ms.",
+          "middlename": "Jane",
+          "nickname": "Sara",
+          "yomifullname": "Sarah Connor",
+          "description": "Senior field service engineer covering EMEA hydrogen & renewables sites. On-call rota: weekends.",
+          "birthdate": "1985-05-13",
+          "anniversary": "2012-09-21",
+          "gendercode": 1,
+          "gendercode@OData.Community.Display.V1.FormattedValue": "Female",
+          "familystatuscode": 2,
+          "familystatuscode@OData.Community.Display.V1.FormattedValue": "Married",
+          "preferredcontactmethodcode": 2,
+          "preferredcontactmethodcode@OData.Community.Display.V1.FormattedValue": "Email",
+          "donotemail": false,
+          "donotbulkemail": true,
+          "donotphone": false,
+          "donotpostalmail": true,
+          "donotfax": true,
+          "creditlimit": 50000,
+          "creditlimit_base": 50000,
+          "numberofchildren": 2,
+          "annualincome": 95000,
+          "entityimage_timestamp": 638500000000000000,
+          "entityimage_url": "https://picsum.photos/seed/sarah-connor/96/96",
+          "_parentcustomerid_value": "a1111111-1111-1111-1111-111111111111",
+          "_parentcustomerid_value@OData.Community.Display.V1.FormattedValue": "Contoso Energy",
+          "_parentcustomerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_ownerid_value": "11111111-2222-3333-4444-555555555555",
+          "_ownerid_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "_createdby_value": "11111111-2222-3333-4444-555555555555",
+          "_createdby_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_createdby_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "_modifiedby_value": "11111111-2222-3333-4444-555555555555",
+          "_modifiedby_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_modifiedby_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "createdon": "2023-03-25T09:32:00Z",
+          "createdon@OData.Community.Display.V1.FormattedValue": "3/25/2023 9:32 AM",
+          "modifiedon": "2026-07-07T11:15:00Z",
+          "modifiedon@OData.Community.Display.V1.FormattedValue": "7/7/2026 11:15 AM",
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active",
+          "versionnumber": 1234567
+        }
+      ],
+      "account": [
+        {
+          "accountid": "a1111111-1111-1111-1111-111111111111",
+          "name": "Contoso Energy",
+          "telephone1": "+44-20-7946-0000",
+          "telephone2": "+44-800-123-4567",
+          "websiteurl": "https://contoso.com",
+          "emailaddress1": "info@contoso.com",
+          "address1_line1": "One Microsoft Way",
+          "address1_composite": "One Microsoft Way\nLondon\nEC2A 4NE\nUnited Kingdom",
+          "address1_city": "London",
+          "address1_postalcode": "EC2A 4NE",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.523,
+          "address1_longitude": -0.085,
+          "entityimage_url": "https://picsum.photos/seed/contoso-energy/96/96",
+          "revenue": 125000,
+          "numberofemployees": 250,
+          "industrycode": 16,
+          "industrycode@OData.Community.Display.V1.FormattedValue": "Financial",
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active",
+          "_transactioncurrencyid_value": "cur11111-1111-1111-1111-111111111111",
+          "_transactioncurrencyid_value@OData.Community.Display.V1.FormattedValue": "British Pound",
+          "_transactioncurrencyid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "transactioncurrency",
+          "_msdyn_serviceterritory_value": "st111111-1111-1111-1111-111111111111",
+          "_msdyn_serviceterritory_value@OData.Community.Display.V1.FormattedValue": "London South",
+          "_msdyn_serviceterritory_value@Microsoft.Dynamics.CRM.lookuplogicalname": "territory",
+          "_primarycontactid_value": "c1111111-1111-1111-1111-111111111111",
+          "_primarycontactid_value@OData.Community.Display.V1.FormattedValue": "Sarah Connor",
+          "_primarycontactid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "contact"
+        },
+        {
+          "accountid": "a2222222-2222-2222-2222-222222222222",
+          "name": "Smith Residence",
+          "telephone1": "01234 567890",
+          "emailaddress1": "john.smith@email.com",
+          "address1_line1": "14 Elm Street",
+          "address1_composite": "14 Elm Street\nReading\nRG1 4AA\nUnited Kingdom",
+          "address1_city": "Reading",
+          "address1_postalcode": "RG1 4AA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.4545,
+          "address1_longitude": -0.9782,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        },
+        {
+          "accountid": "a3333333-3333-3333-3333-333333333333",
+          "name": "Contoso Ltd.",
+          "telephone1": "07700 678944",
+          "telephone2": "01483 555123",
+          "emailaddress1": "service@contoso.com",
+          "address1_line1": "191 Common Lane",
+          "address1_composite": "191 Common Lane\nPyrford\nKT14 7HT",
+          "address1_city": "Pyrford",
+          "address1_postalcode": "KT14 7HT",
+          "address1_latitude": 51.3148,
+          "address1_longitude": -0.5069,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        },
+        {
+          "accountid": "63b8ccee-4418-ef11-840a-002248073a18",
+          "name": "Lewis Fabrication Services Ltd",
+          "telephone1": "01737 444622",
+          "emailaddress1": "test@email.com",
+          "websiteurl": "https://www.lewisfabricationserv.co.uk",
+          "address1_line1": "131 Sandy Lane",
+          "address1_composite": "131 Sandy Lane\nMerstham\nSurrey\nRH5 4VA\nUnited Kingdom",
+          "address1_city": "Merstham",
+          "address1_stateorprovince": "Surrey",
+          "address1_postalcode": "RH5 4VA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.22175,
+          "address1_longitude": -0.09102,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ],
+      "msdyn_workorder": [
+        {
+          "msdyn_workorderid": "ab111111-1111-1111-1111-111111111111",
+          "msdyn_name": "WO-00047",
+          "msdyn_workordersummary": "Central heating not producing hot water. Customer reports issue started 3 days ago. Boiler is a Baxi 600 Combi (2019). Error code E133 showing on display. No unusual noises. Gas supply confirmed working. Previous engineer visit 6 months ago for annual service — no issues found at that time.",
+          "msdyn_phonenumber": "07700 678944",
+          "_msdyn_serviceaccount_value": "a3333333-3333-3333-3333-333333333333",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Contoso Ltd.",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_billingaccount_value": "a3333333-3333-3333-3333-333333333333",
+          "_msdyn_billingaccount_value@OData.Community.Display.V1.FormattedValue": "Contoso Ltd.",
+          "_msdyn_billingaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-1111-1111-1111-111111111111",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Reactive Maintenance",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-1111-1111-1111-111111111111",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Boiler Fault",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "pri11111-1111-1111-1111-111111111111",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "High",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "191 Common Lane",
+          "msdyn_city": "Pyrford",
+          "msdyn_postalcode": "KT14 7HT",
+          "msdyn_latitude": 51.3148,
+          "msdyn_longitude": -0.5069,
+          "msdyn_instructions": "Access via back garden gate. Dog in front garden.",
+          "msdyn_systemstatus": 690970001,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Open"
+        },
+        {
+          "msdyn_workorderid": "ab222222-2222-2222-2222-222222222222",
+          "msdyn_name": "WO-10045",
+          "msdyn_workordersummary": "Annual gas boiler service for residential property. Customer has HomeCare 300 cover. Last service completed 12 months ago — all checks passed. Boiler is a Worcester Greenstar 30i (2018), located in kitchen utility cupboard. Customer requests morning appointment if possible.",
+          "msdyn_phonenumber": "01234 567890",
+          "_msdyn_serviceaccount_value": "a2222222-2222-2222-2222-222222222222",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Smith Residence",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-2222-2222-2222-222222222222",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Preventive Maintenance",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-2222-2222-2222-222222222222",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Gas Boiler Service",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "pri22222-2222-2222-2222-222222222222",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "Normal",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "14 Elm Street",
+          "msdyn_city": "Reading",
+          "msdyn_postalcode": "RG1 4AA",
+          "msdyn_latitude": 51.4545,
+          "msdyn_longitude": -0.9782,
+          "msdyn_instructions": "Access via side gate. Key under mat.",
+          "msdyn_systemstatus": 690970001,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Open"
+        },
+        {
+          "msdyn_workorderid": "e12ee2c7-4029-f111-88b3-7c1e521e04df",
+          "msdyn_name": "02046",
+          "msdyn_workordersummary": "Work completed without any challenges",
+          "_msdyn_serviceaccount_value": "63b8ccee-4418-ef11-840a-002248073a18",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Lewis Fabrication Services Ltd",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_billingaccount_value": "63b8ccee-4418-ef11-840a-002248073a18",
+          "_msdyn_billingaccount_value@OData.Community.Display.V1.FormattedValue": "Lewis Fabrication Services Ltd",
+          "_msdyn_billingaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-3333-3333-3333-333333333333",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Diagnosis and Repair",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-3333-3333-3333-333333333333",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Repair - Bearing Replacement",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "18c7f4b7-7e68-f011-bec3-7c1e522e9307",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "Standard",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "131 Sandy Lane",
+          "msdyn_city": "Merstham",
+          "msdyn_stateorprovince": "Surrey",
+          "msdyn_postalcode": "RH5 4VA",
+          "msdyn_country": "United Kingdom",
+          "msdyn_displayaddress": "131 Sandy Lane\nMerstham, Surrey RH5 4VA",
+          "msdyn_latitude": 51.22175,
+          "msdyn_longitude": -0.09102,
+          "msdyn_instructions": "Repair required at Lewis Fabrication Services Ltd. Customer reports excessive noise and vibration. Diagnose and repair.",
+          "msdyn_systemstatus": 690970020,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "In Progress",
+          "msdyn_firstarrivedon": "2026-05-29T12:00:00Z",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ],
+      "bookableresourcebooking": [
+        {
+          "bookableresourcebookingid": "bb111111-1111-1111-1111-111111111111",
+          "name": "BK-00047",
+          "_msdyn_workorder_value": "ab111111-1111-1111-1111-111111111111",
+          "_msdyn_workorder_value@OData.Community.Display.V1.FormattedValue": "WO-00047",
+          "_msdyn_workorder_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workorder",
+          "_resource_value": "c1111111-1111-1111-1111-111111111111",
+          "_resource_value@OData.Community.Display.V1.FormattedValue": "John Smith",
+          "_resource_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookableresource",
+          "_bookingstatus_value": "bs111111-1111-1111-1111-111111111111",
+          "_bookingstatus_value@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "_bookingstatus_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookingstatus",
+          "starttime": "30/03/2026 09:00",
+          "endtime": "30/03/2026 11:00",
+          "duration": 120,
+          "bookingtype": 1,
+          "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+          "msdyn_bookingmethod": 690970003,
+          "msdyn_bookingmethod@OData.Community.Display.V1.FormattedValue": "Manual",
+          "msdyn_latitude": 51.3148,
+          "msdyn_longitude": -0.5069,
+          "msdyn_worklocation": 690970000,
+          "msdyn_worklocation@OData.Community.Display.V1.FormattedValue": "Onsite",
+          "msdyn_estimatedarrivaltime": "30/03/2026 08:45",
+          "msdyn_estimatedtravelduration": 30,
+          "statecode": 0,
+          "statuscode": 1
+        },
+        {
+          "bookableresourcebookingid": "8bd91213-4229-f111-88b4-7c1e5278ac90",
+          "name": "02046",
+          "_msdyn_workorder_value": "e12ee2c7-4029-f111-88b3-7c1e521e04df",
+          "_msdyn_workorder_value@OData.Community.Display.V1.FormattedValue": "02046",
+          "_msdyn_workorder_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workorder",
+          "_resource_value": "adc60063-6427-f111-88b4-7c1e5278980d",
+          "_resource_value@OData.Community.Display.V1.FormattedValue": "Sienna Hall",
+          "_resource_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookableresource",
+          "_bookingstatus_value": "53f39908-d08a-4d9c-90e8-907fd7bec07d",
+          "_bookingstatus_value@OData.Community.Display.V1.FormattedValue": "In Progress",
+          "_bookingstatus_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookingstatus",
+          "starttime": "2026-05-29T11:30:00Z",
+          "starttime@OData.Community.Display.V1.FormattedValue": "5/29/2026 11:30 AM",
+          "endtime": "2026-05-29T14:00:00Z",
+          "endtime@OData.Community.Display.V1.FormattedValue": "5/29/2026 2:00 PM",
+          "duration": 150,
+          "bookingtype": 1,
+          "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+          "msdyn_bookingmethod": 690970003,
+          "msdyn_bookingmethod@OData.Community.Display.V1.FormattedValue": "Manual",
+          "msdyn_latitude": 51.22175,
+          "msdyn_longitude": -0.09102,
+          "msdyn_worklocation": 690970000,
+          "msdyn_worklocation@OData.Community.Display.V1.FormattedValue": "Onsite",
+          "msdyn_actualtravelduration": 30,
+          "msdyn_actualarrivaltime": "2026-05-29T12:00:00Z",
+          "statecode": 0,
+          "statuscode": 1
+        }
+      ],
+      "bookingstatus": [
+        {
+          "bookingstatusid": "f16d80d1-fd07-4237-8b69-187a11eb75f9",
+          "name": "Scheduled",
+          "msdyn_statuscolor": "49F249",
+          "msdyn_fieldservicestatus": "Scheduled"
+        },
+        {
+          "bookingstatusid": "53f39908-d08a-4d9c-90e8-907fd7bec07d",
+          "name": "In Progress",
+          "msdyn_statuscolor": "47d041",
+          "msdyn_fieldservicestatus": "In Progress"
+        },
+        {
+          "bookingstatusid": "a2ad7f6a-f763-461a-b724-6d4371506baa",
+          "name": "In Progress",
+          "msdyn_statuscolor": "00C3D3",
+          "msdyn_fieldservicestatus": "In Progress"
+        },
+        {
+          "bookingstatusid": "976869c4-f187-4680-9a5a-a9dade8e9636",
+          "name": "Traveling",
+          "msdyn_statuscolor": "426EFF",
+          "msdyn_fieldservicestatus": "Traveling"
+        },
+        {
+          "bookingstatusid": "91c79750-acac-4da1-9e69-447b4bb2dfc9",
+          "name": "Completed",
+          "msdyn_statuscolor": "47C21D",
+          "msdyn_fieldservicestatus": "Completed"
+        },
+        {
+          "bookingstatusid": "c33410b9-1abe-4631-b4e9-6e4a1113af34",
+          "name": "Completed",
+          "msdyn_statuscolor": "005b70",
+          "msdyn_fieldservicestatus": "Completed"
+        },
+        {
+          "bookingstatusid": "0adbf4e6-86cc-4db0-9dbb-51b7d1ed4020",
+          "name": "Canceled",
+          "msdyn_statuscolor": "797775",
+          "msdyn_fieldservicestatus": "Canceled"
+        },
+        {
+          "bookingstatusid": "ef3164b9-0893-4032-9bb2-0f2e58f982af",
+          "name": "On Break",
+          "msdyn_statuscolor": "c19c00",
+          "msdyn_fieldservicestatus": "On Break"
+        }
+      ],
+      "msdyn_priority": [
+        {
+          "msdyn_priorityid": "7a9228f7-7e68-f011-bec3-7c1e522e9307",
+          "msdyn_name": "Emergency",
+          "msdyn_prioritycolor": "FF0000",
+          "msdyn_priorityvalue": 100,
+          "msdyn_levelofimportance": 10
+        },
+        {
+          "msdyn_priorityid": "18c7f4b7-7e68-f011-bec3-7c1e522e9307",
+          "msdyn_name": "Standard",
+          "msdyn_prioritycolor": "00FF00",
+          "msdyn_priorityvalue": 1,
+          "msdyn_levelofimportance": 1
+        }
+      ],
+      "msdyn_customerasset": [
+        {
+          "msdyn_customerassetid": "ca111111-1111-1111-1111-111111111111",
+          "msdyn_name": "Baxi 600 Combi Boiler",
+          "_msdyn_product_value": "prod1111-1111-1111-1111-111111111111",
+          "_msdyn_product_value@OData.Community.Display.V1.FormattedValue": "Gas Boiler",
+          "_msdyn_product_value@Microsoft.Dynamics.CRM.lookuplogicalname": "product",
+          "_msdyn_account_value": "a2222222-2222-2222-2222-222222222222",
+          "_msdyn_account_value@OData.Community.Display.V1.FormattedValue": "Smith Residence",
+          "_msdyn_account_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "msdyn_deviceid": "BX600-2019-44721",
+          "msdyn_assettag": "ASSET-00142",
+          "msdyn_latitude": 51.4545,
+          "msdyn_longitude": -0.9782,
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ]
+    },
+    "dataSource": "mock"
   },
   {
+    "schemaVersion": 2,
     "name": "LIVE: Account - Mobile Form",
     "description": "Account form: name as title, primary contact + territory subtitles, phone/email/web, composite address with map, revenue/employees grid, status/industry tags.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -75,13 +507,20 @@
       "tagField2": "$industrycode",
       "tagField3": ""
     },
-    "pageEntityId": "a1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "account",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "a1111111-1111-1111-1111-111111111111",
+      "typeName": "account"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "LIVE: Work Order - Service Form",
     "description": "Work order form: WO number title, service account + WO type subtitles, phone from WO, address, description + instructions details, system status + priority grid, tags for status/incident/priority.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -116,18 +555,24 @@
       "tagField2": "$msdyn_primaryincidenttype",
       "tagField3": "$msdyn_priority"
     },
-    "pageEntityId": "ab111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "msdyn_workorder",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "ab111111-1111-1111-1111-111111111111",
+      "typeName": "msdyn_workorder"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Contact Card",
-    "description": "Contact form: full name title, job title + company subtitles, mobile/business phones, email, website, street address with map, city/postcode/country grid.",
-    "savedAt": "2026-04-13T00:00:00Z",
+    "savedAt": "2026-06-01T06:50:59.430Z",
     "propertyValues": {
-      "layout": "contact",
+      "layout": "smart",
       "hideEmptyFields": true,
       "showCardBorder": true,
       "showVersionInfo": false,
@@ -141,15 +586,15 @@
       "phoneField2": "$telephone1",
       "emailField": "$emailaddress1",
       "webField": "$websiteurl",
-      "addressField": "$address1_line1",
+      "addressField": "$address2_composite",
       "latitudeField": "$address1_latitude",
       "longitudeField": "$address1_longitude",
       "detailField1": "",
       "detailField2": "",
       "detailField3": "",
-      "gridField1": "$address1_city",
-      "gridField2": "$address1_postalcode",
-      "gridField3": "$address1_country",
+      "gridField1": "",
+      "gridField2": "",
+      "gridField3": "",
       "gridField4": "",
       "gridField5": "",
       "gridField6": "",
@@ -157,13 +602,444 @@
       "tagField2": "",
       "tagField3": ""
     },
-    "pageEntityId": "c1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "contact",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "pageContext": {
+      "entityId": "c1111111-1111-1111-1111-111111111111",
+      "typeName": "contact"
+    },
+    "network": {
+      "mode": "online",
+      "customLatencyMs": 1000
+    },
+    "device": {
+      "preset": "iphone-14",
+      "containerWidth": null,
+      "containerHeight": null,
+      "host": "Web",
+      "isFullBleed": false
+    },
+    "userSettings": {
+      "languageId": 1033,
+      "isRTL": false,
+      "timeZoneOffsetMinutes": 60,
+      "userId": "{00000000-0000-0000-0000-000000000001}",
+      "userName": "Harness User",
+      "securityRoles": [
+        "system-administrator"
+      ]
+    },
+    "isControlDisabled": false,
+    "dataSource": "mock",
+    "dataRecords": {
+      "contact": [
+        {
+          "contactid": "c1111111-1111-1111-1111-111111111111",
+          "firstname": "Sarah",
+          "lastname": "Connor",
+          "fullname": "Sarah Connor",
+          "jobtitle": "Field Service Engineer",
+          "mobilephone": "+44-7700-900123",
+          "telephone1": "+44-20-7946-0958",
+          "emailaddress1": "sarah.connor@contoso.com",
+          "websiteurl": "https://contoso.com/team/sconnor",
+          "address1_line1": "10 Downing Street",
+          "address1_city": "London",
+          "address1_postalcode": "SW1A 2AA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.5034,
+          "address1_longitude": -0.1276,
+          "address1_line2": "Westminster",
+          "address1_line3": "",
+          "address1_stateorprovince": "Greater London",
+          "address1_county": "London",
+          "address2_composite": "1 Infinite Loop\r\nCupertino, California 95014\r\nUnited States",
+          "address1_telephone1": "+44-20-7946-0958",
+          "address1_addresstypecode": 3,
+          "address1_addresstypecode@OData.Community.Display.V1.FormattedValue": "Primary",
+          "address2_line1": "1 Infinite Loop",
+          "address2_city": "Cupertino",
+          "address2_stateorprovince": "California",
+          "address2_postalcode": "95014",
+          "address2_country": "United States",
+          "salutation": "Ms.",
+          "middlename": "Jane",
+          "nickname": "Sara",
+          "yomifullname": "Sarah Connor",
+          "description": "Senior field service engineer covering EMEA hydrogen & renewables sites. On-call rota: weekends.",
+          "birthdate": "1985-05-13",
+          "anniversary": "2012-09-21",
+          "gendercode": 1,
+          "gendercode@OData.Community.Display.V1.FormattedValue": "Female",
+          "familystatuscode": 2,
+          "familystatuscode@OData.Community.Display.V1.FormattedValue": "Married",
+          "preferredcontactmethodcode": 2,
+          "preferredcontactmethodcode@OData.Community.Display.V1.FormattedValue": "Email",
+          "donotemail": false,
+          "donotbulkemail": true,
+          "donotphone": false,
+          "donotpostalmail": true,
+          "donotfax": true,
+          "creditlimit": 50000,
+          "creditlimit_base": 50000,
+          "numberofchildren": 2,
+          "annualincome": 95000,
+          "entityimage_timestamp": 638500000000000000,
+          "entityimage_url": "https://picsum.photos/seed/sarah-connor/96/96",
+          "_parentcustomerid_value": "a1111111-1111-1111-1111-111111111111",
+          "_parentcustomerid_value@OData.Community.Display.V1.FormattedValue": "Contoso Energy",
+          "_parentcustomerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_ownerid_value": "11111111-2222-3333-4444-555555555555",
+          "_ownerid_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "_createdby_value": "11111111-2222-3333-4444-555555555555",
+          "_createdby_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_createdby_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "_modifiedby_value": "11111111-2222-3333-4444-555555555555",
+          "_modifiedby_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+          "_modifiedby_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+          "createdon": "2023-03-25T09:32:00Z",
+          "createdon@OData.Community.Display.V1.FormattedValue": "3/25/2023 9:32 AM",
+          "modifiedon": "2026-07-07T11:15:00Z",
+          "modifiedon@OData.Community.Display.V1.FormattedValue": "7/7/2026 11:15 AM",
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active",
+          "versionnumber": 1234567
+        }
+      ],
+      "account": [
+        {
+          "accountid": "a1111111-1111-1111-1111-111111111111",
+          "name": "Contoso Energy",
+          "telephone1": "+44-20-7946-0000",
+          "telephone2": "+44-800-123-4567",
+          "websiteurl": "https://contoso.com",
+          "emailaddress1": "info@contoso.com",
+          "address1_line1": "One Microsoft Way",
+          "address1_composite": "One Microsoft Way\nLondon\nEC2A 4NE\nUnited Kingdom",
+          "address1_city": "London",
+          "address1_postalcode": "EC2A 4NE",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.523,
+          "address1_longitude": -0.085,
+          "entityimage_url": "https://picsum.photos/seed/contoso-energy/96/96",
+          "revenue": 125000,
+          "numberofemployees": 250,
+          "industrycode": 16,
+          "industrycode@OData.Community.Display.V1.FormattedValue": "Financial",
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active",
+          "_transactioncurrencyid_value": "cur11111-1111-1111-1111-111111111111",
+          "_transactioncurrencyid_value@OData.Community.Display.V1.FormattedValue": "British Pound",
+          "_transactioncurrencyid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "transactioncurrency",
+          "_msdyn_serviceterritory_value": "st111111-1111-1111-1111-111111111111",
+          "_msdyn_serviceterritory_value@OData.Community.Display.V1.FormattedValue": "London South",
+          "_msdyn_serviceterritory_value@Microsoft.Dynamics.CRM.lookuplogicalname": "territory",
+          "_primarycontactid_value": "c1111111-1111-1111-1111-111111111111",
+          "_primarycontactid_value@OData.Community.Display.V1.FormattedValue": "Sarah Connor",
+          "_primarycontactid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "contact"
+        },
+        {
+          "accountid": "a2222222-2222-2222-2222-222222222222",
+          "name": "Smith Residence",
+          "telephone1": "01234 567890",
+          "emailaddress1": "john.smith@email.com",
+          "address1_line1": "14 Elm Street",
+          "address1_composite": "14 Elm Street\nReading\nRG1 4AA\nUnited Kingdom",
+          "address1_city": "Reading",
+          "address1_postalcode": "RG1 4AA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.4545,
+          "address1_longitude": -0.9782,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        },
+        {
+          "accountid": "a3333333-3333-3333-3333-333333333333",
+          "name": "Contoso Ltd.",
+          "telephone1": "07700 678944",
+          "telephone2": "01483 555123",
+          "emailaddress1": "service@contoso.com",
+          "address1_line1": "191 Common Lane",
+          "address1_composite": "191 Common Lane\nPyrford\nKT14 7HT",
+          "address1_city": "Pyrford",
+          "address1_postalcode": "KT14 7HT",
+          "address1_latitude": 51.3148,
+          "address1_longitude": -0.5069,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        },
+        {
+          "accountid": "63b8ccee-4418-ef11-840a-002248073a18",
+          "name": "Lewis Fabrication Services Ltd",
+          "telephone1": "01737 444622",
+          "emailaddress1": "test@email.com",
+          "websiteurl": "https://www.lewisfabricationserv.co.uk",
+          "address1_line1": "131 Sandy Lane",
+          "address1_composite": "131 Sandy Lane\nMerstham\nSurrey\nRH5 4VA\nUnited Kingdom",
+          "address1_city": "Merstham",
+          "address1_stateorprovince": "Surrey",
+          "address1_postalcode": "RH5 4VA",
+          "address1_country": "United Kingdom",
+          "address1_latitude": 51.22175,
+          "address1_longitude": -0.09102,
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ],
+      "msdyn_workorder": [
+        {
+          "msdyn_workorderid": "ab111111-1111-1111-1111-111111111111",
+          "msdyn_name": "WO-00047",
+          "msdyn_workordersummary": "Central heating not producing hot water. Customer reports issue started 3 days ago. Boiler is a Baxi 600 Combi (2019). Error code E133 showing on display. No unusual noises. Gas supply confirmed working. Previous engineer visit 6 months ago for annual service — no issues found at that time.",
+          "msdyn_phonenumber": "07700 678944",
+          "_msdyn_serviceaccount_value": "a3333333-3333-3333-3333-333333333333",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Contoso Ltd.",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_billingaccount_value": "a3333333-3333-3333-3333-333333333333",
+          "_msdyn_billingaccount_value@OData.Community.Display.V1.FormattedValue": "Contoso Ltd.",
+          "_msdyn_billingaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-1111-1111-1111-111111111111",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Reactive Maintenance",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-1111-1111-1111-111111111111",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Boiler Fault",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "pri11111-1111-1111-1111-111111111111",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "High",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "191 Common Lane",
+          "msdyn_city": "Pyrford",
+          "msdyn_postalcode": "KT14 7HT",
+          "msdyn_latitude": 51.3148,
+          "msdyn_longitude": -0.5069,
+          "msdyn_instructions": "Access via back garden gate. Dog in front garden.",
+          "msdyn_systemstatus": 690970001,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Open"
+        },
+        {
+          "msdyn_workorderid": "ab222222-2222-2222-2222-222222222222",
+          "msdyn_name": "WO-10045",
+          "msdyn_workordersummary": "Annual gas boiler service for residential property. Customer has HomeCare 300 cover. Last service completed 12 months ago — all checks passed. Boiler is a Worcester Greenstar 30i (2018), located in kitchen utility cupboard. Customer requests morning appointment if possible.",
+          "msdyn_phonenumber": "01234 567890",
+          "_msdyn_serviceaccount_value": "a2222222-2222-2222-2222-222222222222",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Smith Residence",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-2222-2222-2222-222222222222",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Preventive Maintenance",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-2222-2222-2222-222222222222",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Gas Boiler Service",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "pri22222-2222-2222-2222-222222222222",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "Normal",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "14 Elm Street",
+          "msdyn_city": "Reading",
+          "msdyn_postalcode": "RG1 4AA",
+          "msdyn_latitude": 51.4545,
+          "msdyn_longitude": -0.9782,
+          "msdyn_instructions": "Access via side gate. Key under mat.",
+          "msdyn_systemstatus": 690970001,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Open"
+        },
+        {
+          "msdyn_workorderid": "e12ee2c7-4029-f111-88b3-7c1e521e04df",
+          "msdyn_name": "02046",
+          "msdyn_workordersummary": "Work completed without any challenges",
+          "_msdyn_serviceaccount_value": "63b8ccee-4418-ef11-840a-002248073a18",
+          "_msdyn_serviceaccount_value@OData.Community.Display.V1.FormattedValue": "Lewis Fabrication Services Ltd",
+          "_msdyn_serviceaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_billingaccount_value": "63b8ccee-4418-ef11-840a-002248073a18",
+          "_msdyn_billingaccount_value@OData.Community.Display.V1.FormattedValue": "Lewis Fabrication Services Ltd",
+          "_msdyn_billingaccount_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "_msdyn_workordertype_value": "wotype-3333-3333-3333-333333333333",
+          "_msdyn_workordertype_value@OData.Community.Display.V1.FormattedValue": "Diagnosis and Repair",
+          "_msdyn_workordertype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workordertype",
+          "_msdyn_primaryincidenttype_value": "incident-3333-3333-3333-333333333333",
+          "_msdyn_primaryincidenttype_value@OData.Community.Display.V1.FormattedValue": "Repair - Bearing Replacement",
+          "_msdyn_primaryincidenttype_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_incidenttype",
+          "_msdyn_priority_value": "18c7f4b7-7e68-f011-bec3-7c1e522e9307",
+          "_msdyn_priority_value@OData.Community.Display.V1.FormattedValue": "Standard",
+          "_msdyn_priority_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_priority",
+          "msdyn_address1": "131 Sandy Lane",
+          "msdyn_city": "Merstham",
+          "msdyn_stateorprovince": "Surrey",
+          "msdyn_postalcode": "RH5 4VA",
+          "msdyn_country": "United Kingdom",
+          "msdyn_displayaddress": "131 Sandy Lane\nMerstham, Surrey RH5 4VA",
+          "msdyn_latitude": 51.22175,
+          "msdyn_longitude": -0.09102,
+          "msdyn_instructions": "Repair required at Lewis Fabrication Services Ltd. Customer reports excessive noise and vibration. Diagnose and repair.",
+          "msdyn_systemstatus": 690970020,
+          "msdyn_systemstatus@OData.Community.Display.V1.FormattedValue": "In Progress",
+          "msdyn_firstarrivedon": "2026-05-29T12:00:00Z",
+          "statecode": 0,
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ],
+      "bookableresourcebooking": [
+        {
+          "bookableresourcebookingid": "bb111111-1111-1111-1111-111111111111",
+          "name": "BK-00047",
+          "_msdyn_workorder_value": "ab111111-1111-1111-1111-111111111111",
+          "_msdyn_workorder_value@OData.Community.Display.V1.FormattedValue": "WO-00047",
+          "_msdyn_workorder_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workorder",
+          "_resource_value": "c1111111-1111-1111-1111-111111111111",
+          "_resource_value@OData.Community.Display.V1.FormattedValue": "John Smith",
+          "_resource_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookableresource",
+          "_bookingstatus_value": "bs111111-1111-1111-1111-111111111111",
+          "_bookingstatus_value@OData.Community.Display.V1.FormattedValue": "Scheduled",
+          "_bookingstatus_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookingstatus",
+          "starttime": "30/03/2026 09:00",
+          "endtime": "30/03/2026 11:00",
+          "duration": 120,
+          "bookingtype": 1,
+          "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+          "msdyn_bookingmethod": 690970003,
+          "msdyn_bookingmethod@OData.Community.Display.V1.FormattedValue": "Manual",
+          "msdyn_latitude": 51.3148,
+          "msdyn_longitude": -0.5069,
+          "msdyn_worklocation": 690970000,
+          "msdyn_worklocation@OData.Community.Display.V1.FormattedValue": "Onsite",
+          "msdyn_estimatedarrivaltime": "30/03/2026 08:45",
+          "msdyn_estimatedtravelduration": 30,
+          "statecode": 0,
+          "statuscode": 1
+        },
+        {
+          "bookableresourcebookingid": "8bd91213-4229-f111-88b4-7c1e5278ac90",
+          "name": "02046",
+          "_msdyn_workorder_value": "e12ee2c7-4029-f111-88b3-7c1e521e04df",
+          "_msdyn_workorder_value@OData.Community.Display.V1.FormattedValue": "02046",
+          "_msdyn_workorder_value@Microsoft.Dynamics.CRM.lookuplogicalname": "msdyn_workorder",
+          "_resource_value": "adc60063-6427-f111-88b4-7c1e5278980d",
+          "_resource_value@OData.Community.Display.V1.FormattedValue": "Sienna Hall",
+          "_resource_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookableresource",
+          "_bookingstatus_value": "53f39908-d08a-4d9c-90e8-907fd7bec07d",
+          "_bookingstatus_value@OData.Community.Display.V1.FormattedValue": "In Progress",
+          "_bookingstatus_value@Microsoft.Dynamics.CRM.lookuplogicalname": "bookingstatus",
+          "starttime": "2026-05-29T11:30:00Z",
+          "starttime@OData.Community.Display.V1.FormattedValue": "5/29/2026 11:30 AM",
+          "endtime": "2026-05-29T14:00:00Z",
+          "endtime@OData.Community.Display.V1.FormattedValue": "5/29/2026 2:00 PM",
+          "duration": 150,
+          "bookingtype": 1,
+          "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+          "msdyn_bookingmethod": 690970003,
+          "msdyn_bookingmethod@OData.Community.Display.V1.FormattedValue": "Manual",
+          "msdyn_latitude": 51.22175,
+          "msdyn_longitude": -0.09102,
+          "msdyn_worklocation": 690970000,
+          "msdyn_worklocation@OData.Community.Display.V1.FormattedValue": "Onsite",
+          "msdyn_actualtravelduration": 30,
+          "msdyn_actualarrivaltime": "2026-05-29T12:00:00Z",
+          "statecode": 0,
+          "statuscode": 1
+        }
+      ],
+      "bookingstatus": [
+        {
+          "bookingstatusid": "f16d80d1-fd07-4237-8b69-187a11eb75f9",
+          "name": "Scheduled",
+          "msdyn_statuscolor": "49F249",
+          "msdyn_fieldservicestatus": "Scheduled"
+        },
+        {
+          "bookingstatusid": "53f39908-d08a-4d9c-90e8-907fd7bec07d",
+          "name": "In Progress",
+          "msdyn_statuscolor": "47d041",
+          "msdyn_fieldservicestatus": "In Progress"
+        },
+        {
+          "bookingstatusid": "a2ad7f6a-f763-461a-b724-6d4371506baa",
+          "name": "In Progress",
+          "msdyn_statuscolor": "00C3D3",
+          "msdyn_fieldservicestatus": "In Progress"
+        },
+        {
+          "bookingstatusid": "976869c4-f187-4680-9a5a-a9dade8e9636",
+          "name": "Traveling",
+          "msdyn_statuscolor": "426EFF",
+          "msdyn_fieldservicestatus": "Traveling"
+        },
+        {
+          "bookingstatusid": "91c79750-acac-4da1-9e69-447b4bb2dfc9",
+          "name": "Completed",
+          "msdyn_statuscolor": "47C21D",
+          "msdyn_fieldservicestatus": "Completed"
+        },
+        {
+          "bookingstatusid": "c33410b9-1abe-4631-b4e9-6e4a1113af34",
+          "name": "Completed",
+          "msdyn_statuscolor": "005b70",
+          "msdyn_fieldservicestatus": "Completed"
+        },
+        {
+          "bookingstatusid": "0adbf4e6-86cc-4db0-9dbb-51b7d1ed4020",
+          "name": "Canceled",
+          "msdyn_statuscolor": "797775",
+          "msdyn_fieldservicestatus": "Canceled"
+        },
+        {
+          "bookingstatusid": "ef3164b9-0893-4032-9bb2-0f2e58f982af",
+          "name": "On Break",
+          "msdyn_statuscolor": "c19c00",
+          "msdyn_fieldservicestatus": "On Break"
+        }
+      ],
+      "msdyn_priority": [
+        {
+          "msdyn_priorityid": "7a9228f7-7e68-f011-bec3-7c1e522e9307",
+          "msdyn_name": "Emergency",
+          "msdyn_prioritycolor": "FF0000",
+          "msdyn_priorityvalue": 100,
+          "msdyn_levelofimportance": 10
+        },
+        {
+          "msdyn_priorityid": "18c7f4b7-7e68-f011-bec3-7c1e522e9307",
+          "msdyn_name": "Standard",
+          "msdyn_prioritycolor": "00FF00",
+          "msdyn_priorityvalue": 1,
+          "msdyn_levelofimportance": 1
+        }
+      ],
+      "msdyn_customerasset": [
+        {
+          "msdyn_customerassetid": "ca111111-1111-1111-1111-111111111111",
+          "msdyn_name": "Baxi 600 Combi Boiler",
+          "_msdyn_product_value": "prod1111-1111-1111-1111-111111111111",
+          "_msdyn_product_value@OData.Community.Display.V1.FormattedValue": "Gas Boiler",
+          "_msdyn_product_value@Microsoft.Dynamics.CRM.lookuplogicalname": "product",
+          "_msdyn_account_value": "a2222222-2222-2222-2222-222222222222",
+          "_msdyn_account_value@OData.Community.Display.V1.FormattedValue": "Smith Residence",
+          "_msdyn_account_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+          "msdyn_deviceid": "BX600-2019-44721",
+          "msdyn_assettag": "ASSET-00142",
+          "msdyn_latitude": 51.4545,
+          "msdyn_longitude": -0.9782,
+          "statecode": 0,
+          "statecode@OData.Community.Display.V1.FormattedValue": "Active",
+          "statuscode": 1,
+          "statuscode@OData.Community.Display.V1.FormattedValue": "Active"
+        }
+      ]
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Customer Asset",
     "description": "Asset form: asset name title, product + account subtitles, device ID + asset tag details, status tag. Compact layout for dense data.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -198,13 +1074,20 @@
       "tagField2": "",
       "tagField3": ""
     },
-    "pageEntityId": "ca111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "msdyn_customerasset",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "ca111111-1111-1111-1111-111111111111",
+      "typeName": "msdyn_customerasset"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Booking - Collapsed Start",
     "description": "Same as LIVE booking but starts collapsed. Shows header, contact bar, and tags only.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -239,13 +1122,20 @@
       "tagField2": "@msdyn_primaryincidenttype",
       "tagField3": ""
     },
-    "pageEntityId": "bb111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "bookableresourcebooking",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "bb111111-1111-1111-1111-111111111111",
+      "typeName": "bookableresourcebooking"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Booking - Desktop Full",
     "description": "Booking with contact layout for desktop — full detail with all related fields visible.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -280,13 +1170,20 @@
       "tagField2": "@msdyn_primaryincidenttype",
       "tagField3": "@msdyn_priority"
     },
-    "pageEntityId": "bb111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "bookableresourcebooking",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "bb111111-1111-1111-1111-111111111111",
+      "typeName": "bookableresourcebooking"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Booking - Offline",
     "description": "Booking in offline mode — tests that related field fetches work via the offline WebAPI store.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -321,13 +1218,20 @@
       "tagField2": "@msdyn_primaryincidenttype",
       "tagField3": ""
     },
-    "pageEntityId": "bb111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "bookableresourcebooking",
-    "networkMode": "offline",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "bb111111-1111-1111-1111-111111111111",
+      "typeName": "bookableresourcebooking"
+    },
+    "network": {
+      "mode": "offline"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Account - Desktop",
     "description": "Account on desktop with contact layout — shows all grid fields and full address.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -362,13 +1266,20 @@
       "tagField2": "$industrycode",
       "tagField3": ""
     },
-    "pageEntityId": "a1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "account",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "a1111111-1111-1111-1111-111111111111",
+      "typeName": "account"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Work Order - Tablet",
     "description": "Work order on iPad with smart layout — good for technicians reviewing WOs on tablets.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -403,13 +1314,20 @@
       "tagField2": "$msdyn_primaryincidenttype",
       "tagField3": ""
     },
-    "pageEntityId": "ab111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "msdyn_workorder",
-    "networkMode": "online",
-    "devicePreset": "ipad",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "ab111111-1111-1111-1111-111111111111",
+      "typeName": "msdyn_workorder"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "ipad"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Read-Only (Disabled)",
     "description": "Work order in read-only mode — control renders but no interaction.",
     "savedAt": "2026-04-13T00:00:00Z",
@@ -444,13 +1362,20 @@
       "tagField2": "",
       "tagField3": ""
     },
-    "pageEntityId": "ab111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "msdyn_workorder",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": true
+    "isControlDisabled": true,
+    "pageContext": {
+      "entityId": "ab111111-1111-1111-1111-111111111111",
+      "typeName": "msdyn_workorder"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Account - Compact Desktop",
     "description": "Account on desktop with COMPACT layout — proves Compact works for traditional MDA users wanting a dense, label:value form feel. Shows section headers (Contact / Details / Info).",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -485,13 +1410,20 @@
       "tagField2": "$industrycode",
       "tagField3": ""
     },
-    "pageEntityId": "a1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "account",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "a1111111-1111-1111-1111-111111111111",
+      "typeName": "account"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Booking - Custom Separator + Copy Buttons",
     "description": "v4.1 features showcase: subtitle separator overridden to ' • ' (bullet) and copy-to-clipboard buttons render next to phone, email, and address chips on desktop. Hover the chips to see the new copy affordance.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -527,13 +1459,20 @@
       "tagField2": "@msdyn_primaryincidenttype",
       "tagField3": "@msdyn_priority"
     },
-    "pageEntityId": "bb111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "bookableresourcebooking",
-    "networkMode": "online",
-    "devicePreset": "desktop",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "bb111111-1111-1111-1111-111111111111",
+      "typeName": "bookableresourcebooking"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "desktop"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Customer Asset - Preset Auto-Fill",
     "description": "Only titleField is bound — every other slot is left empty. The msdyn_customerasset preset auto-populates product, account, device ID, asset tag, lat/lng, and status. Demonstrates SLOT_PRESETS magic for new installs.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -568,13 +1507,20 @@
       "tagField2": "",
       "tagField3": ""
     },
-    "pageEntityId": "ca111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "msdyn_customerasset",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "ca111111-1111-1111-1111-111111111111",
+      "typeName": "msdyn_customerasset"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Sparse - Title Only",
     "description": "Only titleField is bound on an entity that has NO preset. Proves graceful degradation — the card renders with just the title, no broken zones, no empty placeholders. Use as the 'minimum viable binding' demo.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -609,13 +1555,20 @@
       "tagField2": "",
       "tagField3": ""
     },
-    "pageEntityId": "c1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "contact",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "c1111111-1111-1111-1111-111111111111",
+      "typeName": "contact"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Dense Overload - All Slots Filled",
     "description": "Stress test: every single slot bound on an account — 3 subtitles, 2 phones, email, web, address with map, 6 grid fields, 3 tags. Proves the layout handles wrap, overflow, and visual density on a phone screen.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -650,13 +1603,20 @@
       "tagField2": "$industrycode",
       "tagField3": "$msdyn_serviceterritory"
     },
-    "pageEntityId": "a1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "account",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "a1111111-1111-1111-1111-111111111111",
+      "typeName": "account"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Contact - Avatar (Image URL)",
     "description": "Showcases the new imageField slot bound to entityimage_url. 40px circular avatar renders left of the title in Smart layout, fetched from a real URL. Uses Sarah Connor contact with a deterministic picsum.photos seed.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -682,13 +1642,20 @@
       "gridField2": "$address1_postalcode",
       "gridField3": "$address1_country"
     },
-    "pageEntityId": "c1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "contact",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "c1111111-1111-1111-1111-111111111111",
+      "typeName": "contact"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   },
   {
+    "schemaVersion": 2,
     "name": "Contact - Avatar (Initials Fallback)",
     "description": "Same contact card but imageField is unbound — verifies the initials fallback. Title 'Sarah Connor' renders as 'SC' on a brand-coloured circular avatar in Smart and Contact layouts.",
     "savedAt": "2026-05-07T00:00:00Z",
@@ -712,10 +1679,16 @@
       "gridField3": "$address1_country",
       "tagField1": "Active"
     },
-    "pageEntityId": "c1111111-1111-1111-1111-111111111111",
-    "pageEntityTypeName": "contact",
-    "networkMode": "online",
-    "devicePreset": "iphone-14",
-    "isControlDisabled": false
+    "isControlDisabled": false,
+    "pageContext": {
+      "entityId": "c1111111-1111-1111-1111-111111111111",
+      "typeName": "contact"
+    },
+    "network": {
+      "mode": "online"
+    },
+    "device": {
+      "preset": "iphone-14"
+    }
   }
 ]
