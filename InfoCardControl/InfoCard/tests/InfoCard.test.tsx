@@ -22,6 +22,7 @@ import {
   LayoutMode,
   defaultTheme,
   mergeRelatedFields,
+  normalizeImageSource,
 } from "../InfoCard";
 
 interface RelatedFieldMapping {
@@ -102,7 +103,87 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
 // Tests
 // ────────────────────────────────────────
 
+describe("normalizeImageSource", () => {
+  const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlP8S8AAAAASUVORK5CYII=";
+  const jpegBase64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q==";
+
+  it("converts Dataverse PNG base64 into a data URI", () => {
+    expect(normalizeImageSource(pngBase64)).toBe(`data:image/png;base64,${pngBase64}`);
+  });
+
+  it("converts Dataverse JPEG base64 instead of treating it as a relative URL", () => {
+    expect(normalizeImageSource(jpegBase64)).toBe(`data:image/jpeg;base64,${jpegBase64}`);
+  });
+
+  it("preserves existing URL and data URI sources", () => {
+    expect(normalizeImageSource("https://example.com/photo.jpg")).toBe("https://example.com/photo.jpg");
+    expect(normalizeImageSource("/images/photo.jpg")).toBe("/images/photo.jpg");
+    expect(normalizeImageSource("data:image/png;base64,abc")).toBe("data:image/png;base64,abc");
+  });
+
+  it("returns null for empty or non-string values", () => {
+    expect(normalizeImageSource("")).toBeNull();
+    expect(normalizeImageSource(null)).toBeNull();
+  });
+});
+
 describe("InfoCardComponent", () => {
+
+  describe("automation selectors", () => {
+    const automationData = makeData({
+      title: makeField({ slotKey: "titleField", label: "Name", value: "Contoso" }),
+      subtitles: [makeField({ slotKey: "subtitleField2", label: "Account", value: "Parent account" })],
+      phones: [makeField({ slotKey: "phoneField1", label: "Phone", value: "555-1234" })],
+      email: makeField({ slotKey: "emailField", label: "Email", value: "test@example.com" }),
+      web: makeField({ slotKey: "webField", label: "Website", value: "example.com" }),
+      address: makeField({ slotKey: "addressField", label: "Address", value: "1 Microsoft Way" }),
+      latitude: 47.6405,
+      longitude: -122.1293,
+      details: [makeField({ slotKey: "detailField2", label: "Notes", value: "Important" })],
+      gridFields: [makeField({ slotKey: "gridField3", label: "Status", value: "Active" })],
+      tags: [makeField({ slotKey: "tagField1", label: "Priority", value: "High" })],
+    });
+
+    it.each<LayoutMode>(["smart", "contact", "compact"])(
+      "exposes stable slot selectors in the %s layout",
+      (layout) => {
+        const { container } = render(
+          <InfoCardComponent {...makeProps({ data: automationData, layout, collapsibleSections: "none" })} />,
+        );
+
+        [
+          "infocard",
+          "infocard-titleField",
+          "infocard-subtitleField2",
+          "infocard-phoneField1",
+          "infocard-emailField",
+          "infocard-webField",
+          "infocard-addressField",
+          "infocard-detailField2",
+          "infocard-gridField3",
+          "infocard-tagField1",
+        ].forEach((id) => {
+          const element = container.querySelector(`[data-automation-id="${id}"]`);
+          if (!element) throw new Error(`Missing automation selector: ${id}`);
+        });
+      },
+    );
+
+    it("exposes action selectors independently of localized accessible names", () => {
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data: automationData, layout: "smart" })} />,
+      );
+
+      [
+        "infocard-action-phoneField1",
+        "infocard-action-emailField",
+        "infocard-action-webField",
+        "infocard-action-addressField",
+      ].forEach((id) => {
+        expect(container.querySelector(`[data-automation-id="${id}"]`)).not.toBeNull();
+      });
+    });
+  });
 
   // ── Title ──────────────────────────────
 
@@ -112,16 +193,16 @@ describe("InfoCardComponent", () => {
       expect(container.textContent).toContain("Test Card");
     });
 
-    it("shows 'No fields bound' when title is null", () => {
+    it("shows 'No fields configured' when title is not configured", () => {
       const data = makeData({ title: null });
       const { container } = render(<InfoCardComponent {...makeProps({ data })} />);
-      expect(container.textContent).toContain("No fields bound");
+      expect(container.textContent).toContain("No fields configured");
     });
 
-    it("shows 'No fields bound' when title is empty", () => {
-      const data = makeData({ title: emptyField("Name") });
+    it("shows the bound field label when its value is not set", () => {
+      const data = makeData({ title: emptyField("Work Order") });
       const { container } = render(<InfoCardComponent {...makeProps({ data })} />);
-      expect(container.textContent).toContain("No fields bound");
+      expect(container.textContent).toContain("No Work Order set");
     });
   });
 
@@ -347,15 +428,18 @@ describe("InfoCardComponent", () => {
 
     it("renders copy buttons on web (formFactor=2) (smart layout)", () => {
       const data = makeData({
-        phones: [makeField({ label: "Phone", value: "+1 555 1234" })],
-        email: makeField({ label: "Email", value: "a@b.co" }),
-        address: makeField({ label: "Address", value: "1 Microsoft Way" }),
+        phones: [makeField({ slotKey: "phoneField1", label: "Phone", value: "+1 555 1234" })],
+        email: makeField({ slotKey: "emailField", label: "Email", value: "a@b.co" }),
+        address: makeField({ slotKey: "addressField", label: "Address", value: "1 Microsoft Way" }),
       });
       const { container } = render(
         <InfoCardComponent {...makeProps({ data, layout: "smart", formFactor: 2 })} />,
       );
       const copyButtons = container.querySelectorAll("button[aria-label^='Copy ']");
       expect(copyButtons.length).toBe(3); // phone, email, address
+      expect(container.querySelector('[data-automation-id="infocard-copy-phoneField1"]')).not.toBeNull();
+      expect(container.querySelector('[data-automation-id="infocard-copy-emailField"]')).not.toBeNull();
+      expect(container.querySelector('[data-automation-id="infocard-copy-addressField"]')).not.toBeNull();
     });
 
     it("invokes navigator.clipboard.writeText with chip value when clicked", async () => {
@@ -483,6 +567,24 @@ describe("InfoCardComponent", () => {
       const gridDiv = container.querySelector("div[style*='grid-template-columns']") as HTMLElement;
       expect(gridDiv).not.toBeNull();
       expect(gridDiv.style.gridTemplateColumns).toBe("1fr");
+    });
+
+    it("keeps date and time on one line", () => {
+      const data = makeData({
+        gridFields: [
+          makeField({
+            label: "Start Time",
+            value: "20/02/2026 08:00",
+            dateText: "20/02/2026",
+            timeText: "08:00",
+          }),
+        ],
+      });
+      const { getByText } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "smart" })} />,
+      );
+      const value = getByText("20/02/2026 08:00");
+      expect(value).toHaveStyle({ whiteSpace: "nowrap" });
     });
   });
 
@@ -816,6 +918,23 @@ describe("InfoCardComponent", () => {
         const el = link as HTMLElement;
         expect(el.style.width).toBe("44px");
         expect(el.style.height).toBe("44px");
+      });
+    });
+
+    it("uses denser action buttons on web", () => {
+      const data = makeData({
+        title: makeField({ label: "Account", value: "Contoso" }),
+        phones: [makeField({ label: "Phone", value: "555-1234" })],
+        email: makeField({ label: "Email", value: "test@example.com" }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "contact", formFactor: 2 })} />,
+      );
+      const actionLinks = container.querySelectorAll('a[href^="tel:"], a[href^="mailto:"]');
+      actionLinks.forEach((link) => {
+        const el = link as HTMLElement;
+        expect(el.style.width).toBe("32px");
+        expect(el.style.height).toBe("32px");
       });
     });
   });
@@ -1167,7 +1286,7 @@ describe("InfoCardComponent", () => {
       expect(img!.getAttribute("alt")).toBe("Acme Corp");
     });
 
-    it("falls back to initials when image fails to load", () => {
+    it("hides the image when it fails to load", () => {
       const data = makeData({
         title: { label: "Name", value: "Microsoft", rawValue: "Microsoft", isEmpty: false },
         imageUrl: "https://example.com/broken.jpg",
@@ -1181,8 +1300,7 @@ describe("InfoCardComponent", () => {
       act(() => {
         img!.dispatchEvent(new Event("error"));
       });
-      // Single-word title → first two characters
-      expect(container.textContent).toContain("MI");
+      expect(container.textContent).not.toContain("MI");
       expect(container.querySelector("img")).toBeNull();
     });
   });
@@ -1231,6 +1349,26 @@ describe("InfoCardComponent", () => {
       );
       expect(container.textContent).toContain("Duration");
       expect(container.textContent).toContain("2h 30m");
+    });
+
+    it("renders compact info as an inline bold label followed by naturally wrapping text", () => {
+      const data = makeData({
+        details: [makeField({ slotKey: "detailField1", label: "Work Order Summary", value: "Long narrative text" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact" })} />,
+      );
+      const row = container.querySelector('[data-automation-id="infocard-detailField1"]') as HTMLElement;
+      const label = Array.from(row.querySelectorAll("span"))
+        .find(s => s.textContent === "Work Order Summary: ");
+      const content = label!.parentElement as HTMLElement;
+
+      expect(row.textContent).toBe("Work Order Summary: Long narrative text");
+      expect(row.style.display).toBe("block");
+      expect(label!.style.fontWeight).toBe("600");
+      expect(content.style.textAlign).toBe("left");
+      expect(content.style.wordBreak).toBe("normal");
+      expect(content.style.overflowWrap).toBe("anywhere");
     });
   });
 
@@ -1673,6 +1811,17 @@ describe("InfoCardComponent", () => {
       const subtitleField2Entries = merged.subtitles.filter(s => s.slotKey === "subtitleField2");
       expect(subtitleField2Entries).toHaveLength(1);
     });
+
+    it("converts a related Dataverse image column into a renderable data URI", () => {
+      const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlP8S8AAAAASUVORK5CYII=";
+      const merged = mergeRelatedFields(
+        makeData({ imageUrl: null }),
+        { jdp_workorderimage: fetched("imageField", pngBase64) },
+        [{ sourceSlot: "titleField", fetchField: "jdp_workorderimage", targetSlot: "imageField" }],
+      );
+
+      expect(merged.imageUrl).toBe(`data:image/png;base64,${pngBase64}`);
+    });
   });
 
   // ── v4.3 features: showDetailIcons, detailLabelStyle ─────────────
@@ -1769,12 +1918,11 @@ describe("InfoCardComponent", () => {
       expect(headingDiv).toBeDefined();
     });
 
-    it("does not render labels on compact layout (compact already shows label:value)", () => {
+    it("ignores detailLabelStyle on compact because compact always uses inline labels", () => {
       const { container } = render(
         <InfoCardComponent {...makeProps({ data: detailData(), layout: "compact", detailLabelStyle: "inline-bold" })} />,
       );
-      // Compact ignores the prop — its own label rendering is unchanged
-      expect(container.textContent).toContain("Access via back garden");
+      expect(container.textContent).toContain("Instructions: Access via back garden");
     });
 
     it("combines showDetailIcons=false with detailLabelStyle='inline-bold' for prose-style rows", () => {

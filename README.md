@@ -34,7 +34,7 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 - **Fluent UI theme integration** -- automatically adapts to Power Apps modern theming (light/dark mode)
 - **Tappable action links** -- phone (`tel:`), email (`mailto:`), web (`https:`), and map links (lat/lng or address text)
 - **Copy-to-clipboard buttons** on phone, email, and address chips on web (form factor 2); hidden on mobile/tablet where `tel:`/`mailto:` is primary
-- **Avatar / image** -- bind `imageField` to an entity image URL. Configurable shape (`rounded` default, `circle`, `square`). Initials show only as a fallback when a supplied URL fails to load
+- **Avatar / image** -- configure `imageField` with a Dataverse image-column expression (`@.entityimage` for the current record or `@customimage` through the title lookup). Raw Dataverse base64 values render directly; URLs remain supported for compatibility
 - **Title prefix** -- optional muted-colour literal before the title (e.g. `Case: ACME-001`, `Work Order: WO-12345`)
 - **Configurable collapsible sections** -- choose what disappears when the card collapses: `none`, `body` (details + grid, default), `body-tags`, or `all`. Smart, Contact, and Compact layouts can all collapse
 - **Detail row presentation** -- optionally suppress leading icons (`showDetailIcons=false`) and/or render the field's display name inline-bold or as a small caps heading (`detailLabelStyle`) so detail rows read like prose
@@ -72,7 +72,7 @@ InfoCard exposes 24 slot properties across 6 groups, plus 12 config properties. 
 | Property | Type | Description |
 |----------|------|-------------|
 | `titleField` | Bound (required) | Card header -- anchor field. Related fields (`@fieldName`) fetch from this lookup's entity. |
-| `imageField` | Input | Avatar / entity image URL (typically `entityimage_url` or `@entityimage_url`). Empty / unbound = no avatar |
+| `imageField` | Input | Dataverse image expression: `@.entityimage` for the current record or `@customimage` for the title lookup record. Raw base64 image values are converted to data URIs. URLs remain supported. |
 | `subtitleField1` | Input | Shown under title, separator-joined. Supports `@fieldName` for related data. |
 | `subtitleField2` | Input | Shown under title, separator-joined |
 | `subtitleField3` | Input | Shown under title, separator-joined |
@@ -268,6 +268,20 @@ Your customer is then importing **your** solution — not a sample — and lifec
 | Canvas apps | Not supported (model-driven only) |
 
 Tested against PCF SDK 1.x, React 16.8, Fluent UI 9 (host-provided), TypeScript 4.9.
+
+---
+
+## UI automation selectors
+
+Rendered fields expose stable, localization-independent `data-automation-id` attributes based on their manifest slot names. Scope selectors to the desired PCF instance when a form contains more than one InfoCard.
+
+| Element | Selector example |
+|---------|------------------|
+| Card root | `[data-automation-id="infocard"]` |
+| Field slot | `[data-automation-id="infocard-gridField3"]` |
+| Field action | `[data-automation-id="infocard-action-phoneField1"]` |
+| Copy action | `[data-automation-id="infocard-copy-phoneField1"]` |
+| Image / version | `[data-automation-id="infocard-imageField"]`, `[data-automation-id="infocard-version"]` |
 
 ---
 

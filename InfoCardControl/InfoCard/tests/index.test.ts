@@ -611,6 +611,19 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(result?.value).toBe("Contoso Equipment");
       expect(result?.value).not.toBe("[object Object]");
     });
+
+    it("detects the MIME type of a fetched JPEG image", () => {
+      const jpegBase64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q==";
+      const ctx = createMockContext();
+      control.init(ctx, notifyOutputChanged);
+      const readField = getReadField(control);
+      const result = readField(
+        { jdp_workorderimage: jpegBase64 } as ComponentFramework.WebApi.Entity,
+        "jdp_workorderimage"
+      );
+
+      expect(result?.value).toBe(`data:image/jpeg;base64,${jpegBase64}`);
+    });
   });
 
   describe("readSlot()", () => {
@@ -1702,16 +1715,19 @@ describe("InfoCard PCF Lifecycle", () => {
       expect(overrides.gridField1.value).toBe("3/30/2026 9:00 AM");
     });
 
-    it("does not value-match numeric raws to ambiguous columns (e.g. statuscode vs bookingtype)", async () => {
-      // raw=1 in a non-bound slot would historically match statuscode(1) AND bookingtype(1).
-      // Numeric matching is intentionally disabled to avoid silently-wrong bindings.
-      // The slot stays unresolved unless the maker binds via attributes.LogicalName.
+    it("does not infer a preset column for a maker-bound numeric slot", async () => {
+      // The maker may bind gridField3 to another numeric column whose value happens
+      // to equal the Booking duration preset. Numeric matching must not relabel or
+      // reformat that value as Duration.
       const webAPIMock = jest.fn().mockResolvedValue(makeWebAPIRecord({
-        statuscode: 1, statecode: 0, bookingtype: 1,
-        "bookingtype@OData.Community.Display.V1.FormattedValue": "Solid",
+        duration: 120,
+        customnumber: 120,
+        statecode: 0,
+        statuscode: 1,
       }));
       const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
-        { LogicalName: "bookingtype", DisplayName: "Booking Type" },
+        { LogicalName: "duration", DisplayName: "Duration" },
+        { LogicalName: "customnumber", DisplayName: "Custom Number" },
       ]));
 
       const ctx = createMockContext({
@@ -1723,7 +1739,7 @@ describe("InfoCard PCF Lifecycle", () => {
             raw: [{ id: "ab111111-1111-1111-1111-111111111111", name: "WO", entityType: "msdyn_workorder" }],
             attributes: { LogicalName: "msdyn_workorder", DisplayName: "Work Order" },
           },
-          gridField3: { raw: 1, type: "OptionSet", attributes: {} },
+          gridField3: { raw: 120, type: "Whole.None", attributes: {} },
         },
       });
       control.init(ctx, notifyOutputChanged);

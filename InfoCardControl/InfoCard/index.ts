@@ -1,7 +1,7 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import {
     InfoCardComponent, InfoCardData, InfoCardTheme, SlotField, LayoutMode, defaultTheme,
-    DEFAULT_STRINGS, formatLocalizedDuration,
+    DEFAULT_STRINGS, formatLocalizedDuration, normalizeImageSource,
 } from "./InfoCard";
 import type { RelatedFieldMapping, BindingDiagnostic, InfoCardStrings } from "./InfoCard";
 import { isUnbindableColumn } from "./bindingValidator";
@@ -9,7 +9,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.4.17";
+const CONTROL_VERSION = "4.4.21";
 
 /**
  * Column-name heuristic for Whole.Duration columns. Some Dataverse hosts don't
@@ -516,8 +516,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const lng = lngSlot && !lngSlot.isEmpty ? Number(lngSlot.rawValue) : null;
 
         const imageSlot = this.readSlot(context, "imageField");
-        const imageUrl = (imageSlot && !imageSlot.isEmpty && typeof imageSlot.rawValue === "string" && imageSlot.rawValue.length > 0)
-            ? imageSlot.rawValue
+        const imageUrl = imageSlot && !imageSlot.isEmpty
+            ? normalizeImageSource(imageSlot.rawValue) ?? normalizeImageSource(imageSlot.value)
             : null;
 
         const data: InfoCardData = {
@@ -943,8 +943,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             if (opt?.color) optionColor = opt.color;
         }
 
-        // Pre-compute split date/time text for DateAndTime.DateAndTime fields so the renderer
-        // can stack them on two lines. Honors user locale formats via context.formatting.
+        // Pre-compute date/time text for DateAndTime.DateAndTime fields. The renderer
+        // keeps both parts on one line to match Workbench and avoid host-only layout drift.
         // DateOnly fields skip timeText. Falls back to toLocaleDateString/toLocaleTimeString
         // when context.formatting is unavailable (test harness).
         let dateText: string | undefined;
@@ -1489,7 +1489,8 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             for (const key of allImageKeys) {
                 const val = rec[key];
                 if (val && typeof val === "string" && (val as string).length > 100 && !key.endsWith("_url")) {
-                    return { value: `data:image/png;base64,${val}`, label: "image" };
+                    const normalized = normalizeImageSource(val);
+                    if (normalized) return { value: normalized, label: "image" };
                 }
             }
             return null;

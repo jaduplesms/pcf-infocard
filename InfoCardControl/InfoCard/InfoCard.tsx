@@ -39,6 +39,39 @@ export function safeHttpUrl(value: string | undefined | null): string | null {
     return `https://${cleaned}`;
 }
 
+/**
+ * Convert Dataverse image-column base64 values into a browser-renderable data URI.
+ * Existing URL/data/blob sources are preserved for backwards compatibility.
+ */
+export function normalizeImageSource(value: unknown): string | null {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    if (/^(?:https?:|data:image\/|blob:)/i.test(trimmed)) {
+        return trimmed;
+    }
+
+    const compact = trimmed.replace(/\s+/g, "");
+    const isBase64 = compact.length >= 64
+        && compact.length % 4 === 0
+        && /^[A-Za-z0-9+/]+={0,2}$/.test(compact);
+    if (isBase64 && compact.startsWith("/9j/")) {
+        return `data:image/jpeg;base64,${compact}`;
+    }
+    if (trimmed.startsWith("/")) return trimmed;
+    if (!isBase64) return trimmed;
+
+    let mimeType = "image/jpeg";
+    if (compact.startsWith("iVBOR")) mimeType = "image/png";
+    else if (compact.startsWith("R0lGOD")) mimeType = "image/gif";
+    else if (compact.startsWith("UklGR")) mimeType = "image/webp";
+    else if (compact.startsWith("Qk")) mimeType = "image/bmp";
+    else if (compact.startsWith("PHN2Zy") || compact.startsWith("PD94bWwg")) mimeType = "image/svg+xml";
+
+    return `data:${mimeType};base64,${compact}`;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // Types
 // ════════════════════════════════════════════════════════════════════
@@ -66,8 +99,7 @@ export interface SlotField {
     optionColor?: string;
     /** Pre-computed date portion (locale-formatted) for DateAndTime.DateAndTime fields. */
     dateText?: string;
-    /** Pre-computed time portion (locale-formatted) for DateAndTime.DateAndTime fields.
-     *  When both dateText and timeText are present, the renderer stacks them on two lines. */
+    /** Pre-computed time portion (locale-formatted) for DateAndTime.DateAndTime fields. */
     timeText?: string;
 }
 
@@ -274,6 +306,11 @@ export const DEFAULT_STRINGS: InfoCardStrings = {
 /** Format a localized template string. Replaces {0} with `arg`. */
 export function formatTemplate(template: string, arg: string): string {
     return template.replace("{0}", arg);
+}
+
+/** Stable, localization-independent selector for UI automation tools. */
+function automationId(field: SlotField | null | undefined, fallbackSlotKey: string): string {
+    return `infocard-${field?.slotKey ?? fallbackSlotKey}`;
 }
 
 /**
@@ -496,9 +533,7 @@ const TopProgressBar: React.FC<{ theme: InfoCardTheme }> = ({ theme }) => (
     </div>
 );
 
-/** Renders a shimmer when `field.isPending`, otherwise the supplied children (defaults to field.value).
- *  When the field has both dateText and timeText (DateAndTime.DateAndTime), they are stacked on two lines
- *  unless the caller passes children to override. */
+/** Renders a shimmer when `field.isPending`, otherwise the supplied children (defaults to field.value). */
 function ValueOrShimmer(props: {
     field: SlotField;
     theme: InfoCardTheme;
@@ -513,12 +548,9 @@ function ValueOrShimmer(props: {
     }
     const { dateText, timeText } = props.field;
     if (dateText && timeText) {
-        // Time on top (most actionable when working through a day), date below
-        // in muted styling so the row reads "2:30 PM / 5/1/2026".
         return (
-            <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.2 }}>
-                <span>{timeText}</span>
-                <span style={{ fontSize: "0.9em" }}>{dateText}</span>
+            <span style={{ whiteSpace: "nowrap" }}>
+                {dateText} {timeText}
             </span>
         );
     }
@@ -574,10 +606,11 @@ interface CopyButtonProps {
     label: string;
     theme: InfoCardTheme;
     onCopy: (value: string) => void;
+    automationId: string;
 }
 
 /** Small icon-only button that copies a value. Renders nothing when value is empty. */
-const CopyButton: React.FC<CopyButtonProps> = ({ value, label, theme, onCopy }) => {
+const CopyButton: React.FC<CopyButtonProps> = ({ value, label, theme, onCopy, automationId: copyAutomationId }) => {
     if (!value) return null;
     return (
         <button
@@ -585,6 +618,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ value, label, theme, onCopy }) 
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); onCopy(value); }}
             aria-label={label}
             title={label}
+            data-automation-id={copyAutomationId}
             style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -700,12 +734,9 @@ export function mergeRelatedFields(
         if (target === "addressField") {
             merged.address = fetchedWithKey;
         } else if (target === "imageField") {
-            const url = (typeof fetchedWithKey.rawValue === "string" && fetchedWithKey.rawValue.length > 0)
-                ? fetchedWithKey.rawValue
-                : (typeof fetchedWithKey.value === "string" && fetchedWithKey.value.length > 0 && fetchedWithKey.value !== "---")
-                    ? fetchedWithKey.value
-                    : null;
-            if (url) merged.imageUrl = url;
+            const source = normalizeImageSource(fetchedWithKey.rawValue)
+                ?? (fetchedWithKey.value !== "---" ? normalizeImageSource(fetchedWithKey.value) : null);
+            if (source) merged.imageUrl = source;
         } else if (target === "phoneField1" || target === "phoneField2") {
             placeBySlotKey(merged.phones, target, "phoneField", fetchedWithKey);
         } else if (target === "emailField") {
@@ -760,6 +791,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
         <div style={{ marginBottom: 8 }}>
             {showTitle && (
                 <div
+                    data-automation-id={automationId(title, "titleField")}
                     style={{
                         fontSize: theme.typography.title.fontSize,
                         fontWeight: theme.typography.title.fontWeight,
@@ -799,6 +831,7 @@ const Header: React.FC<HeaderProps> = ({ data, theme, hideEmpty, showTitle = tru
                                 )}
                                 {icon && <span style={{ marginRight: 4, verticalAlign: "middle", display: "inline-flex", position: "relative", top: -1 }} aria-hidden="true">{icon}</span>}
                                 <span
+                                    data-automation-id={automationId(sub, `subtitleField${i + 1}`)}
                                     style={{
                                         color: isSubLookup ? theme.brand : theme.textSecondary,
                                         cursor: subCanOpen ? "pointer" : "default",
@@ -853,9 +886,15 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
     const { copy, announcement } = useClipboardCopy(strings.actionCopied);
     if (!hasAny) return null;
     const showCopy = formFactor === 2 && !!copy;
-    const renderCopy = (value: string) => (
+    const renderCopy = (field: SlotField, fallbackSlotKey: string) => (
         showCopy && copy
-            ? <CopyButton value={value} label={formatTemplate(strings.actionCopy, value)} theme={theme} onCopy={copy} />
+            ? <CopyButton
+                value={String(field.value)}
+                label={formatTemplate(strings.actionCopy, String(field.value))}
+                theme={theme}
+                onCopy={copy}
+                automationId={`infocard-copy-${field.slotKey ?? fallbackSlotKey}`}
+            />
             : null
     );
     const groupStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center" };
@@ -897,7 +936,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
         }}>
             {/* Address */}
             {address && (!address.isEmpty || address.isPending) && (
-                <span style={groupStyle}>
+                <span data-automation-id={automationId(address, "addressField")} style={groupStyle}>
                     {address.isPending ? (
                         <span style={{ ...chipStyle, color: theme.textSecondary, cursor: "default" }} title={address.label}>
                             <PinIcon size={16} color={theme.textMuted} />
@@ -905,6 +944,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                         </span>
                     ) : mapUrl ? (
                         <a
+                            data-automation-id={`infocard-action-${address.slotKey ?? "addressField"}`}
                             href={mapUrl}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -922,13 +962,17 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                             {address.value}
                         </span>
                     )}
-                    {!address.isPending && renderCopy(String(address.value))}
+                    {!address.isPending && renderCopy(address, "addressField")}
                 </span>
             )}
 
             {/* Phones — phone1 gets landline icon, phone2 gets mobile icon */}
             {phones.map((phone, i) => (
-                <span key={`phone-${i}`} style={groupStyle}>
+                <span
+                    key={`phone-${i}`}
+                    data-automation-id={automationId(phone, `phoneField${i + 1}`)}
+                    style={groupStyle}
+                >
                     {phone.isPending ? (
                         <span style={{ ...chipStyle, cursor: "default" }} title={phone.label}>
                             {i === 0 ? <PhoneIcon size={14} color={theme.textMuted} /> : <MobileIcon size={14} color={theme.textMuted} />}
@@ -936,6 +980,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                         </span>
                     ) : (
                         <a
+                            data-automation-id={`infocard-action-${phone.slotKey ?? `phoneField${i + 1}`}`}
                             href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
                             style={chipStyle}
                             title={phone.label}
@@ -946,13 +991,13 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                             {phone.value}
                         </a>
                     )}
-                    {!phone.isPending && renderCopy(String(phone.value))}
+                    {!phone.isPending && renderCopy(phone, `phoneField${i + 1}`)}
                 </span>
             ))}
 
             {/* Email */}
             {email && (
-                <span style={groupStyle}>
+                <span data-automation-id={automationId(email, "emailField")} style={groupStyle}>
                     {email.isPending ? (
                         <span style={{ ...chipStyle, cursor: "default" }} title={email.label}>
                             <EmailIcon size={14} color={theme.textMuted} />
@@ -960,6 +1005,7 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                         </span>
                     ) : (
                         <a
+                            data-automation-id={`infocard-action-${email.slotKey ?? "emailField"}`}
                             href={`mailto:${email.value}`}
                             style={chipStyle}
                             title={email.label}
@@ -970,42 +1016,45 @@ const ContactRows: React.FC<ContactRowsProps> = ({ data, theme, hideEmpty, strin
                             {email.value}
                         </a>
                     )}
-                    {!email.isPending && renderCopy(String(email.value))}
+                    {!email.isPending && renderCopy(email, "emailField")}
                 </span>
             )}
 
             {/* Web */}
             {web && (
-                web.isPending ? (
-                    <span style={{ ...chipStyle, cursor: "default" }} title={web.label}>
-                        <WebIcon size={14} color={theme.textMuted} />
-                        <Shimmer theme={theme} width="110px" />
-                    </span>
-                ) : (() => {
-                    const safeWeb = safeHttpUrl(web.value);
-                    if (!safeWeb) {
+                <span data-automation-id={automationId(web, "webField")}>
+                    {web.isPending ? (
+                        <span style={{ ...chipStyle, cursor: "default" }} title={web.label}>
+                            <WebIcon size={14} color={theme.textMuted} />
+                            <Shimmer theme={theme} width="110px" />
+                        </span>
+                    ) : (() => {
+                        const safeWeb = safeHttpUrl(web.value);
+                        if (!safeWeb) {
+                            return (
+                                <span style={{ ...chipStyle, cursor: "default", color: theme.textMuted }} title={web.label}>
+                                    <WebIcon size={14} color={theme.textMuted} />
+                                    {web.value}
+                                </span>
+                            );
+                        }
                         return (
-                            <span style={{ ...chipStyle, cursor: "default", color: theme.textMuted }} title={web.label}>
-                                <WebIcon size={14} color={theme.textMuted} />
+                            <a
+                                data-automation-id={`infocard-action-${web.slotKey ?? "webField"}`}
+                                href={safeWeb}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={chipStyle}
+                                title={web.label}
+                                aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <WebIcon size={14} color={theme.brand} />
                                 {web.value}
-                            </span>
+                            </a>
                         );
-                    }
-                    return (
-                        <a
-                            href={safeWeb}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={chipStyle}
-                            title={web.label}
-                            aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <WebIcon size={14} color={theme.brand} />
-                            {web.value}
-                        </a>
-                    );
-                })()
+                    })()}
+                </span>
             )}
             {/* SR-only live region for copy success announcements */}
             <span
@@ -1050,6 +1099,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
 
                 const valueNode = showMapLink ? (
                     <a
+                        data-automation-id={`infocard-action-${field.slotKey ?? `detailField${i + 1}`}`}
                         href={mapUrl!}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1067,6 +1117,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                     return (
                         <div
                             key={i}
+                            data-automation-id={automationId(field, `detailField${i + 1}`)}
                             style={{
                                 display: "flex",
                                 alignItems: "flex-start",
@@ -1109,6 +1160,7 @@ const DetailRows: React.FC<DetailRowsProps> = ({ details, theme, hideEmpty, lati
                 return (
                     <div
                         key={i}
+                        data-automation-id={automationId(field, `detailField${i + 1}`)}
                         style={{
                             display: "flex",
                             alignItems: "flex-start",
@@ -1173,7 +1225,11 @@ const GridFields: React.FC<GridFieldsProps> = ({ fields, theme, hideEmpty }) => 
             }}
         >
             {filtered.map((field, i) => (
-                <div key={i} style={{ minWidth: 0 }}>
+                <div
+                    key={i}
+                    data-automation-id={automationId(field, `gridField${i + 1}`)}
+                    style={{ minWidth: 0 }}
+                >
                     <div style={{ fontSize: theme.typography.fieldLabel.fontSize, fontWeight: theme.typography.fieldLabel.fontWeight, lineHeight: theme.typography.fieldLabel.lineHeight, color: theme.textMuted, marginBottom: 2 }}>
                         {field.label}
                     </div>
@@ -1219,6 +1275,7 @@ const Tags: React.FC<TagsProps> = ({ tags, theme, hideEmpty }) => {
                 return (
                     <span
                         key={i}
+                        data-automation-id={automationId(tag, `tagField${i + 1}`)}
                         style={{
                             display: "inline-block",
                             padding: "2px 8px",
@@ -1299,6 +1356,7 @@ const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitial
                 src={imageUrl as string}
                 alt={title || ""}
                 onError={onError}
+                data-automation-id="infocard-imageField"
                 style={{ ...baseStyle, objectFit: "cover" }}
             />
         );
@@ -1307,6 +1365,7 @@ const ImageAvatar: React.FC<ImageProps> = ({ imageUrl, title, theme, showInitial
     return (
         <div
             aria-hidden="true"
+            data-automation-id="infocard-imageField"
             style={{
                 ...baseStyle,
                 background: theme.brandLight,
@@ -1337,6 +1396,7 @@ const VersionBadge: React.FC<VersionBadgeProps> = ({ version, theme }) => {
 
     return (
         <div
+            data-automation-id="infocard-version"
             style={{
                 position: "absolute",
                 bottom: 4,
@@ -1429,7 +1489,7 @@ const SmartCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTi
         <div>
             {/* Header row with image, title, subtitles, and chevron */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={true} shape={imageShape} />
+                <ImageAvatar imageUrl={data.imageUrl} title={data.title?.value ?? ""} theme={theme} showInitialsFallback={false} shape={imageShape} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <Header data={data} theme={theme} hideEmpty={hideEmpty} showTitle={showTitle} designTime={designTime} onOpenRecord={onOpenRecord} strings={strings} subtitleSeparator={subtitleSeparator} titlePrefix={titlePrefix} />
                 </div>
@@ -1518,8 +1578,9 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
     const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
 
-    // formFactor reserved for future per-host tweaks; mark as intentionally unused.
-    void formFactor;
+    const isWeb = formFactor === 2;
+    const actionSize = isWeb ? 32 : 44;
+    const actionIconSize = isWeb ? 16 : 18;
 
     // Action buttons: render only when the underlying value exists
     const hasCall = firstPhone && !firstPhone.isPending;
@@ -1538,8 +1599,8 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 44,
-        height: 44,
+        width: actionSize,
+        height: actionSize,
         padding: 0,
         background: theme.cardBg,
         border: `1px solid ${theme.border}`,
@@ -1555,52 +1616,64 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
         return (
             <>
                 {hasCall && firstPhone && (
-                    <a
-                        href={`tel:${String(firstPhone.value).replace(/\s+/g, "")}`}
-                        style={iconBtnStyle}
-                        aria-label={formatTemplate(strings.actionCall, String(firstPhone.value))}
-                        title={strings.vcardActionCall}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <PhoneIcon size={18} color={theme.link} />
-                    </a>
+                    <span data-automation-id={automationId(firstPhone, "phoneField1")}>
+                        <a
+                            data-automation-id={`infocard-action-${firstPhone.slotKey ?? "phoneField1"}`}
+                            href={`tel:${String(firstPhone.value).replace(/\s+/g, "")}`}
+                            style={iconBtnStyle}
+                            aria-label={formatTemplate(strings.actionCall, String(firstPhone.value))}
+                            title={strings.vcardActionCall}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <PhoneIcon size={actionIconSize} color={theme.link} />
+                        </a>
+                    </span>
                 )}
                 {hasEmail && email && (
-                    <a
-                        href={`mailto:${email.value}`}
-                        style={iconBtnStyle}
-                        aria-label={formatTemplate(strings.actionEmail, String(email.value))}
-                        title={strings.vcardActionEmail}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <EmailIcon size={18} color={theme.link} />
-                    </a>
+                    <span data-automation-id={automationId(email, "emailField")}>
+                        <a
+                            data-automation-id={`infocard-action-${email.slotKey ?? "emailField"}`}
+                            href={`mailto:${email.value}`}
+                            style={iconBtnStyle}
+                            aria-label={formatTemplate(strings.actionEmail, String(email.value))}
+                            title={strings.vcardActionEmail}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <EmailIcon size={actionIconSize} color={theme.link} />
+                        </a>
+                    </span>
                 )}
                 {hasMap && mapUrl && (
-                    <a
-                        href={mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={iconBtnStyle}
-                        aria-label={formatTemplate(strings.actionOpenInMaps, address ? String(address.value) : "")}
-                        title={strings.vcardActionMap}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <PinIcon size={18} color={theme.link} />
-                    </a>
+                    <span>
+                        <a
+                            data-automation-id={`infocard-action-${address?.slotKey ?? "addressField"}`}
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={iconBtnStyle}
+                            aria-label={formatTemplate(strings.actionOpenInMaps, address ? String(address.value) : "")}
+                            title={strings.vcardActionMap}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <PinIcon size={actionIconSize} color={theme.link} />
+                        </a>
+                    </span>
                 )}
                 {hasWeb && safeWeb && web && (
-                    <a
-                        href={safeWeb}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={iconBtnStyle}
-                        aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
-                        title={strings.vcardActionWeb}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <WebIcon size={18} color={theme.link} />
-                    </a>
+                    <span data-automation-id={automationId(web, "webField")}>
+                        <a
+                            data-automation-id={`infocard-action-${web.slotKey ?? "webField"}`}
+                            href={safeWeb}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={iconBtnStyle}
+                            aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
+                            title={strings.vcardActionWeb}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <WebIcon size={actionIconSize} color={theme.link} />
+                        </a>
+                    </span>
                 )}
             </>
         );
@@ -1665,6 +1738,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             <div style={{ paddingRight: headerPaddingRight }}>
                 {showTitle && title && (!designTime ? !title.isEmpty : true) && (
                     <div
+                        data-automation-id={automationId(title, "titleField")}
                         style={{
                             fontSize: theme.typography.title.fontSize,
                             fontWeight: 600,
@@ -1711,6 +1785,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                             return (
                                 <span
                                     key={i}
+                                    data-automation-id={automationId(sub, `subtitleField${i + 1}`)}
                                     style={{ ...perSlotStyle, color: subIsLookup ? theme.brand : theme.textSecondary, cursor: subCanOpen ? "pointer" : "default" }}
                                     onClick={subCanOpen ? (e) => { e.stopPropagation(); onOpenRecord!(sub.lookupEntityType!, sub.lookupId!); } : undefined}
                                     onKeyDown={subCanOpen ? (e) => {
@@ -1735,7 +1810,7 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
             {/* Address block (full width, left-aligned) */}
             {!hideContact && address && (
-                <div style={{ marginTop: 6 }}>
+                <div data-automation-id={automationId(address, "addressField")} style={{ marginTop: 6 }}>
                     {renderAddressLines()}
                 </div>
             )}
@@ -1743,10 +1818,10 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
             {/* Action icons — bottom-right of contact area, single row */}
             {!hideContact && hasAnyAction && (
                 <div style={{
-                    marginTop: address ? 10 : 12,
+                    marginTop: address ? (isWeb ? 6 : 10) : (isWeb ? 8 : 12),
                     display: "flex",
                     justifyContent: "flex-end",
-                    gap: 6,
+                    gap: isWeb ? 2 : 6,
                 }}>
                     {renderActionButtons()}
                 </div>
@@ -1832,6 +1907,15 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
         gap: 8,
     };
 
+    const infoFieldRowStyle: React.CSSProperties = {
+        display: "block",
+        minWidth: 0,
+        padding: "3px 0",
+        fontSize: theme.typography.body.fontSize,
+        fontWeight: theme.typography.body.fontWeight,
+        lineHeight: theme.typography.body.lineHeight,
+    };
+
     return (
         <div>
             {/* Header — Compact omits avatar to preserve dense form-feel.
@@ -1863,7 +1947,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionContact}</div>
                     {address && (
-                        <div style={fieldRowStyle}>
+                        <div data-automation-id={automationId(address, "addressField")} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{address.label}</span>
                             <span style={{ color: theme.textPrimary, textAlign: "right" }}>
                                 <ValueOrShimmer field={address} theme={theme} width="120px" />
@@ -1871,12 +1955,17 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         </div>
                     )}
                     {phones.map((phone, i) => (
-                        <div key={`phone-${i}`} style={fieldRowStyle}>
+                        <div
+                            key={`phone-${i}`}
+                            data-automation-id={automationId(phone, `phoneField${i + 1}`)}
+                            style={fieldRowStyle}
+                        >
                             <span style={{ color: theme.textMuted }}>{phone.label}</span>
                             {phone.isPending ? (
                                 <Shimmer theme={theme} width="100px" />
                             ) : (
                                 <a
+                                    data-automation-id={`infocard-action-${phone.slotKey ?? `phoneField${i + 1}`}`}
                                     href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
                                     style={{ color: theme.brand, textDecoration: "none" }}
                                     aria-label={formatTemplate(strings.actionCall, String(phone.value))}
@@ -1887,12 +1976,13 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         </div>
                     ))}
                     {email && (
-                        <div style={fieldRowStyle}>
+                        <div data-automation-id={automationId(email, "emailField")} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{email.label}</span>
                             {email.isPending ? (
                                 <Shimmer theme={theme} width="130px" />
                             ) : (
                                 <a
+                                    data-automation-id={`infocard-action-${email.slotKey ?? "emailField"}`}
                                     href={`mailto:${email.value}`}
                                     style={{ color: theme.brand, textDecoration: "none" }}
                                     aria-label={formatTemplate(strings.actionEmail, String(email.value))}
@@ -1903,7 +1993,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         </div>
                     )}
                     {web && (
-                        <div style={fieldRowStyle}>
+                        <div data-automation-id={automationId(web, "webField")} style={fieldRowStyle}>
                             <span style={{ color: theme.textMuted }}>{web.label}</span>
                             {web.isPending ? (
                                 <Shimmer theme={theme} width="130px" />
@@ -1914,6 +2004,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                                 }
                                 return (
                                     <a
+                                        data-automation-id={`infocard-action-${web.slotKey ?? "webField"}`}
                                         href={safeWeb}
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -1934,7 +2025,11 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionDetails}</div>
                     {gridFields.map((field, i) => (
-                        <div key={i} style={fieldRowStyle}>
+                        <div
+                            key={i}
+                            data-automation-id={automationId(field, `gridField${i + 1}`)}
+                            style={fieldRowStyle}
+                        >
                             <span style={{ color: theme.textMuted }}>{field.label}</span>
                             <span style={{ color: theme.textPrimary, textAlign: "right" }}>
                                 <ValueOrShimmer field={field} theme={theme} width="100px" />
@@ -1949,9 +2044,17 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                 <div>
                     <div style={sectionHeaderStyle}>{strings.sectionInfo}</div>
                     {details.map((field, i) => (
-                        <div key={i} style={fieldRowStyle}>
-                            <span style={{ color: theme.textMuted }}>{field.label}</span>
-                            <span style={{ color: theme.textPrimary, textAlign: "right", wordBreak: "break-word" }}>
+                        <div
+                            key={i}
+                            data-automation-id={automationId(field, `detailField${i + 1}`)}
+                            style={infoFieldRowStyle}
+                        >
+                            <span style={{ color: theme.textPrimary, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "normal", overflowWrap: "anywhere" }}>
+                                {field.label && (
+                                    <span style={{ fontWeight: theme.typography.inlineBoldLabel.fontWeight }}>
+                                        {field.label}:{" "}
+                                    </span>
+                                )}
                                 <ValueOrShimmer field={field} theme={theme} width="140px" />
                             </span>
                         </div>
@@ -2255,7 +2358,8 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         };
         const imageOv = recordOverrides["imageField"];
         if (imageOv && imageOv.value && !displayData.imageUrl) {
-            displayData = { ...displayData, imageUrl: imageOv.value };
+            const source = normalizeImageSource(imageOv.value);
+            if (source) displayData = { ...displayData, imageUrl: source };
         }
     }
 
@@ -2340,6 +2444,9 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
 
     // No data state — but show diagnostics at design time
     if (!hasTitle) {
+        const emptyStateMessage = displayData.title
+            ? `No ${displayData.title.label} set`
+            : "No fields configured";
         return (
             <div style={cardStyle}>
                 <div
@@ -2354,7 +2461,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                     }}
                 >
                     <PersonIcon size={16} color={theme.textMuted} />
-                    <span>No fields bound</span>
+                    <span>{emptyStateMessage}</span>
                 </div>
                 {bindingDiagnostics && bindingDiagnostics.length > 0 && (
                     <DesignTimeBindingPanel diagnostics={bindingDiagnostics} theme={theme} />
@@ -2433,7 +2540,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
         : cardStyle;
 
     return (
-        <div style={finalCardStyle} {...interactiveCardProps}>
+        <div data-automation-id="infocard" style={finalCardStyle} {...interactiveCardProps}>
             <LoadingKeyframes />
             {isLoading && <TopProgressBar theme={theme} />}
             {layout === "smart" && <SmartCardLayout {...layoutProps} />}

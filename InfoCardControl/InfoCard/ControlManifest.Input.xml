@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard"           version="4.4.17"
+  <control namespace="Sample" constructor="InfoCard"           version="4.4.21"
            display-name-key="InfoCard (Sample)"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -62,7 +62,7 @@
               description-key="Optional muted-colour prefix rendered before the title (e.g. Case: , Work Order: ). Useful when the form section header doesnt already announce the record type. Plain literal — no template syntax."
               of-type="SingleLine.Text" usage="input" required="false" />
     <property name="imageShape" display-name-key="Image Shape"
-              description-key="Shape of the avatar / entity image in the header. Rounded rectangle (default) preserves logos and people photos equally well; circle is more avatar-like for contact / user records; square has no rounding. No effect when imageField is unbound and initials fallback is showing — initials follow the same shape."
+              description-key="Shape of the avatar or entity image in the header. Rounded rectangle (default) preserves logos and people photos equally well; circle is more avatar-like for contact or user records; square has no rounding. No effect when Image or Avatar is empty."
               of-type="Enum" usage="input" required="false">
       <value name="rounded" display-name-key="Rounded Rectangle">rounded</value>
       <value name="circle"  display-name-key="Circle">circle</value>
@@ -92,7 +92,7 @@
               description-key="Main heading. Bind to the records primary name column (e.g. account.name, msdyn_workorder.msdyn_name). When bound to a lookup column, related-field syntax (@column) on other slots fetches from the lookup target."
               of-type-group="fieldTypes" usage="bound" required="true" />
     <property name="imageField" display-name-key="Image / Avatar"
-              description-key="Optional avatar shown left of the title (Smart and Contact layouts). Bind to a column that returns an image URL — typically entityimage_url, or @entityimage_url to pull from a related lookup. When empty or unbound, falls back to initials computed from the title."
+              description-key="Optional Dataverse image column shown with the title in Smart and Contact layouts. Use @.entityimage for an image on the current record, or related-field syntax such as @jdp_workorderimage to read an image from the title lookup record. Raw Dataverse base64 image values are supported; image URLs remain supported for backwards compatibility."
               of-type="SingleLine.Text" usage="input" required="false" />
     <property name="subtitleField1" display-name-key="Subtitle 1"
               description-key="Shown under title, dot-separated. Bind a column (e.g. jobtitle) or use @column to pull from the titles lookup target (e.g. @msdyn_serviceaccount)."
