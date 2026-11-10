@@ -9,7 +9,7 @@ A compact, read-only info card PCF control for Dynamics 365 and Power Apps model
 
 InfoCard uses a **slot-based architecture** where admins bind form fields to card zones (header, contact, address, details, grid, tags) directly in the form designer -- no code required. It supports **related entity field fetching** via `@fieldName` syntax, enabling data from lookup records to appear on the card without custom scripting.
 
-**Version:** 4.4.23-alpha.2 (control 4.4.23) | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
+**Version:** 4.4.23-alpha.3 (control 4.4.23) | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
 
 > ⚠️ **This is a sample.** The control ships under the `Sample.InfoCard` namespace with publisher prefix `smp` so that it is obvious in your environment that this is reference code, not a vendor product. Before using in production, **re-namespace** the control to your own publisher (see [Re-namespacing for production](#re-namespacing-for-production)). No support, warranty, or SLA is offered.
 

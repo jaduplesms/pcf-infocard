@@ -62,6 +62,7 @@ jobs:
             "artifacts/InfoCardSolution_${version}_unmanaged.zip"
             "artifacts/SHA256SUMS_${version}.txt"
           )
-          $prerelease = if ($env:GITHUB_REF_NAME -match '-alpha\.\d+$') { @('--prerelease') } else { @() }
+          [string[]]$prerelease = @()
+          if ($env:GITHUB_REF_NAME -match '-alpha\.\d+$') { $prerelease += '--prerelease' }
           gh release create $env:GITHUB_REF_NAME @assets @prerelease --draft --verify-tag --generate-notes --title "InfoCard $env:GITHUB_REF_NAME (sample)"
           if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed.' }

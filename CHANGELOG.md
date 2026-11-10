@@ -4,7 +4,7 @@ All notable changes to the InfoCard PCF control are documented in this file.
 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 4.4.23-alpha.2
+## 4.4.23-alpha.3
 
 **Prerelease sample for evaluation, not production acceptance.** The control
 and solution use numeric versions `4.4.23` and `4.4.23.0`; the GitHub tag
