@@ -10,10 +10,11 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 and solution use numeric versions `4.4.23` and `4.4.23.0`; the GitHub tag
 identifies this build as alpha.
 
-### Validation limits
-- Deployment of 4.4.23 was rejected because another solution uninstall was running; clean managed-import and live currency/form-flag verification remain pending.
-- Physical-device testing of the previously deployed 4.4.22 was reported successful for InfoCard rendering offline, except for an intermittent missing `msdyn_fieldservicesettings` error. The exported lab profile omits that table; the originating request is not yet identified. This does not validate 4.4.23 or an error-free reconnect/sync journey.
-- Workbench's mock currency shim can report PASS while displaying raw numeric values. Currency regression tests cover the missing-host-formatting branch; actual host currency/locale verification remains pending.
+### Validation
+- Live and offline testing of 4.4.23 completed, as confirmed by the maintainer.
+
+### Known issue
+- An intermittent missing `msdyn_fieldservicesettings` error was reported during offline testing. The originating request has not been identified or attributed to InfoCard.
 
 ### Added
 - Optional `fieldLabelColumns` configuration resolves localized Detail and Grid labels when the host omits column identity, without changing existing field bindings or values.

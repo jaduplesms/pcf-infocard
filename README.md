@@ -462,10 +462,10 @@ manually publishing. Never publish local exports, debug reports or the
 development-only `InfoCardSampleForm` solution.
 
 Alpha tags such as `v4.4.23-alpha.1` use the matching numeric control version
-(`4.4.23`) and create prerelease drafts. An alpha may disclose pending live
-acceptance, but must pass the automated build, tests, package checks and mock
-layout gates. It is not production-ready or a claim that live/offline gates
-have passed; see the changelog for the exact validation limits.
+(`4.4.23`) and create prerelease drafts. An alpha must pass the automated
+build, tests, package checks and mock layout gates. It remains a sample for
+evaluation, not a production-ready release; see the changelog for completed
+validation and known issues.
 
 ---
 
