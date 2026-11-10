@@ -38,6 +38,9 @@ jobs:
       - name: Audit production dependencies
         working-directory: InfoCardControl
         run: npm audit --omit=dev
+      - name: Generate manifest types
+        working-directory: InfoCardControl
+        run: npm run refreshTypes
       - name: Test
         working-directory: InfoCardControl
         run: npm test -- --ci --runInBand
