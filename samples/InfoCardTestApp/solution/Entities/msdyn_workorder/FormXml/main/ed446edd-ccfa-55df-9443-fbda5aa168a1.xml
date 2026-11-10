@@ -1,0 +1,561 @@
+<?xml version='1.0' encoding='utf-8'?>
+<forms type="main">
+ <systemform>
+  <formid>ed446edd-ccfa-55df-9443-fbda5aa168a1</formid>
+  <IntroducedVersion>1.0.0.0</IntroducedVersion>
+  <FormPresentation>1</FormPresentation>
+  <FormActivationState>1</FormActivationState>
+  <form>
+   <tabs>
+    <tab name="ictest_smart" id="{05ef427c-418e-56c4-942a-c515bd44cb9b}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="1 - Smart card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_smart_section" showlabel="false" showbar="false" locklevel="0" id="{afecb61c-0ff5-5a2f-b373-4fd031432128}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard smart" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{3136ad99-599c-5e58-b277-e95fcfb4cd9e}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="ictest_smart" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{79d395e9-c7b3-55e8-814c-5c3aba7f00ee}" datafieldname="msdyn_name" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+    <tab name="ictest_contact" id="{2bd12a5a-39ad-518a-9363-5b9471f4b8bb}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="2 - Contact card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_contact_section" showlabel="false" showbar="false" locklevel="0" id="{e55942e9-f72d-5b8d-9343-349957933558}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard contact" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{0177fe10-2487-5bb8-90ac-42a28d459af1}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="ictest_contact" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{f9f931b7-b1bc-52bd-bdc7-91f7ebc53a22}" datafieldname="msdyn_name" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+    <tab name="ictest_compact" id="{6a57f337-37ce-53c5-b9f4-27a3364afa1d}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="3 - Form Card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_compact_section" showlabel="false" showbar="false" locklevel="0" id="{816f87d7-1841-563a-b758-c41a6096b1ca}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard Form Card" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{742b3abb-6ccf-5e6a-b02d-a2d4acf9e776}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="ictest_compact" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{72dfb0f8-308d-5c57-8a0b-42cc2e1c69ab}" datafieldname="msdyn_name" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+    <tab name="ictest_related" id="{41224137-d311-58be-acad-601edaa40d97}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="Related lookup" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_related_section" showlabel="false" showbar="false" locklevel="0" id="{e515f2d4-075f-51ae-92ce-1b7fad503c81}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard related" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{8573e868-2df6-5e4c-a67d-d5500fb4fa84}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="ictest_related" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{5aba130e-ee42-5832-8d80-fa77d98edbb9}" datafieldname="msdyn_serviceaccount" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+   </tabs>
+   <header />
+   <controlDescriptions>
+    <controlDescription forControl="{79d395e9-c7b3-55e8-814c-5c3aba7f00ee}">
+     <customControl id="{841e977e-bf62-5ea9-bd42-e70fbdba2038}">
+      <parameters>
+       <datafieldname>msdyn_name</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+    <controlDescription forControl="{f9f931b7-b1bc-52bd-bdc7-91f7ebc53a22}">
+     <customControl id="{841e977e-bf62-5ea9-bd42-e70fbdba2038}">
+      <parameters>
+       <datafieldname>msdyn_name</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+    <controlDescription forControl="{72dfb0f8-308d-5c57-8a0b-42cc2e1c69ab}">
+     <customControl id="{841e977e-bf62-5ea9-bd42-e70fbdba2038}">
+      <parameters>
+       <datafieldname>msdyn_name</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="SingleLine.Text">msdyn_name</titleField>
+       <subtitleField1 type="Lookup.Simple">msdyn_serviceaccount</subtitleField1>
+       <subtitleField2 type="Lookup.Simple">msdyn_workordertype</subtitleField2>
+       <subtitleField3 type="SingleLine.Text" static="true">@.msdyn_systemstatus</subtitleField3>
+       <phoneField1 type="SingleLine.Text" static="true">@.msdyn_phoneNumber</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@.msdyn_serviceaccount.telephone1</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@.msdyn_serviceaccount.websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.msdyn_address1</addressField>
+       <detailField1 type="Multiple">msdyn_instructions</detailField1>
+       <detailField2 type="Multiple">msdyn_workordersummary</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.msdyn_datewindowstart</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.msdyn_datewindowend</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.msdyn_totalestimatedduration</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.msdyn_pricelist</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.msdyn_taxable</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.createdon</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.msdyn_systemstatus</tagField1>
+       <tagField2 type="Lookup.Simple">msdyn_workordertype</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"msdyn_instructions","detailField2":"msdyn_workordersummary"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+    <controlDescription forControl="{5aba130e-ee42-5832-8d80-fa77d98edbb9}">
+     <customControl id="{841e977e-bf62-5ea9-bd42-e70fbdba2038}">
+      <parameters>
+       <datafieldname>msdyn_serviceaccount</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="Lookup.Simple">msdyn_serviceaccount</titleField>
+       <imageField type="SingleLine.Text" static="true">@entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text" static="true">@primarycontactid</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@statuscode</subtitleField2>
+       <phoneField1 type="SingleLine.Text" static="true">@telephone1</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@telephone2</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@address1_composite</addressField>
+       <detailField1 type="SingleLine.Text" static="true">@description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@primarycontactid.jobtitle</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@revenue</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@numberofemployees</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@industrycode</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@primarycontactid.emailaddress1</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@statuscode</tagField1>
+       <tagField2 type="SingleLine.Text" static="true">@industrycode</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">all</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="Lookup.Simple">msdyn_serviceaccount</titleField>
+       <imageField type="SingleLine.Text" static="true">@entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text" static="true">@primarycontactid</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@statuscode</subtitleField2>
+       <phoneField1 type="SingleLine.Text" static="true">@telephone1</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@telephone2</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@address1_composite</addressField>
+       <detailField1 type="SingleLine.Text" static="true">@description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@primarycontactid.jobtitle</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@revenue</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@numberofemployees</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@industrycode</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@primarycontactid.emailaddress1</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@statuscode</tagField1>
+       <tagField2 type="SingleLine.Text" static="true">@industrycode</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">all</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">rounded</imageShape>
+       <titleField type="Lookup.Simple">msdyn_serviceaccount</titleField>
+       <imageField type="SingleLine.Text" static="true">@entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text" static="true">@primarycontactid</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@statuscode</subtitleField2>
+       <phoneField1 type="SingleLine.Text" static="true">@telephone1</phoneField1>
+       <phoneField2 type="SingleLine.Text" static="true">@telephone2</phoneField2>
+       <emailField type="SingleLine.Text" static="true">@emailaddress1</emailField>
+       <webField type="SingleLine.Text" static="true">@websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@address1_composite</addressField>
+       <detailField1 type="SingleLine.Text" static="true">@description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@primarycontactid.jobtitle</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@revenue</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@numberofemployees</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@industrycode</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@primarycontactid.emailaddress1</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@statuscode</tagField1>
+       <tagField2 type="SingleLine.Text" static="true">@industrycode</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">all</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+      </parameters>
+     </customControl>
+    </controlDescription>
+   </controlDescriptions>
+  </form>
+  <IsCustomizable>1</IsCustomizable>
+  <CanBeDeleted>1</CanBeDeleted>
+  <LocalizedNames>
+   <LocalizedName description="InfoCard Sample - msdyn_workorder" languagecode="1033" />
+  </LocalizedNames>
+  <Descriptions>
+   <Description description="Dedicated fictional sample; does not overwrite an existing form." languagecode="1033" />
+  </Descriptions>
+ </systemform>
+</forms>

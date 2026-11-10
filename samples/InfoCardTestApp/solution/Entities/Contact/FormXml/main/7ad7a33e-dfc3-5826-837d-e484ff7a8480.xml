@@ -1,0 +1,429 @@
+<?xml version='1.0' encoding='utf-8'?>
+<forms type="main">
+ <systemform>
+  <formid>7ad7a33e-dfc3-5826-837d-e484ff7a8480</formid>
+  <IntroducedVersion>1.0.0.0</IntroducedVersion>
+  <FormPresentation>1</FormPresentation>
+  <FormActivationState>1</FormActivationState>
+  <form>
+   <tabs>
+    <tab name="ictest_smart" id="{bb818b05-4634-5bab-bd17-e942501293f9}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="1 - Smart card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_smart_section" showlabel="false" showbar="false" locklevel="0" id="{923f0ffe-fd02-5299-a7af-271b0d24c14d}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard smart" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{6177bc43-8537-5019-97f5-09c297ee4edb}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="lastname1" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{e6e0eefc-1874-54b8-b829-a204dcaf0302}" datafieldname="lastname" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+    <tab name="ictest_contact" id="{405a4fe0-0aee-5f85-8c5a-0e5e8c0ce200}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="2 - Contact card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_contact_section" showlabel="false" showbar="false" locklevel="0" id="{efc52285-a830-513d-bb31-74cc3814ceb1}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard contact" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{6d3eec36-fe93-5124-a01f-963f53d35acb}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="lastname2" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{1d646e5b-f085-5ab9-9b4d-b0be802265dd}" datafieldname="lastname" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+    <tab name="ictest_compact" id="{c9a06a91-f84e-529f-9119-725826b6150c}" IsUserDefined="1" locklevel="0" showlabel="true" expanded="true">
+     <labels>
+      <label description="3 - Form Card" languagecode="1033" />
+     </labels>
+     <columns>
+      <column width="100%">
+       <sections>
+        <section name="ictest_compact_section" showlabel="false" showbar="false" locklevel="0" id="{9dfd6665-bac7-5e6d-a606-2df7f4fe90d9}" IsUserDefined="1" layout="varwidth" columns="1" labelwidth="115" celllabelalignment="Left" celllabelposition="Top">
+         <labels>
+          <label description="InfoCard Form Card" languagecode="1033" />
+         </labels>
+         <rows>
+          <row>
+           <cell id="{b47acb83-32e5-523e-aebd-9003eca42639}" showlabel="false" locklevel="0">
+            <labels>
+             <label description="InfoCard" languagecode="1033" />
+            </labels>
+            <control id="lastname3" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" uniqueid="{85017234-cd0b-531c-81c0-997955211839}" datafieldname="lastname" />
+           </cell>
+          </row>
+         </rows>
+        </section>
+       </sections>
+      </column>
+     </columns>
+    </tab>
+   </tabs>
+   <header />
+   <controlDescriptions>
+    <controlDescription forControl="{e6e0eefc-1874-54b8-b829-a204dcaf0302}">
+     <customControl id="{18e4484c-a115-5b89-9130-176c4d080a2f}">
+      <parameters>
+       <datafieldname>lastname</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">smart</layout>
+       <startExpanded type="TwoOptions" static="true">false</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">inline-bold</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+    <controlDescription forControl="{1d646e5b-f085-5ab9-9b4d-b0be802265dd}">
+     <customControl id="{18e4484c-a115-5b89-9130-176c4d080a2f}">
+      <parameters>
+       <datafieldname>lastname</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">contact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+    <controlDescription forControl="{85017234-cd0b-531c-81c0-997955211839}">
+     <customControl id="{18e4484c-a115-5b89-9130-176c4d080a2f}">
+      <parameters>
+       <datafieldname>lastname</datafieldname>
+      </parameters>
+     </customControl>
+     <customControl formFactor="0" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="1" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+     <customControl formFactor="2" name="smp_Sample.InfoCard">
+      <parameters>
+       <hideEmptyFields type="TwoOptions" static="true">true</hideEmptyFields>
+       <showCardBorder type="TwoOptions" static="true">true</showCardBorder>
+       <showVersionInfo type="TwoOptions" static="true">true</showVersionInfo>
+       <showTitle type="TwoOptions" static="true">true</showTitle>
+       <showDetailIcons type="TwoOptions" static="true">true</showDetailIcons>
+       <imageShape type="Enum" static="true">circle</imageShape>
+       <titleField type="SingleLine.Text">fullname</titleField>
+       <imageField type="SingleLine.Text" static="true">@.entityimage</imageField>
+       <subtitleField1 type="SingleLine.Text">jobtitle</subtitleField1>
+       <subtitleField2 type="SingleLine.Text" static="true">@.parentcustomerid</subtitleField2>
+       <phoneField1 type="SingleLine.Phone">mobilephone</phoneField1>
+       <phoneField2 type="SingleLine.Phone">telephone1</phoneField2>
+       <emailField type="SingleLine.Email">emailaddress1</emailField>
+       <webField type="SingleLine.URL">websiteurl</webField>
+       <addressField type="SingleLine.Text" static="true">@.address1_composite</addressField>
+       <detailField1 type="Multiple">description</detailField1>
+       <detailField2 type="SingleLine.Text" static="true">@.parentcustomerid.description</detailField2>
+       <gridField1 type="SingleLine.Text" static="true">@.birthdate</gridField1>
+       <gridField2 type="SingleLine.Text" static="true">@.parentcustomerid.telephone1</gridField2>
+       <gridField3 type="SingleLine.Text" static="true">@.createdon</gridField3>
+       <gridField4 type="SingleLine.Text" static="true">@.modifiedon</gridField4>
+       <gridField5 type="SingleLine.Text" static="true">@.parentcustomerid.websiteurl</gridField5>
+       <gridField6 type="SingleLine.Text" static="true">@.anniversary</gridField6>
+       <tagField1 type="SingleLine.Text" static="true">@.statuscode</tagField1>
+       <tagField2 type="SingleLine.Text">jobtitle</tagField2>
+       <layout type="Enum" static="true">compact</layout>
+       <startExpanded type="TwoOptions" static="true">true</startExpanded>
+       <collapsibleSections type="Enum" static="true">body-tags</collapsibleSections>
+       <detailLabelStyle type="Enum" static="true">above</detailLabelStyle>
+       <fieldLabelColumns type="SingleLine.Text" static="true">{"detailField1":"description"}</fieldLabelColumns>
+      </parameters>
+     </customControl>
+    </controlDescription>
+   </controlDescriptions>
+  </form>
+  <IsCustomizable>1</IsCustomizable>
+  <CanBeDeleted>1</CanBeDeleted>
+  <LocalizedNames>
+   <LocalizedName description="InfoCard Sample - Contact" languagecode="1033" />
+  </LocalizedNames>
+  <Descriptions>
+   <Description description="Dedicated fictional sample; does not overwrite an existing form." languagecode="1033" />
+  </Descriptions>
+ </systemform>
+</forms>

@@ -88,6 +88,7 @@ function makeProps(overrides: Partial<InfoCardProps> = {}): InfoCardProps {
     currentRecordId: overrides.currentRecordId,
     fetchRelatedData: overrides.fetchRelatedData,
     resolveRecordFields: overrides.resolveRecordFields,
+    recordFieldsKey: overrides.recordFieldsKey,
     onOpenRecord: overrides.onOpenRecord,
     subtitleSeparator: overrides.subtitleSeparator,
     titlePrefix: overrides.titlePrefix,
@@ -1307,7 +1308,7 @@ describe("InfoCardComponent", () => {
 
   // ── Compact layout specifics ──────────
 
-  describe("compact layout specifics", () => {
+  describe("Form Card layout specifics", () => {
     it("shows Contact section header when phones/email present", () => {
       const data = makeData({
         phones: [makeField({ label: "Phone", value: "+1555", rawValue: "+1555" })],
@@ -1351,6 +1352,47 @@ describe("InfoCardComponent", () => {
       expect(container.textContent).toContain("2h 30m");
     });
 
+    it("protects address and grid labels from mid-word wrapping while allowing values to wrap", () => {
+      const data = makeData({
+        address: makeField({ slotKey: "addressField", label: "Address", value: "3 Fictional Workshop Road\nExampleland" }),
+        gridFields: [makeField({ slotKey: "gridField1", label: "Serial Number", value: "LONG-DEMONSTRATION-IDENTIFIER-123456789" })],
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact" })} />,
+      );
+      for (const slot of ["addressField", "gridField1"]) {
+        const row = container.querySelector(`[data-automation-id="infocard-${slot}"]`) as HTMLElement;
+        const label = row.children[0] as HTMLElement;
+        const value = row.children[1] as HTMLElement;
+        expect(label.style.wordBreak).toBe("normal");
+        expect(label.style.overflowWrap).toBe("normal");
+        expect(value.style.minWidth).toBe("0");
+        expect(value.style.overflowWrap).toBe("anywhere");
+        expect(value.style.whiteSpace).toBe("pre-wrap");
+      }
+      expect(container.textContent).toContain("3 Fictional Workshop Road\nExampleland");
+    });
+
+    it("wraps long contact links without changing their destinations", () => {
+      const email = "fictional.demonstration.contact.with.a.long.name@example.com";
+      const web = "https://example.com/fictional-demonstration-path-with-a-long-identifier";
+      const data = makeData({
+        phones: [makeField({ slotKey: "phoneField1", label: "Phone", value: "+1 202 555 0103" })],
+        email: makeField({ slotKey: "emailField", label: "Email", value: email }),
+        web: makeField({ slotKey: "webField", label: "Website", value: web }),
+      });
+      const { container } = render(
+        <InfoCardComponent {...makeProps({ data, layout: "compact" })} />,
+      );
+      const destinations = { phoneField1: "tel:+12025550103", emailField: `mailto:${email}`, webField: web };
+      for (const [slot, destination] of Object.entries(destinations)) {
+        const link = container.querySelector(`[data-automation-id="infocard-action-${slot}"]`) as HTMLAnchorElement;
+        expect(link.getAttribute("href")).toBe(destination);
+        expect(link.style.minWidth).toBe("0");
+        expect(link.style.overflowWrap).toBe("anywhere");
+      }
+    });
+
     it("renders compact info as an inline bold label followed by naturally wrapping text", () => {
       const data = makeData({
         details: [makeField({ slotKey: "detailField1", label: "Work Order Summary", value: "Long narrative text" })],
@@ -1366,6 +1408,8 @@ describe("InfoCardComponent", () => {
       expect(row.textContent).toBe("Work Order Summary: Long narrative text");
       expect(row.style.display).toBe("block");
       expect(label!.style.fontWeight).toBe("600");
+      expect(label!.style.display).toBe("inline-block");
+      expect(label!.style.overflowWrap).toBe("normal");
       expect(content.style.textAlign).toBe("left");
       expect(content.style.wordBreak).toBe("normal");
       expect(content.style.overflowWrap).toBe("anywhere");
@@ -1474,6 +1518,58 @@ describe("InfoCardComponent", () => {
   // ── resolveRecordFields React integration ──
 
   describe("resolveRecordFields callback", () => {
+    it.each(["smart", "contact", "compact"] as LayoutMode[])(
+      "renders Detail/Grid labels without changing live bound values in %s", async (layout) => {
+        const data = makeData({
+          details: [makeField({ slotKey: "detailField1", label: "Detail 1", value: "Unsaved service notes" })],
+          gridFields: [
+            makeField({ slotKey: "gridField1", label: "Grid 1", value: "$99.00" }),
+            makeField({ slotKey: "gridField2", label: "Grid 2", value: "42" }),
+          ],
+        });
+        const props = makeProps({
+          data, layout, detailLabelStyle: "above",
+          resolveRecordFields: jest.fn().mockResolvedValue({
+            detailField1: { label: "Description", value: "" },
+            gridField1: { label: "Annual Revenue", value: "" },
+            gridField2: { label: "Number of Employees", value: "" },
+          }),
+        });
+        const { container, rerender } = render(<InfoCardComponent {...props} />);
+        await waitFor(() => {
+          expect(container).toHaveTextContent(/Description/i);
+          expect(container).toHaveTextContent(/Annual Revenue/i);
+          expect(container).toHaveTextContent(/Number of Employees/i);
+        });
+        expect(container).not.toHaveTextContent(/Detail 1|Grid [12]/i);
+        expect(container).toHaveTextContent("Unsaved service notes");
+        expect(container).toHaveTextContent("$99.00");
+        rerender(<InfoCardComponent {...props} data={{
+          ...data, gridFields: [makeField({ slotKey: "gridField1", label: "Grid 1", value: "$101.00" })],
+        }} />);
+        expect(container).toHaveTextContent("$101.00");
+        expect(container).not.toHaveTextContent("$99.00");
+      },
+    );
+
+    it("refreshes and clears labels when the label-column configuration changes", async () => {
+      const resolveMock = jest.fn().mockResolvedValueOnce({
+        gridField1: { label: "Revenue", value: "" },
+      }).mockResolvedValueOnce({});
+      const props = makeProps({
+        layout: "compact", recordFieldsKey: "revenue",
+        data: makeData({ gridFields: [makeField({ slotKey: "gridField1", label: "Grid 1", value: "42" })] }),
+        resolveRecordFields: resolveMock,
+      });
+      const { container, rerender } = render(<InfoCardComponent {...props} />);
+      await waitFor(() => expect(container).toHaveTextContent(/Revenue/i));
+      rerender(<InfoCardComponent {...props} recordFieldsKey="no-label-hint" />);
+      await waitFor(() => expect(resolveMock).toHaveBeenCalledTimes(2));
+      expect(container).not.toHaveTextContent(/Revenue/i);
+      expect(container).toHaveTextContent(/Grid 1/i);
+      expect(container).toHaveTextContent("42");
+    });
+
     it("applies label and value overrides to grid fields", async () => {
       const resolveMock = jest.fn().mockResolvedValue({
         gridField1: { label: "Start Time", value: "3/30/2026 9:00 AM" },

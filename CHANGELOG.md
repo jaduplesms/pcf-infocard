@@ -4,7 +4,57 @@ All notable changes to the InfoCard PCF control are documented in this file.
 
 The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased — v4.3.0 (in progress on `main`)
+## 4.4.23-alpha.1
+
+**Prerelease sample for evaluation, not production acceptance.** The control
+and solution use numeric versions `4.4.23` and `4.4.23.0`; the GitHub tag
+identifies this build as alpha.
+
+### Validation limits
+- Deployment of 4.4.23 was rejected because another solution uninstall was running; clean managed-import and live currency/form-flag verification remain pending.
+- Physical-device testing of the previously deployed 4.4.22 was reported successful for InfoCard rendering offline, except for an intermittent missing `msdyn_fieldservicesettings` error. The exported lab profile omits that table; the originating request is not yet identified. This does not validate 4.4.23 or an error-free reconnect/sync journey.
+- Workbench's mock currency shim can report PASS while displaying raw numeric values. Currency regression tests cover the missing-host-formatting branch; actual host currency/locale verification remains pending.
+
+### Added
+- Optional `fieldLabelColumns` configuration resolves localized Detail and Grid labels when the host omits column identity, without changing existing field bindings or values.
+
+### Fixed
+- Currency inputs without a host-formatted value use the platform currency formatter instead of displaying raw numbers, while preserving supplied formatting and current edits.
+- Cleared the form-level read-only flags on the optional development sample's InfoCard placements. The control remains display-only; shipping control-only packages do not modify customer forms.
+- Genuine metadata labels such as Description are no longer discarded when they match the readable logical-name fallback.
+- Record-field labels refresh after mapping changes, and stale asynchronous responses cannot populate another record or configuration.
+
+### Changed
+- Renamed Compact Form to **Form Card**, retaining the `compact` configuration value. Labels wrap at word boundaries while long values wrap within their available column.
+- Release builds produce verified, versioned managed and unmanaged control-only packages with SHA-256 checksums, without editing the shipping solution manifest.
+- CI uses Node.js 22, production builds, and solution package validation; version tags create draft releases for manual review.
+- Public harness scenarios and test fixtures use fictional mock-only records. Local Dataverse records, metadata, and Workbench caches stay ignored.
+- Clarified installation, local mock setup, external-link behavior, and release acceptance requirements for the unsupported MIT sample.
+
+## 4.4.21 — 2026-08-28
+
+### Added
+- **Current-record related syntax** — `@.fieldName` and `@.lookup.field` fetch from the form record, including otherwise unbindable Duration, Status, Owner, Customer, and similar columns.
+- **Title-lookup preset expansion** — a lookup-bound `titleField` can auto-fill unconfigured slots from the target entity's `SLOT_PRESETS` definition.
+- **Maker binding diagnostics** — authoring mode warns about empty/inefficient `@` and `@.` expressions while keeping runtime network calls suppressed.
+- **Stable automation selectors** — card, slot, action, copy, image, and version elements expose localization-independent `data-automation-id` values.
+- **Dataverse image-column support** — raw PNG/JPEG base64 image values are normalized to data URIs for direct, preset, and related-field paths.
+
+### Changed
+- **Contact layout redesigned as a vCard/business card** — stacked subtitles, business hierarchy, top-right 48 px image, postal address block, and icon-only Call/Email/Map/Web actions.
+- **Mobile and keyboard hardening** — contact actions use 44×44 touch targets; collapsible cards have a visible token-based focus ring.
+- **Modern theming** — runtime colors and typography use Fluent theme tokens with the existing safe fallback.
+- **Related-field requests are batched** into combined `$select`/`$expand` reads per source record, with per-column and hop-two fallbacks where Dataverse rejects a combined query.
+- **Async result protection** prevents stale related/current-record/override responses from replacing newer render state.
+- **Grid/date presentation** uses locale-formatted date/time parts, improved labels, time-first ordering, and safer wrapping in Compact layout.
+
+### Fixed
+- Static `@` input properties no longer get discarded when their attribute metadata is empty.
+- Lookup fields returned as sparse navigation objects fall back to lookup primitives instead of rendering `[object Object]` or blank values.
+- Duration fields are detected through metadata and logical-name heuristics when hosts omit `IntegerAttributeMetadata.Format`.
+- Late sparse record-resolution passes merge with earlier overrides instead of erasing labels and values.
+
+## 4.3.0 — 2026-05-08
 
 ### Added
 - **Show / hide detail icons** — new `showDetailIcons` config property (TwoOptions, default `true`). When `false`, the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, 📅 dates, etc.) on Smart and Contact detail rows is suppressed and only the value text renders. No effect on Compact layout (which uses label:value format).
@@ -20,7 +70,7 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - `InfoCardControl/InfoCard/metadata.json` is no longer tracked. It is harness-only (PCF Workbench display labels), is not imported by tests, and tended to leak environment-specific custom-prefix columns. Generate one locally if you want richer labels in the workbench; an entry in `.gitignore` keeps any local copy out of commits.
 - `InfoCardControl/InfoCard/EntityDefinitions_*.json` — unused dev-time exports — removed from the repo and added to `.gitignore`.
 
-## Unreleased — v4.2.0 (in progress on `main`)
+## 4.2.0 — 2026-05-07
 
 ### Added
 - **Configurable collapsible sections** — new `collapsibleSections` enum config property lets makers choose what disappears when the card collapses: `none` (collapse disabled, no chevron), `body` (details + grid — default, preserves prior Smart-layout behaviour), `body-tags` (details + grid + tags), or `all` (everything below the header — contact rows, body, and tags). Applies to all three layouts; Contact and Compact layouts gain the chevron + whole-card click-to-toggle for the first time when set to anything other than `none`.
@@ -32,7 +82,7 @@ The project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - **Avatar default shape**: rounded rectangle (8 px) instead of circle. Set `imageShape="circle"` to restore prior look.
 - **No initials placeholder when `imageField` is unbound or empty.** Previously, leaving `imageField` blank rendered a coloured square with the record's initials. Now: no avatar renders at all unless an image URL is supplied. Initials still serve as the **fallback** when a supplied URL fails to load (e.g. 404). This matches customer expectation that "no image configured = no avatar."
 
-## Unreleased — v4.1.0 (in progress on `main`)
+## 4.1.0 — 2026-05-07
 
 ### Added
 - **Subtitle separator** is now configurable via the `subtitleSeparator` config property (default `·`). Makers can set any literal string (` • `, ` | `, etc.) in the form designer.

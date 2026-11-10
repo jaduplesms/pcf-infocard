@@ -6,7 +6,7 @@ name: PCF Build Loop
 #
 # What it does on every PR (and push to main):
 #   1. Builds your PCF control with `npm run build`.
-#   2. Clones PCF-Workbench, runs `pcf-harness loop` against the built bundle.
+#   2. Runs a pinned published PCF Workbench against the production bundle.
 #   3. Uploads report.json + screenshot.png as a workflow artifact.
 #   4. Posts a sticky comment on the PR with pass/fail + perf-budget summary.
 #   5. Fails the workflow (red ❌) if the loop reports `warn` or `fail`.
@@ -22,13 +22,18 @@ on:
       - '**/*.tsx'
       - '**/*.css'
       - '**/data.json'
+      - '**/test-scenarios.json'
+      - '**/package.json'
+      - '**/package-lock.json'
       - '.github/workflows/pcf-loop.yml'
+      - '.github/workflows/release.yml'
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
-  group: pcf-loop-${{ github.ref }}
+  group: pcf-loop-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -37,27 +42,38 @@ env:
   PCF_PROJECT_DIR: './InfoCardControl'
   # Control dir (the one containing ControlManifest.Input.xml).
   PCF_CONTROL_DIR: './InfoCardControl/InfoCard'
-  # Pin a known-good Workbench commit (or use 'main'). Pinning protects you
-  # from upstream changes; bump deliberately.
-  PCF_WORKBENCH_REF: 'main'
+  # Pin the published Workbench version; bump deliberately.
+  PCF_WORKBENCH_VERSION: '1.2.0'
   # ───────────────────────────────────────────────────────────────────────
 
 jobs:
   loop:
-    name: AI Build Loop
+    name: Build loop (${{ matrix.id }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: smart
+            scenario: 'MOCK: Booking related fields'
+          - id: contact
+            scenario: 'MOCK: Contact image and collapse'
+          - id: compact
+            scenario: 'MOCK: Work order Form Card'
+          - id: offline
+            scenario: 'MOCK: Collapsed offline booking'
     permissions:
       contents: read
       pull-requests: write
     steps:
       - name: Checkout PCF project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install Linux system deps (libsecret for keytar)
         run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev
@@ -68,48 +84,47 @@ jobs:
 
       - name: Build PCF control
         working-directory: ${{ env.PCF_PROJECT_DIR }}
-        run: npm run build
-
-      - name: Clone PCF Workbench
-        run: |
-          git clone --depth=1 --branch "${PCF_WORKBENCH_REF}" \
-            https://github.com/jaduplesms/PCF-Workbench /tmp/pcfwb
-
-      - name: Install Workbench deps
-        working-directory: /tmp/pcfwb/harness
-        run: npm ci
+        run: npm run build -- --buildMode production
 
       - name: Install Playwright Chromium
-        working-directory: /tmp/pcfwb/harness
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx --yes --package "@pcfworkbench/cli@${PCF_WORKBENCH_VERSION}" \
+            --package @fluentui/react-icons@2.0.327 playwright install --with-deps chromium
 
       - name: Run AI build loop
         id: loop
-        working-directory: /tmp/pcfwb/harness
+        working-directory: ${{ runner.temp }}
         run: |
-          npm run harness -- loop \
+          npx --yes --package "@pcfworkbench/cli@${PCF_WORKBENCH_VERSION}" \
+            --package @fluentui/react-icons@2.0.327 pcfworkbench loop \
             --path "${GITHUB_WORKSPACE}/${PCF_CONTROL_DIR}" \
             --skip-build \
-            --out "${GITHUB_WORKSPACE}/pcf-loop-reports"
+            --timeout 300000 \
+            --scenario "${{ matrix.scenario }}" \
+            --out "${GITHUB_WORKSPACE}/pcf-loop-reports/${{ matrix.id }}"
         continue-on-error: true
 
       - name: Upload report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pcf-loop-reports
+          name: pcf-loop-reports-${{ matrix.id }}
           path: pcf-loop-reports/
           retention-days: 30
 
       - name: Post PR comment
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && always()
         uses: actions/github-script@v7
+        env:
+          SCENARIO_ID: ${{ matrix.id }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
 
-            const reportPath = path.join('pcf-loop-reports', 'report.json');
+            const scenarioId = process.env.SCENARIO_ID;
+            const marker = `<!-- pcf-build-loop-${scenarioId} -->`;
+            const reportPath = path.join('pcf-loop-reports', scenarioId, 'report.json');
             if (!fs.existsSync(reportPath)) {
               core.warning('report.json not found, skipping PR comment');
               return;
@@ -153,8 +168,8 @@ jobs:
               `${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = [
-              `<!-- pcf-build-loop -->`,
-              `### 🤖 PCF Build Loop — ${icon[status]} ${status.toUpperCase()}`,
+              marker,
+              `### 🤖 PCF Build Loop (${scenarioId}) — ${icon[status]} ${status.toUpperCase()}`,
               ``,
               `**${headline}**`,
               ``,
@@ -175,7 +190,7 @@ jobs:
               issue_number: context.issue.number,
             });
             const existing = comments.find(c =>
-              c.user.type === 'Bot' && c.body?.includes('<!-- pcf-build-loop -->')
+              c.user.type === 'Bot' && c.body?.includes(marker)
             );
 
             if (existing) {

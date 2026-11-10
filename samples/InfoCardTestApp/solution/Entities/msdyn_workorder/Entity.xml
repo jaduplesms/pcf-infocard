@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Entity>
+ <Name LocalizedName="msdyn_workorder" OriginalName="">msdyn_workorder</Name>
+ <EntityInfo>
+  <entity Name="msdyn_workorder" unmodified="1">
+   <attributes />
+  </entity>
+ </EntityInfo>
+ <FormXml />
+ <RibbonDiffXml />
+</Entity>

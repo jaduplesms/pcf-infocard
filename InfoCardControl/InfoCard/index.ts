@@ -9,7 +9,7 @@ import * as React from "react";
 
 // IMPORTANT: keep in sync with manifest version in ControlManifest.Input.xml.
 // Bump both together on every deploy (mobile aggressively caches by manifest version).
-const CONTROL_VERSION = "4.4.21";
+const CONTROL_VERSION = "4.4.23";
 
 /**
  * Column-name heuristic for Whole.Duration columns. Some Dataverse hosts don't
@@ -30,6 +30,7 @@ function isLikelyDurationColumn(colName: string | undefined): boolean {
 // formatInteger consistently across hosts, so we narrow it ourselves and
 // guard every call.
 interface MaybeFormatting {
+    formatCurrency?: ComponentFramework.Formatting["formatCurrency"];
     formatDateShort?: (d: Date, includeTime?: boolean) => string;
     formatTime?: (d: Date, behavior?: number) => string;
     formatInteger?: (n: number) => string;
@@ -290,6 +291,7 @@ const SLOT_PRESETS: Record<string, SlotPreset> = {
 
 interface ColumnMeta {
     displayName: string;
+    hasDisplayName: boolean;
     logicalName: string;
     /** Format hint from metadata (e.g. "duration", "phone", "email"). Lowercased. */
     format?: string;
@@ -318,13 +320,10 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
     // Entity metadata cache for bound field labels + option set resolution
     private _columnMetadata: Record<string, ColumnMeta> = {};
     private _slotToColumn: Record<string, string> = {};
+    private _fieldLabelColumns: Record<string, string> = {};
+    private _recordFieldsKey = "";
     private _resolvedValues: Record<string, string> = {};
-    // Tracks slots whose column mapping originated from SLOT_PRESETS (vs. maker
-    // binding via attributes.LogicalName, vs. value-matching at runtime). Used by
-    // the override-merger to decide whether to surface the real column DisplayName
-    // ("Start Time") or fall back to a generic slot label ("Grid 1") — value-matched
-    // slots get generic labels so the row labels stay consistent across slots that
-    // happen to match vs. ones that don't.
+    // Preset slots can use readable column labels even when metadata has no display name.
     private _presetSlots: Set<string> = new Set();
     // Colors resolved from lookup entity records
     private _resolvedColors: Record<string, string> = {};
@@ -398,6 +397,14 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         const formatting = getFormatting(context);
         this._strings = strings;
         this._formatting = formatting;
+        this._fieldLabelColumns = this.readFieldLabelColumns(context.parameters.fieldLabelColumns?.raw);
+        const recordFieldsKey = JSON.stringify([this._formEntityName, this._formRecordId, this._fieldLabelColumns]);
+        if (recordFieldsKey !== this._recordFieldsKey) {
+            this._slotToColumn = {};
+            this._resolvedValues = {};
+            this._resolvedColors = {};
+            this._recordFieldsKey = recordFieldsKey;
+        }
 
         const data = this.collectData(context, formatting, strings);
         const layout = this.resolveLayout(context);
@@ -482,6 +489,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             fetchRelatedData: this._isAuthoringMode ? undefined : this.boundFetchRelatedData,
             resolveRecordFields: (!designTime && !this._isAuthoringMode && this._formEntityName && this._formRecordId)
                 ? this.boundResolveRecordFields : undefined,
+            recordFieldsKey: this._recordFieldsKey,
             onOpenRecord,
             bindingDiagnostics,
             strings,
@@ -819,9 +827,14 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         }
 
         // Check if we resolved the column name from the record fetch
-        const resolvedColumn = this._slotToColumn[key] ?? logicalName;
+        const resolvedColumn = logicalName ?? this._fieldLabelColumns[key] ?? this._slotToColumn[key];
 
         const raw = param.raw;
+        if (!logicalName && this._fieldLabelColumns[key]) {
+            // Label hints must never become value bindings or overwrite unsaved form values.
+            delete this._slotToColumn[key];
+            delete this._resolvedValues[key];
+        }
 
         // Label fallback chain: displayName (from attrs) → metadata cache → formatted
         // logicalName from attrs → generic slot key. We deliberately do NOT use
@@ -878,6 +891,20 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         } else if (raw === null || raw === undefined) {
             isEmpty = true;
             displayValue = "---";
+        } else if (param.type === "Currency" && typeof raw === "number") {
+            const formatting = this._formatting ?? getFormatting(context);
+            if (formatted) {
+                displayValue = formatted;
+            } else if (formatting?.formatCurrency) {
+                try {
+                    displayValue = formatting.formatCurrency(raw, attrs?.Precision, attrs?.CurrencySymbol);
+                } catch (err) {
+                    console.warn("[InfoCard] Currency formatting unavailable:", err);
+                    displayValue = String(raw);
+                }
+            } else {
+                displayValue = resolvedValue || String(raw);
+            }
         } else if (resolvedValue) {
             // Use the formatted value from the WebAPI record (includes OptionSet labels, dates, etc.)
             displayValue = resolvedValue;
@@ -1114,11 +1141,15 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         context: ComponentFramework.Context<IInputs>,
     ): Promise<Record<string, { label: string; value: string; color?: string }>> {
         if (!this._formEntityName || !this._formRecordId) return {};
+        const resolutionKey = this._recordFieldsKey;
+        const entityName = this._formEntityName;
+        const recordId = this._formRecordId;
         const overrides: Record<string, { label: string; value: string; color?: string }> = {};
 
         try {
             // Fetch full record — includes formatted value annotations for all columns
-            const record = await context.webAPI.retrieveRecord(this._formEntityName, this._formRecordId);
+            const record = await context.webAPI.retrieveRecord(entityName, recordId);
+            if (resolutionKey !== this._recordFieldsKey) return {};
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const rec = record as Record<string, any>;
 
@@ -1137,6 +1168,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
             // are a sign of ambiguity and we refuse rather than guess.
             for (const key of ALL_SLOT_KEYS) {
                 if (this._slotToColumn[key]) continue;
+                if (this._fieldLabelColumns[key]) continue;
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const param = (context.parameters as Record<string, any>)[key];
                 if (!param || param.type === "Unknown") continue;
@@ -1208,17 +1240,27 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 .map(([k, v]) => `${k}→${v}${this._resolvedValues[k] ? ` (${this._resolvedValues[k]})` : ""}`).join(", "));
 
             // Fetch metadata for all discovered columns (labels + option set defs)
-            const allColumns = [...new Set(Object.values(this._slotToColumn))];
+            const labelColumns = Object.fromEntries(Object.entries(this._fieldLabelColumns).filter(([slotKey]) => {
+                const raw = context.parameters[slotKey as keyof IInputs]?.raw;
+                return !this._slotToColumn[slotKey] && !(typeof raw === "string" && raw.startsWith("@"));
+            }));
+            const allColumns = [...new Set([
+                ...Object.values(this._slotToColumn),
+                ...Object.values(labelColumns),
+            ])];
             if (allColumns.length > 0) {
                 try {
-                    const metadata = await context.utils.getEntityMetadata(this._formEntityName!, allColumns);
+                    const metadata = await context.utils.getEntityMetadata(entityName, allColumns);
+                    if (resolutionKey !== this._recordFieldsKey) return {};
                     if (metadata?.Attributes) {
                         for (const attr of metadata.Attributes.getAll()) {
                             const logName = attr.LogicalName;
                             if (!logName) continue;
+                            const displayName = this.extractDisplayNameFromMeta(attr.DisplayName);
                             const entry: ColumnMeta = {
                                 logicalName: logName,
-                                displayName: this.extractDisplayNameFromMeta(attr.DisplayName) ?? this.formatLogicalName(logName),
+                                displayName: displayName ?? this.formatLogicalName(logName),
+                                hasDisplayName: !!displayName,
                             };
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const attrAny = attr as Record<string, any>;
@@ -1265,7 +1307,10 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                     }
                     console.log("[InfoCard] Bound field labels:", Object.entries(this._slotToColumn)
                         .map(([k, col]) => `${k}→"${this._columnMetadata[col]?.displayName ?? col}"`).join(", "));
-                } catch { /* metadata is optional */ }
+                } catch (err) {
+                    if (resolutionKey !== this._recordFieldsKey) return {};
+                    console.warn("[InfoCard] Field label metadata unavailable:", err);
+                }
             }
 
             // Resolve formatted values from the fetched record for slots bound via
@@ -1310,6 +1355,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 const ref = this.extractLookupRef(raw);
                 if (ref?.entityType && ref?.id) {
                     const color = await this.fetchLookupColor(context, ref.entityType, ref.id);
+                    if (resolutionKey !== this._recordFieldsKey) return {};
                     if (color) this._resolvedColors[key] = color;
                 }
             }
@@ -1334,8 +1380,7 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 // is the only way to learn the column. Without surfacing the
                 // metadata DisplayName here, every grid slot renders as
                 // "Grid 1/2/3" instead of "Start Time/End Time/Duration".
-                const hasMetadataDisplayName = !!meta?.displayName
-                    && meta.displayName !== this.formatLogicalName(colName);
+                const hasMetadataDisplayName = meta?.hasDisplayName === true;
                 const useRealLabel = hasMakerBinding
                     || this._presetSlots.has(slotKey)
                     || hasMetadataDisplayName;
@@ -1357,6 +1402,13 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
                 }
             }
 
+            for (const [slotKey, columnName] of Object.entries(labelColumns)) {
+                overrides[slotKey] = {
+                    label: this._columnMetadata[columnName]?.displayName ?? this.formatLogicalName(columnName),
+                    value: "",
+                };
+            }
+
             // Include tag colors even if the tag wasn't matched by value
             // (lookups like bookingstatus can't be matched via _column_value filtering)
             for (const key of TAG_KEYS) {
@@ -1374,6 +1426,29 @@ export class InfoCard implements ComponentFramework.ReactControl<IInputs, IOutpu
         } catch (err) {
             console.warn("[InfoCard] resolveRecordFields failed:", err);
             return overrides;
+        }
+    }
+
+    private readFieldLabelColumns(raw: string | null | undefined): Record<string, string> {
+        if (!raw?.trim()) return {};
+        try {
+            const parsed: unknown = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+                throw new Error("Field Label Columns must be a JSON object.");
+            }
+            const result: Record<string, string> = {};
+            const keys: readonly string[] = [...DETAIL_KEYS, ...GRID_KEYS];
+            for (const [key, value] of Object.entries(parsed)) {
+                if (!keys.includes(key) || typeof value !== "string" || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(value)) {
+                    console.warn(`[InfoCard] Invalid Field Label Columns mapping for "${key}"; ignored.`);
+                    continue;
+                }
+                result[key] = value;
+            }
+            return result;
+        } catch (err) {
+            console.warn("[InfoCard] Invalid Field Label Columns configuration:", err);
+            return {};
         }
     }
 

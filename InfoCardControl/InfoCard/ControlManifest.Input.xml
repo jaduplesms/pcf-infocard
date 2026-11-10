@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Sample" constructor="InfoCard"           version="4.4.21"
+  <control namespace="Sample" constructor="InfoCard"           version="4.4.23"
            display-name-key="InfoCard (Sample)"
            description-key="Compact read-only info card with slot-based layout. Bind to table columns or use related field syntax for entity data."
            control-type="virtual">
@@ -34,11 +34,11 @@
 
     <!-- CONFIG (12 properties) -->
     <property name="layout" display-name-key="Layout Mode"
-              description-key="Card layout. Smart = collapsible header summary with body on tap (best for mobile lists). Contact = full vCard-style block with action buttons. Compact = dense label:value form (closest to a classic form section)."
+              description-key="Card layout. Smart Card = collapsible header summary with body on tap (best for mobile lists). Contact Card = full vCard-style block with action buttons. Form Card = labelled read-only rows grouped into form-style sections."
               of-type="Enum" usage="input" required="false">
       <value name="smart"   display-name-key="Smart Card">smart</value>
       <value name="contact" display-name-key="Contact Card">contact</value>
-      <value name="compact" display-name-key="Compact Form">compact</value>
+      <value name="compact" display-name-key="Form Card">compact</value>
     </property>
     <property name="hideEmptyFields" display-name-key="Hide Empty Fields"
               description-key="Hide rows whose value is blank or ---. Recommended ON for mobile to keep cards tight. Default true."
@@ -69,7 +69,7 @@
       <value name="square"  display-name-key="Square">square</value>
     </property>
     <property name="collapsibleSections" display-name-key="Collapsible Sections"
-              description-key="Which card sections collapse when the maker / user taps the header. None disables collapse entirely (always fully visible). Body (default) collapses Detail rows + Grid fields — current Smart-layout behaviour. Body + Tags also hides tag chips. All hides everything below the header — contact rows, body, tags. Applies to all three layouts; Contact and Compact gain collapse for the first time when set to anything other than None."
+              description-key="Which card sections collapse when the maker / user taps the header. None disables collapse entirely (always fully visible). Body (default) collapses Detail rows + Grid fields — current Smart-layout behaviour. Body + Tags also hides tag chips. All hides everything below the header — contact rows, body, tags. Applies to Smart Card, Contact Card, and Form Card."
               of-type="Enum" usage="input" required="false">
       <value name="none"      display-name-key="None">none</value>
       <value name="body"      display-name-key="Body (Details + Grid)">body</value>
@@ -77,10 +77,10 @@
       <value name="all"       display-name-key="All (Below Header)">all</value>
     </property>
     <property name="showDetailIcons" display-name-key="Show Detail Icons"
-              description-key="Show the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, etc.) on Smart and Contact detail rows. Set to false when the maker prefers plain text rows or has chosen to show field labels via Detail Label Style. Default true. No effect on Compact layout (which uses label:value format)."
+              description-key="Show the auto-detected leading icon (✏️ instructions, 📋 summary, 📝 notes, etc.) on Smart and Contact detail rows. Set to false when the maker prefers plain text rows or has chosen to show field labels via Detail Label Style. Default true. No effect on Form Card (which uses label:value format)."
               of-type="TwoOptions" usage="input" required="false" />
     <property name="detailLabelStyle" display-name-key="Detail Label Style"
-              description-key="How to render the fields display name on Smart and Contact detail rows. None (default) shows only the value — current behaviour. Inline Bold prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) — reads like prose. Above renders the display name as a small caps heading on its own line above the value. No effect on Compact layout (which already shows labels)."
+              description-key="How to render the fields display name on Smart and Contact detail rows. None (default) shows only the value — current behaviour. Inline Bold prefixes the value with the bolded display name (e.g. **Instructions:** Access via back garden) — reads like prose. Above renders the display name as a small caps heading on its own line above the value. No effect on Form Card (which already shows labels)."
               of-type="Enum" usage="input" required="false">
       <value name="none"        display-name-key="None (Value Only)">none</value>
       <value name="inline-bold" display-name-key="Inline Bold">inline-bold</value>
@@ -170,6 +170,10 @@
     <property name="tagField3" display-name-key="Tag 3"
               description-key="Compact chip/pill badge (e.g. @msdyn_priority)."
               of-type-group="fieldTypes" usage="input" required="false" />
+
+    <property name="fieldLabelColumns" display-name-key="Field Label Columns"
+              description-key="Optional JSON mapping of Detail/Grid slot names to current-table column logical names when the host omits binding metadata. Example: {&quot;gridField1&quot;:&quot;revenue&quot;,&quot;detailField1&quot;:&quot;description&quot;}. Resolves localized labels only; existing values and bindings remain unchanged. Related-field expressions already resolve their own labels."
+              of-type="SingleLine.Text" usage="input" required="false" />
 
     <resources>
       <code path="index.ts" order="1"/>

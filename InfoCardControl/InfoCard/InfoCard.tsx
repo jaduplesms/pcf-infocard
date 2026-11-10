@@ -212,9 +212,9 @@ export interface InfoCardProps {
     imageShape?: "rounded" | "circle" | "square";
     /** Which sections collapse when the chevron is tapped. Default "body" (details + grid). "none" disables collapse entirely. */
     collapsibleSections?: "none" | "body" | "body-tags" | "all";
-    /** Show auto-detected leading icons on Smart/Contact detail rows. Default true. No effect on Compact. */
+    /** Show auto-detected leading icons on Smart/Contact detail rows. Default true. No effect on Form Card. */
     showDetailIcons?: boolean;
-    /** How to render the field's display name on Smart/Contact detail rows. Default "none". No effect on Compact. */
+    /** How to render the field's display name on Smart/Contact detail rows. Default "none". No effect on Form Card. */
     detailLabelStyle?: "none" | "inline-bold" | "above";
     /** Form factor from context.client.getFormFactor(): 0=mobile, 1=tablet, 2=web. Used to gate desktop-only affordances. */
     formFactor?: number;
@@ -228,6 +228,8 @@ export interface InfoCardProps {
     fetchRelatedData?: (entityType: string, id: string, columns: string[]) => Promise<Record<string, { value: string; label: string; lookupId?: string; lookupEntityType?: string; color?: string }>>;
     /** Resolves labels, formatted values, and colors for bound fields via record fetch + metadata */
     resolveRecordFields?: () => Promise<Record<string, { label: string; value: string; color?: string }>>;
+    /** Changes when the form record or label-column configuration changes. */
+    recordFieldsKey?: string;
     onOpenRecord?: (entityType: string, id: string) => void;
     bindingDiagnostics?: BindingDiagnostic[];
     /**
@@ -1861,10 +1863,10 @@ const ContactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 };
 
 // ════════════════════════════════════════════════════════════════════
-// Compact Card Layout
+// Form Card Layout
 // ════════════════════════════════════════════════════════════════════
 
-const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, formFactor }) => {
+const FormCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, showTitle = true, designTime, onOpenRecord, collapsed = false, isCollapsible = false, collapsibleSections, strings, subtitleSeparator, titlePrefix, formFactor }) => {
     const effectiveHideEmpty = designTime ? false : hideEmpty;
     const phones = filterEmpty(data.phones, effectiveHideEmpty);
     const email = data.email && (designTime || !data.email.isEmpty || data.email.isPending) ? data.email : null;
@@ -1882,7 +1884,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     const hideBody = collapsed && shouldCollapseSection(collapsibleSections, "body");
     const hideTags = collapsed && shouldCollapseSection(collapsibleSections, "tags");
 
-    // formFactor not used by Compact today, but kept in signature for parity.
+    // formFactor not used by Form Card today, but kept in signature for parity.
     void formFactor;
 
     const sectionHeaderStyle: React.CSSProperties = {
@@ -1897,14 +1899,30 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
     };
 
     const fieldRowStyle: React.CSSProperties = {
-        display: "flex",
-        justifyContent: "space-between",
+        display: "grid",
+        gridTemplateColumns: "fit-content(40%) minmax(0, 1fr)",
         alignItems: "baseline",
         padding: "2px 0",
         fontSize: theme.typography.body.fontSize,
         fontWeight: theme.typography.body.fontWeight,
         lineHeight: theme.typography.body.lineHeight,
         gap: 8,
+    };
+
+    const fieldLabelStyle: React.CSSProperties = {
+        color: theme.textMuted,
+        whiteSpace: "normal",
+        wordBreak: "normal",
+        overflowWrap: "normal",
+    };
+
+    const fieldValueStyle: React.CSSProperties = {
+        color: theme.textPrimary,
+        minWidth: 0,
+        textAlign: "right",
+        whiteSpace: "pre-wrap",
+        wordBreak: "normal",
+        overflowWrap: "anywhere",
     };
 
     const infoFieldRowStyle: React.CSSProperties = {
@@ -1918,7 +1936,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
 
     return (
         <div>
-            {/* Header — Compact omits avatar to preserve dense form-feel.
+            {/* Header — Form Card omits avatar to preserve form-feel.
                 When collapsible, wrap header + chevron in a flex row. */}
             {isCollapsible ? (
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -1948,8 +1966,8 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                     <div style={sectionHeaderStyle}>{strings.sectionContact}</div>
                     {address && (
                         <div data-automation-id={automationId(address, "addressField")} style={fieldRowStyle}>
-                            <span style={{ color: theme.textMuted }}>{address.label}</span>
-                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>
+                            <span style={fieldLabelStyle}>{address.label}</span>
+                            <span style={fieldValueStyle}>
                                 <ValueOrShimmer field={address} theme={theme} width="120px" />
                             </span>
                         </div>
@@ -1960,14 +1978,14 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                             data-automation-id={automationId(phone, `phoneField${i + 1}`)}
                             style={fieldRowStyle}
                         >
-                            <span style={{ color: theme.textMuted }}>{phone.label}</span>
+                            <span style={fieldLabelStyle}>{phone.label}</span>
                             {phone.isPending ? (
                                 <Shimmer theme={theme} width="100px" />
                             ) : (
                                 <a
                                     data-automation-id={`infocard-action-${phone.slotKey ?? `phoneField${i + 1}`}`}
                                     href={`tel:${String(phone.value).replace(/\s+/g, "")}`}
-                                    style={{ color: theme.brand, textDecoration: "none" }}
+                                    style={{ ...fieldValueStyle, color: theme.brand, textDecoration: "none" }}
                                     aria-label={formatTemplate(strings.actionCall, String(phone.value))}
                                 >
                                     {phone.value}
@@ -1977,14 +1995,14 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                     ))}
                     {email && (
                         <div data-automation-id={automationId(email, "emailField")} style={fieldRowStyle}>
-                            <span style={{ color: theme.textMuted }}>{email.label}</span>
+                            <span style={fieldLabelStyle}>{email.label}</span>
                             {email.isPending ? (
                                 <Shimmer theme={theme} width="130px" />
                             ) : (
                                 <a
                                     data-automation-id={`infocard-action-${email.slotKey ?? "emailField"}`}
                                     href={`mailto:${email.value}`}
-                                    style={{ color: theme.brand, textDecoration: "none" }}
+                                    style={{ ...fieldValueStyle, color: theme.brand, textDecoration: "none" }}
                                     aria-label={formatTemplate(strings.actionEmail, String(email.value))}
                                 >
                                     {email.value}
@@ -1994,13 +2012,13 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                     )}
                     {web && (
                         <div data-automation-id={automationId(web, "webField")} style={fieldRowStyle}>
-                            <span style={{ color: theme.textMuted }}>{web.label}</span>
+                            <span style={fieldLabelStyle}>{web.label}</span>
                             {web.isPending ? (
                                 <Shimmer theme={theme} width="130px" />
                             ) : (() => {
                                 const safeWeb = safeHttpUrl(web.value);
                                 if (!safeWeb) {
-                                    return <span style={{ color: theme.textMuted }}>{web.value}</span>;
+                                    return <span style={{ ...fieldValueStyle, color: theme.textMuted }}>{web.value}</span>;
                                 }
                                 return (
                                     <a
@@ -2008,7 +2026,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                                         href={safeWeb}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        style={{ color: theme.brand, textDecoration: "none" }}
+                                        style={{ ...fieldValueStyle, color: theme.brand, textDecoration: "none" }}
                                         aria-label={formatTemplate(strings.actionOpenWebsite, String(web.value))}
                                     >
                                         {web.value}
@@ -2030,8 +2048,8 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                             data-automation-id={automationId(field, `gridField${i + 1}`)}
                             style={fieldRowStyle}
                         >
-                            <span style={{ color: theme.textMuted }}>{field.label}</span>
-                            <span style={{ color: theme.textPrimary, textAlign: "right" }}>
+                            <span style={fieldLabelStyle}>{field.label}</span>
+                            <span style={fieldValueStyle}>
                                 <ValueOrShimmer field={field} theme={theme} width="100px" />
                             </span>
                         </div>
@@ -2051,7 +2069,7 @@ const CompactCardLayout: React.FC<LayoutProps> = ({ data, theme, hideEmpty, show
                         >
                             <span style={{ color: theme.textPrimary, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "normal", overflowWrap: "anywhere" }}>
                                 {field.label && (
-                                    <span style={{ fontWeight: theme.typography.inlineBoldLabel.fontWeight }}>
+                                    <span style={{ display: "inline-block", wordBreak: "normal", overflowWrap: "normal", fontWeight: theme.typography.inlineBoldLabel.fontWeight }}>
                                         {field.label}:{" "}
                                     </span>
                                 )}
@@ -2202,6 +2220,10 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
     const [isCardFocused, setIsCardFocused] = React.useState(false);
     const toggleCollapsed = React.useCallback(() => setCollapsed(c => !c), []);
 
+    React.useEffect(() => {
+        setRecordOverrides({});
+    }, [props.recordFieldsKey]);
+
     // Resolve bound field labels/values/colors via record fetch.
     // Multiple resolveRecordFields calls can occur per render cycle (callback
     // identity may change). Each call may return a SUBSET of the full override
@@ -2218,9 +2240,9 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
                 if (cancelled) return;
                 setRecordOverrides((prev) => ({ ...prev, ...next }));
             })
-            .catch(() => { /* optional */ });
+            .catch((err) => { console.warn("[InfoCard] Record-field resolution failed:", err); });
         return () => { cancelled = true; };
-    }, [props.resolveRecordFields]);
+    }, [props.resolveRecordFields, props.recordFieldsKey]);
 
     // Fetch title-entity related data
     React.useEffect(() => {
@@ -2545,7 +2567,7 @@ export const InfoCardComponent: React.FC<InfoCardProps> = (props) => {
             {isLoading && <TopProgressBar theme={theme} />}
             {layout === "smart" && <SmartCardLayout {...layoutProps} />}
             {layout === "contact" && <ContactCardLayout {...layoutProps} />}
-            {layout === "compact" && <CompactCardLayout {...layoutProps} />}
+            {layout === "compact" && <FormCardLayout {...layoutProps} />}
             {bindingDiagnostics && bindingDiagnostics.length > 0 && (
                 <DesignTimeBindingPanel diagnostics={bindingDiagnostics} theme={theme} />
             )}

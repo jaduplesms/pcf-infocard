@@ -4,6 +4,7 @@
  */
 
 import * as testData from "./test-data.json";
+import * as publicScenarios from "../test-scenarios.json";
 import {
     buildSchemaFromData,
     validateBindings,
@@ -238,7 +239,7 @@ describe("validateBindings()", () => {
     });
 
     describe("full scenario validation", () => {
-        it("validates the LIVE booking scenario from test-scenarios.json", () => {
+        it("validates a mock booking scenario", () => {
             const scenario: Record<string, string> = {
                 titleField: "$msdyn_workorder",
                 subtitleField1: "$resource",
@@ -268,6 +269,72 @@ describe("validateBindings()", () => {
 
             expect(validCount).toBeGreaterThan(0);
             // Some fields like msdyn_address1 may not be in the sample data — that's expected
+        });
+
+        describe("public mock harness assets", () => {
+            const metadata = publicScenarios.metadata as unknown as Record<string, {
+                primaryIdAttribute: string;
+                columns: Record<string, unknown>;
+            }>;
+
+            it("resolves every saved binding and lookup from scenario-local records", () => {
+                for (const scenario of publicScenarios.scenarios) {
+                    expect(scenario.dataSource).toBe("mock");
+                    const records = scenario.dataRecords as unknown as Record<string, Array<Record<string, unknown>>>;
+                    const schemas = buildSchemaFromData(records);
+                    const formEntity = scenario.pageContext.typeName;
+                    const titleEntity = resolveTitleEntity(scenario.propertyValues.titleField, formEntity, schemas);
+                    const results = validateBindings(
+                        scenario.propertyValues as unknown as Record<string, string>, schemas, formEntity, titleEntity,
+                    );
+                    expect(results.filter(result => !result.valid)).toEqual([]);
+                    expect(records[formEntity].some(record =>
+                        record[metadata[formEntity].primaryIdAttribute] === scenario.pageContext.entityId,
+                    )).toBe(true);
+
+                    for (const [entity, rows] of Object.entries(records)) {
+                        expect(metadata[entity]).toBeDefined();
+                        for (const row of rows) {
+                            for (const [key, value] of Object.entries(row)) {
+                                if (key.includes("@")) continue;
+                                const column = key.startsWith("_") && key.endsWith("_value") ? key.slice(1, -6) : key;
+                                expect(metadata[entity].columns[column]).toBeDefined();
+                                if (key.startsWith("_") && key.endsWith("_value") && value) {
+                                    const target = String(row[`${key}@Microsoft.Dynamics.CRM.lookuplogicalname`]);
+                                    expect(records[target]?.some(targetRow =>
+                                        targetRow[metadata[target].primaryIdAttribute] === value,
+                                    )).toBe(true);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            it("keeps public record ids synthetic and external links on example.com", () => {
+                function check(value: unknown, key = ""): void {
+                    if (Array.isArray(value)) {
+                        value.forEach(item => check(item));
+                    } else if (value && typeof value === "object") {
+                        for (const [name, item] of Object.entries(value)) check(item, name);
+                    } else if (typeof value === "string") {
+                        expect(value).not.toMatch(/https?:\/\/[^/\s"]*(?:dynamics\.com|sharepoint\.com)/i);
+                        if (/^(?:https?:\/\/)/.test(value)) expect(new URL(value).hostname).toBe("example.com");
+                        if (/email/i.test(key) && value && !value.startsWith("$") && !value.startsWith("@")) {
+                            expect(value).toMatch(/@example\.com$/);
+                        }
+                        if (/phone/i.test(key) && value && !value.startsWith("$") && !value.startsWith("@")) {
+                            expect(value).toMatch(/555-01\d{2}$/);
+                        }
+                        if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value)) {
+                            expect(value).toMatch(/^00000000-0000-0000-0000-000000000\d{3}$/);
+                        }
+                        expect(key).not.toMatch(/^(?:liveProfile|orgUrl|provenance)$/i);
+                    }
+                }
+                check(publicScenarios);
+                check(testData);
+            });
         });
     });
 });

@@ -8,7 +8,7 @@
     <Descriptions>
       <Description description="Reference Bookable Resource Booking form configuration for the InfoCard PCF control. Development sandbox — not for production use." languagecode="1033" />
     </Descriptions>
-    <Version>4.3.0</Version>
+    <Version>4.4.23.0</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>Sample</UniqueName>

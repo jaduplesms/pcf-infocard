@@ -9,7 +9,7 @@ A compact, read-only info card PCF control for Dynamics 365 and Power Apps model
 
 InfoCard uses a **slot-based architecture** where admins bind form fields to card zones (header, contact, address, details, grid, tags) directly in the form designer -- no code required. It supports **related entity field fetching** via `@fieldName` syntax, enabling data from lookup records to appear on the card without custom scripting.
 
-**Version:** 4.3.0 | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
+**Version:** 4.4.23-alpha.1 (control 4.4.23) | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
 
 > ⚠️ **This is a sample.** The control ships under the `Sample.InfoCard` namespace with publisher prefix `smp` so that it is obvious in your environment that this is reference code, not a vendor product. Before using in production, **re-namespace** the control to your own publisher (see [Re-namespacing for production](#re-namespacing-for-production)). No support, warranty, or SLA is offered.
 
@@ -17,44 +17,49 @@ InfoCard uses a **slot-based architecture** where admins bind form fields to car
 
 ## Layouts at a glance
 
-| Smart Card | Contact Card | Compact Form |
-|:---:|:---:|:---:|
-| <img src="docs/images/layout-smart.png" alt="Smart Card layout" width="260"> | <img src="docs/images/layout-contact.png" alt="Contact Card layout" width="260"> | <img src="docs/images/layout-compact.png" alt="Compact Form layout" width="260"> |
-| Action bar, 2-col grid, and icon+text detail rows. Whole-card collapse on tap | Default. Icon action buttons, icon+text detail rows, tag chips. Optional whole-card collapse | Section labels and label:value rows that preserve the form feel. Optional whole-card collapse |
+| Layout | Best for | Presentation |
+|--------|----------|--------------|
+| **Smart Card** | Mobile summaries and operational records | Action bar, two-column grid, icon/text details, and optional whole-card collapse |
+| **Contact Card** | People, accounts, and customer-facing records | vCard/business-card layout with stacked subtitles, top-right image, postal address, and 44×44 icon actions |
+| **Form Card** | Labelled read-only form sections | Section labels and wrapping label:value rows with optional whole-card collapse |
 
 ---
 
 ## Key Features
 
-- **3 layout modes** -- Smart Card, Contact Card, and Compact Form. All three support optional whole-card collapse.
-- **24 configurable slot properties** across 6 groups (header, contact, address, details, grid, tags), plus **12 config properties**
+- **3 layout modes** -- Smart Card, Contact Card, and Form Card. All three support optional whole-card collapse. Form Card retains the `compact` configuration value for existing form bindings.
+- **24 configurable slot properties** across 6 groups (header, contact, address, details, grid, tags), plus **13 config properties**
 - **Related entity data** via `@fieldName` (1-hop) and `@lookup.field` (2-hop chaining)
-- **Bound field or static value** per property -- use `$columnName` for bound fields or enter a literal value
+- **Current-record escape hatch** via `@.fieldName` and `@.lookup.field` for column types the PCF manifest cannot bind directly
+- **Bound field or static value** per property -- select "Bind to table column" in the form designer or enter a literal value (`$columnName` is a local test-scenario convention, not form-designer syntax)
 - **Localized** out of the box -- ships with English, German, French, Spanish, Italian, Dutch, and Japanese resource strings; falls back to the user's Dataverse UI language
 - **Fluent UI theme integration** -- automatically adapts to Power Apps modern theming (light/dark mode)
 - **Tappable action links** -- phone (`tel:`), email (`mailto:`), web (`https:`), and map links (lat/lng or address text)
 - **Copy-to-clipboard buttons** on phone, email, and address chips on web (form factor 2); hidden on mobile/tablet where `tel:`/`mailto:` is primary
 - **Avatar / image** -- configure `imageField` with a Dataverse image-column expression (`@.entityimage` for the current record or `@customimage` through the title lookup). Raw Dataverse base64 values render directly; URLs remain supported for compatibility
 - **Title prefix** -- optional muted-colour literal before the title (e.g. `Case: ACME-001`, `Work Order: WO-12345`)
-- **Configurable collapsible sections** -- choose what disappears when the card collapses: `none`, `body` (details + grid, default), `body-tags`, or `all`. Smart, Contact, and Compact layouts can all collapse
+- **Configurable collapsible sections** -- choose what disappears when the card collapses: `none`, `body` (details + grid, default), `body-tags`, or `all`. Smart Card, Contact Card, and Form Card can all collapse
 - **Detail row presentation** -- optionally suppress leading icons (`showDetailIcons=false`) and/or render the field's display name inline-bold or as a small caps heading (`detailLabelStyle`) so detail rows read like prose
 - **Duration auto-formatting** -- numeric minutes are automatically rendered as `Xh Xm`
 - **Lookup navigation** -- tap a lookup value to open the related record
 - **Offline support** -- works in Field Service Mobile with offline-enabled entities; uses `context.webAPI` so cached data is honoured when offline
 - **Auto-detect icons** -- address, phone, email, instructions, dates, and asset fields receive contextual icons (when `showDetailIcons` is on)
 - **Layout presets** -- 8 entities auto-populate sensible default slots when fields aren't manually bound (Work Order, Bookable Resource Booking, Account, Contact, Case, Customer Asset, Work Order Service Task, Agreement)
+- **Title-lookup preset expansion** -- when `titleField` is a lookup to a supported entity, unconfigured slots can auto-fill from that lookup target's preset
+- **Maker diagnostics** -- authoring mode shows syntax guidance for invalid or inefficient `@` / `@.` expressions and suppresses runtime fetches
+- **Batched related reads** -- fields from the same title/current record are requested in combined `$select`/`$expand` queries with layered fallbacks
 
 ---
 
 ## Slot Architecture
 
-InfoCard exposes 24 slot properties across 6 groups, plus 12 config properties. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
+InfoCard exposes 24 slot properties across 6 groups, plus 13 config properties. Each slot can be bound to a table column or configured with a static value. Empty slots are automatically hidden.
 
-### Config (12 properties)
+### Config (13 properties)
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `layout` | Enum | Card layout mode: `smart` (collapsible), `contact` (full), or `compact` (dense grid) |
+| `layout` | Enum | Card layout mode: `smart` (Smart Card), `contact` (Contact Card), or `compact` (Form Card; value retained for compatibility) |
 | `hideEmptyFields` | TwoOptions | Hide fields with no value (default: true) |
 | `showCardBorder` | TwoOptions | Show card border and shadow (default: true) |
 | `showVersionInfo` | TwoOptions | Show version badge in bottom-right corner (default: false) |
@@ -64,8 +69,9 @@ InfoCard exposes 24 slot properties across 6 groups, plus 12 config properties. 
 | `titlePrefix` | Text | Optional muted-colour literal rendered before the title (e.g. `Case: `, `Work Order: `) |
 | `imageShape` | Enum | Avatar / image shape: `rounded` (default, 8 px radius), `circle`, or `square` |
 | `collapsibleSections` | Enum | What collapses when the card is tapped: `none` (collapse off), `body` (details + grid, default), `body-tags`, or `all` (everything below the header) |
-| `showDetailIcons` | TwoOptions | Show auto-detected leading icons on Smart/Contact detail rows (default: true). No effect on Compact |
-| `detailLabelStyle` | Enum | Render the field's display name on Smart/Contact detail rows: `none` (value only, default), `inline-bold` (`**Label:** value`), or `above` (small caps heading on its own line). No effect on Compact |
+| `showDetailIcons` | TwoOptions | Show auto-detected leading icons on Smart/Contact detail rows (default: true). No effect on Form Card |
+| `detailLabelStyle` | Enum | Render the field's display name on Smart/Contact detail rows: `none` (value only, default), `inline-bold` (`**Label:** value`), or `above` (small caps heading on its own line). No effect on Form Card |
+| `fieldLabelColumns` | Text | Optional JSON mapping of Detail/Grid slots to current-table column logical names for localized labels when the host omits binding metadata. Changes labels only, not values or bindings |
 
 ### Header (5 properties)
 
@@ -112,6 +118,16 @@ InfoCard exposes 24 slot properties across 6 groups, plus 12 config properties. 
 | `gridField4` | Input | Key:value field in 2-column grid |
 | `gridField5` | Input | Key:value field in 2-column grid |
 | `gridField6` | Input | Key:value field in 2-column grid |
+
+### Detail and Grid field labels
+
+Some model-driven hosts omit the bound column name for input properties, especially numeric fields. If a bound slot shows `Detail 1` or `Grid 1`, set **Field Label Columns** to a static JSON value matching your existing column bindings:
+
+```json
+{"detailField1":"description","gridField1":"revenue","gridField2":"numberofemployees"}
+```
+
+InfoCard retrieves the columns' localized display names using the supported metadata API. The map never replaces bound values, including unsaved form values. Real binding metadata takes precedence; `@`/`@.` expressions already resolve labels from their source table and ignore these hints. Literal static values without a column mapping retain their slot-label fallback. If metadata is unavailable, explicit mappings fall back to readable logical names.
 
 ### Tags (3 properties)
 
@@ -193,7 +209,7 @@ The full map lives in `SLOT_PRESETS` in `InfoCardControl/InfoCard/index.ts`.
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (CI uses Node.js 22)
 - Power Platform CLI (`pac`) authenticated to your environment
 - .NET SDK (for building the solution package)
 
@@ -201,28 +217,32 @@ The full map lives in `SLOT_PRESETS` in `InfoCardControl/InfoCard/index.ts`.
 
 ```bash
 cd InfoCardControl
-npm install
-npm run build
+npm ci
+npm run build -- --buildMode production
 npm test
 ```
 
 ### Build the shipping solution package
 
 ```bash
-cd InfoCardSolution
-dotnet build /p:SolutionPackageType=Unmanaged   # produces bin/Debug/InfoCardSolution.zip (unmanaged)
-# To produce a managed package, flip <Managed>0</Managed> → <Managed>1</Managed> in
-# src/Other/Solution.xml then run:
-dotnet build /p:SolutionPackageType=Managed
+# From the repository root (PowerShell)
+.\scripts\Build-Release.ps1
+# artifacts\InfoCardSolution_4.4.23_unmanaged.zip
+# artifacts\InfoCardSolution_4.4.23_managed.zip
+# artifacts\SHA256SUMS_4.4.23.txt
 ```
 
 Both zips contain only the control under `Controls/smp_Sample.InfoCard/`.
+The script builds in production mode, verifies versions, managed flags and
+control-only contents, and leaves source manifests unchanged. Do not use the
+old, unversioned ZIPs from a previous local build. Once a release is published,
+download the versioned packages from [GitHub Releases](https://github.com/jaduplesms/pcf-infocard/releases).
 
 ### Import into a Dataverse environment
 
 ```bash
 pac auth create --url https://<your-org>.crm.dynamics.com
-pac solution import --path InfoCardSolution/bin/Debug/InfoCardSolution.zip --publish-changes
+pac solution import --path .\artifacts\InfoCardSolution_4.4.23_managed.zip --publish-changes
 ```
 
 After import, add the control to a form column via **Form designer → Components → Get more components → InfoCard (Sample)**.
@@ -233,7 +253,9 @@ After import, add the control to a form column via **Form designer → Component
 pac solution delete --solution-name InfoCardSample
 ```
 
-> Removing the solution removes the control. Ensure no live forms still reference `smp_Sample.InfoCard` before deleting.
+> Deleting the managed solution removes its control after dependent form references
+> are removed. Deleting an unmanaged solution removes only the solution container,
+> not the installed control. Back up and remove dependencies before uninstalling.
 
 ### Regenerate types after manifest changes
 
@@ -269,6 +291,23 @@ Your customer is then importing **your** solution — not a sample — and lifec
 
 Tested against PCF SDK 1.x, React 16.8, Fluent UI 9 (host-provided), TypeScript 4.9.
 
+### Compatibility and privacy limitations
+
+Current-record presets and `@.` syntax rely on host record-context metadata
+(`context.mode.contextInfo`); maker preview uses the undocumented
+`context.mode.isAuthoringMode` flag with a URL fallback. These integrations may
+change with the host and are not a supported-platform guarantee. Explicitly
+bound slots and title-lookup `@fieldName` mappings do not require current-record
+context. Validate the sample in your target environment before production use.
+
+The control has no custom authentication or telemetry service. Call, email,
+website and map actions invoke external applications; map links send the address
+or coordinates to Google Maps when clicked. Remote image URLs request the image
+host when rendered and may disclose network/record context. Prefer Dataverse
+image columns for offline use; external images and actions are not guaranteed
+offline. Do not include sensitive fields in a mobile offline profile on the
+assumption that field-level security will conceal them offline.
+
 ---
 
 ## UI automation selectors
@@ -287,16 +326,26 @@ Rendered fields expose stable, localization-independent `data-automation-id` att
 
 ## PCF Workbench
 
-InfoCard is compatible with the [PCF Workbench](https://github.com/jaduplesms/PCFBuilderFramework) dev harness, which provides a gallery-based development experience with network conditioning, device emulation, performance monitoring, and hot reload.
+InfoCard is compatible with [PCF Workbench](https://github.com/jaduplesms/PCF-Workbench), which provides device emulation, network conditioning, WebAPI mocking, scenarios, lifecycle diagnostics, and headless acceptance reports.
 
-To run InfoCard in the workbench:
+From `InfoCardControl`, build and launch the published CLI:
 
 ```bash
-cd PCFBuilderFramework/harness
-PCF_CONTROL_PATH="../PowerApps/PCFGallery/InfoCard/InfoCardControl/InfoCard" npx vite --port 8181
+npm run build
+npx @pcfworkbench/cli@latest start --path .\InfoCard --port 8181
 ```
 
-The workbench loads the control's `data.json` and `test-scenarios.json` files automatically. An optional `metadata.json` (Dataverse-style entity metadata, not checked in) can be placed alongside them to enrich the harness with display names and option-set labels — generate it from your own dev environment if you want richer labels in the workbench.
+For a headless build/render/report pass:
+
+```bash
+npx @pcfworkbench/cli@latest loop --path .\InfoCard --out .\pcf-loop-reports
+```
+
+The tracked `test-scenarios.json` contains standalone, fictional mock scenarios
+and metadata. Select one in the Scenarios panel. A local `data.json` or
+`metadata.json` may override/enrich the harness; both are ignored because they
+can contain environment-specific data. Do not commit live exports or include
+them in public screenshots or reports.
 
 ### Previewing authoring (designer) mode locally
 
@@ -316,8 +365,9 @@ InfoCard ships with mock data files that power both the PCF Workbench and the te
 
 | File | Purpose |
 |------|---------|
-| `data.json` | Mock entity records (contacts, accounts, bookings) for WebAPI simulation. Imported by the test suite. |
-| `test-scenarios.json` | Pre-configured property value sets for different form configurations (e.g., "Account - Mobile Form", "Work Order - Field Service"). Imported by the test suite. |
+| `tests/test-data.json` | Fictional entity records imported by the Jest suite. |
+| `test-scenarios.json` | Standalone mock-only scenarios with fictional records and metadata for PCF Workbench. |
+| `data.json`, `metadata.json` | Optional ignored, local-only harness overrides; not required by tests or included in releases. |
 
 Property values in test scenarios use the `$columnName` convention to indicate bound fields (e.g., `$telephone1` binds to the `telephone1` column).
 
@@ -342,6 +392,10 @@ Tests use Jest with jsdom, `@testing-library/react`, and mock `ComponentFramewor
 - Empty field hiding
 - Duration formatting
 - Collapsible card behavior
+- Dataverse image-column base64 normalization
+- vCard layout behavior, touch targets, focus states, and automation selectors
+- Authoring-mode samples and binding diagnostics
+- Stale async response protection
 
 ---
 
@@ -359,14 +413,17 @@ InfoCard/
       ControlManifest.Input.xml          # Property definitions (source of truth)
       index.ts                           # PCF lifecycle class
       InfoCard.tsx                       # React component (3 layout renderers)
-      data.json                          # Mock entity data for harness + tests
-      test-scenarios.json                # Pre-configured test scenarios for harness + tests
+      bindingValidator.ts                # @ / @. binding validation helpers
+      strings/                           # Localized PCF resources (7 languages)
+      test-scenarios.json                # Fictional mock harness scenarios + metadata
       thumbnail.jpg                      # Gallery thumbnail
       generated/
         ManifestTypes.d.ts               # Auto-generated types (do not edit)
       tests/
         index.test.ts                    # PCF lifecycle tests
         InfoCard.test.tsx                # React component tests
+        bindingValidator.test.ts         # Binding validation tests
+        test-data.json                   # Fictional Jest fixtures
   InfoCardSolution/                      # Dataverse solution wrapper
     InfoCardSolution.cdsproj             # Solution project file
     src/
@@ -374,13 +431,41 @@ InfoCard/
         Solution.xml                     # Solution definition
         Customizations.xml               # Solution customizations
         Relationships.xml                # Entity relationships
+  InfoCardSampleForm/                    # Development-only form binding sandbox
 ```
 
 ---
 
 ## Roadmap
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the prioritized list of v4.x, v5, and documentation items, including remaining customer-requested follow-ups (e.g. preferred geospatial-data-provider integration). Issues and PRs welcome.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the verified v4.4.21 baseline and the remaining candidate backlog. Issues and PRs welcome.
+
+## Release acceptance
+
+Before publishing a version, run `npm ci`, `npm run lint`, `npm test -- --ci`,
+and `npm run build -- --buildMode production` in `InfoCardControl`, then run
+`.\scripts\Build-Release.ps1` from the root. Run PCF Workbench's headless loop
+against fictional scenarios for each layout, including a mobile/offline case.
+CI also verifies managed and unmanaged solution packages.
+
+Local tests and the mock harness do not prove Dataverse import, live metadata,
+or mobile offline compatibility. Import the managed package into a disposable
+test environment; check all layouts, lookup navigation, keyboard/screen-reader
+behavior, slow-network errors, and real Field Service Mobile offline rendering.
+Record the environment/client versions and results before claiming support.
+Review translations with native speakers if shipping localized production use.
+
+Version tags (`v4.4.21`, for example) trigger a workflow that validates matching
+versions and creates a **draft**, not a published release, with both packages
+and checksums. Review the changelog, acceptance evidence and assets before
+manually publishing. Never publish local exports, debug reports or the
+development-only `InfoCardSampleForm` solution.
+
+Alpha tags such as `v4.4.23-alpha.1` use the matching numeric control version
+(`4.4.23`) and create prerelease drafts. An alpha may disclose pending live
+acceptance, but must pass the automated build, tests, package checks and mock
+layout gates. It is not production-ready or a claim that live/offline gates
+have passed; see the changelog for the exact validation limits.
 
 ---
 

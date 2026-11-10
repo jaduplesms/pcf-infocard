@@ -1,0 +1,64 @@
+name: Draft release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    uses: ./.github/workflows/pcf-loop.yml
+    permissions:
+      contents: read
+      pull-requests: write
+
+  release:
+    needs: acceptance
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: InfoCardControl/package-lock.json
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - name: Install dependencies
+        working-directory: InfoCardControl
+        run: npm ci
+      - name: Lint
+        working-directory: InfoCardControl
+        run: npm run lint
+      - name: Audit production dependencies
+        working-directory: InfoCardControl
+        run: npm audit --omit=dev
+      - name: Test
+        working-directory: InfoCardControl
+        run: npm test -- --ci --runInBand
+      - name: Build and verify packages against tag
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^v(?<controlVersion>\d+\.\d+\.\d+)(?:-alpha\.\d+)?$') {
+            throw 'Expected vX.Y.Z or vX.Y.Z-alpha.N.'
+          }
+          .\scripts\Build-Release.ps1 -ExpectedVersion $Matches.controlVersion
+      - name: Create draft with verified assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1).Split('-')[0]
+          $assets = @(
+            "artifacts/InfoCardSolution_${version}_managed.zip"
+            "artifacts/InfoCardSolution_${version}_unmanaged.zip"
+            "artifacts/SHA256SUMS_${version}.txt"
+          )
+          $prerelease = if ($env:GITHUB_REF_NAME -match '-alpha\.\d+$') { @('--prerelease') } else { @() }
+          gh release create $env:GITHUB_REF_NAME @assets @prerelease --draft --verify-tag --generate-notes --title "InfoCard $env:GITHUB_REF_NAME (sample)"
+          if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed.' }

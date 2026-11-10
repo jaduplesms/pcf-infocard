@@ -28,6 +28,7 @@ interface ContextOverrides {
   showCardBorder?: boolean;
   showVersionInfo?: boolean;
   relatedConfig?: string | null;
+  fieldLabelColumns?: string | null;
   fluentDesignLanguage?: Record<string, unknown>;
   contextInfo?: { entityTypeName: string; entityId: string };
   slots?: Record<string, SlotParamOverride>;
@@ -90,6 +91,7 @@ function createMockContext(overrides: ContextOverrides = {}): ComponentFramework
     showTitle: { raw: true },
     startExpanded: { raw: true },
     relatedConfig: { raw: overrides.relatedConfig ?? null },
+    fieldLabelColumns: { raw: overrides.fieldLabelColumns ?? null },
   };
 
   for (const key of allSlotKeys) {
@@ -718,6 +720,63 @@ describe("InfoCard PCF Lifecycle", () => {
 
       expect(result!.value).toBe("High");
       expect(result!.isEmpty).toBe(false);
+    });
+
+    it.each([
+      [2450000, "\u00a32,450,000.00"],
+      [0, "\u00a30.00"],
+      [-1234.5, "-\u00a31,234.50"],
+    ])("formats currency inputs without formatted values (%s)", (raw, expected) => {
+      const ctx = createMockContext({
+        fieldLabelColumns: '{"gridField1":"revenue"}',
+        slots: {
+          gridField1: { raw, type: "Currency" },
+          gridField2: { raw: 48, type: "Whole.None" },
+        },
+      });
+      const formatCurrency = jest.fn().mockReturnValue(expected);
+      ctx.formatting.formatCurrency = formatCurrency;
+      control.init(ctx, notifyOutputChanged);
+      const data = control.updateView(ctx).props.data;
+      expect(data.gridFields[0].value).toBe(expected);
+      expect(data.gridFields[0].rawValue).toBe(raw);
+      expect(data.gridFields[1].value).toBe("48");
+      expect(formatCurrency).toHaveBeenCalledWith(raw, undefined, undefined);
+    });
+
+    it("preserves host currency formatting and formats current edits instead of cached saved values", async () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+        webAPIMock: jest.fn().mockResolvedValue({
+          revenue: 42, "revenue@OData.Community.Display.V1.FormattedValue": "42.000 EUR",
+        }),
+        slots: {
+          gridField1: { raw: 99, type: "Currency", attributes: { LogicalName: "revenue", Precision: 3, CurrencySymbol: "EUR" } },
+          gridField2: { raw: 2450000, type: "Currency", formatted: "2.450.000,00 EUR" },
+        },
+      });
+      const formatCurrency = jest.fn().mockReturnValue("99.000 EUR");
+      ctx.formatting.formatCurrency = formatCurrency;
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      await asAny(control).resolveRecordFieldsAsync(ctx);
+      const data = control.updateView(ctx).props.data;
+      expect(data.gridFields.map((field: { value: string }) => field.value))
+        .toEqual(["99.000 EUR", "2.450.000,00 EUR"]);
+      expect(formatCurrency).toHaveBeenLastCalledWith(99, 3, "EUR");
+    });
+
+    it("reports formatter failures without hiding currency values", () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        const ctx = createMockContext({ slots: { gridField1: { raw: 99, type: "Currency" } } });
+        ctx.formatting.formatCurrency = jest.fn().mockImplementation(() => { throw new Error("Formatting failed"); });
+        control.init(ctx, notifyOutputChanged);
+        expect(control.updateView(ctx).props.data.gridFields[0].value).toBe("99");
+        expect(warn).toHaveBeenCalledWith("[InfoCard] Currency formatting unavailable:", expect.any(Error));
+      } finally {
+        warn.mockRestore();
+      }
     });
 
     it("handles lookup arrays (name present)", () => {
@@ -1611,6 +1670,151 @@ describe("InfoCard PCF Lifecycle", () => {
         ctx: ComponentFramework.Context<IInputs>,
       ) => Promise<Record<string, { label: string; value: string; color?: string }>>;
     }
+
+    it("keeps real metadata labels that equal the readable logical-name fallback", async () => {
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+        webAPIMock: jest.fn().mockResolvedValue({ description: "Service access notes", accountnumber: "AV-001" }),
+        metadataMock: jest.fn().mockResolvedValue(makeMetadataResponse([
+          { LogicalName: "description", DisplayName: "Description" },
+          { LogicalName: "accountnumber", DisplayName: "Accountnumber" },
+        ])),
+        slots: {
+          titleField: { raw: "Harbourview", attributes: { LogicalName: "name", DisplayName: "Name" } },
+          detailField1: { raw: "Service access notes" },
+          gridField1: { raw: "AV-001" },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.detailField1.label).toBe("Description");
+      expect(overrides.gridField1.label).toBe("Accountnumber");
+    });
+
+    it("uses explicit localized Detail/Grid labels without inferring bindings or replacing unsaved values", async () => {
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "description", DisplayName: "Beschreibung" },
+        { LogicalName: "revenue", DisplayName: "Jahresumsatz" },
+        { LogicalName: "numberofemployees", DisplayName: "Mitarbeiter" },
+      ]));
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+        fieldLabelColumns: '{"detailField1":"description","gridField1":"revenue","gridField2":"numberofemployees"}',
+        webAPIMock: jest.fn().mockResolvedValue({
+          description: "Saved notes", revenue: 42, numberofemployees: 42, customnumber: 42,
+          "revenue@OData.Community.Display.V1.FormattedValue": "$42.00",
+        }),
+        metadataMock,
+        slots: {
+          titleField: { raw: "Harbourview", attributes: { LogicalName: "name", DisplayName: "Name" } },
+          detailField1: { raw: "Unsaved notes" },
+          gridField1: { raw: 99, formatted: "$99.00", type: "Currency" },
+          gridField2: { raw: 42, type: "Whole.None" },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.detailField1).toEqual({ label: "Beschreibung", value: "" });
+      expect(overrides.gridField1).toEqual({ label: "Jahresumsatz", value: "" });
+      expect(overrides.gridField2).toEqual({ label: "Mitarbeiter", value: "" });
+      const data = control.updateView(ctx).props.data;
+      expect(data.details[0].value).toBe("Unsaved notes");
+      expect(data.gridFields.map((field: { value: string }) => field.value)).toEqual(["$99.00", "42"]);
+    });
+
+    it("discards stale metadata when a label mapping changes during resolution", async () => {
+      let finishMetadata!: (metadata: ReturnType<typeof makeMetadataResponse>) => void;
+      const metadataMock = jest.fn().mockImplementationOnce(() => new Promise((resolve) => {
+        finishMetadata = resolve;
+      })).mockResolvedValue(makeMetadataResponse([{ LogicalName: "numberofemployees", DisplayName: "Employees" }]));
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+        fieldLabelColumns: '{"gridField1":"revenue"}', metadataMock,
+        slots: {
+          titleField: { raw: "Harbourview" },
+          gridField1: { raw: 42, type: "Whole.None" },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const oldResolution = getResolve(control)(ctx);
+      await Promise.resolve();
+      ctx.parameters.fieldLabelColumns.raw = '{"gridField1":"numberofemployees"}';
+      control.updateView(ctx);
+      finishMetadata(makeMetadataResponse([{ LogicalName: "revenue", DisplayName: "Old revenue" }]));
+      expect(await oldResolution).toEqual({});
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.gridField1).toEqual({ label: "Employees", value: "" });
+      expect(control.updateView(ctx).props.data.gridFields[0].label).toBe("Employees");
+    });
+
+    it("gives actual bindings and related expressions precedence over label hints", async () => {
+      const metadataMock = jest.fn().mockResolvedValue(makeMetadataResponse([
+        { LogicalName: "description", DisplayName: "Description" },
+      ]));
+      const ctx = createMockContext({
+        contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+        fieldLabelColumns: '{"detailField1":"wrongcolumn","gridField1":"wrongcolumn"}',
+        metadataMock,
+        slots: {
+          titleField: { raw: "Harbourview", attributes: { LogicalName: "name", DisplayName: "Name" } },
+          detailField1: { raw: "Notes", attributes: { LogicalName: "description", DisplayName: "Description" } },
+          gridField1: { raw: "@.revenue" },
+        },
+      });
+      control.init(ctx, notifyOutputChanged);
+      control.updateView(ctx);
+      const overrides = await getResolve(control)(ctx);
+      expect(overrides.detailField1.label).toBe("Description");
+      expect(overrides.gridField1).toBeUndefined();
+      expect(metadataMock.mock.calls[0][1]).not.toContain("wrongcolumn");
+    });
+
+    it("retains static slot labels and readable mapped-column fallbacks when metadata fails", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      try {
+        const ctx = createMockContext({
+          contextInfo: { entityTypeName: "account", entityId: "aa111111-1111-1111-1111-111111111111" },
+          fieldLabelColumns: '{"gridField1":"annual_revenue"}',
+          metadataMock: jest.fn().mockRejectedValue(new Error("Offline metadata unavailable")),
+          slots: {
+            titleField: { raw: "Harbourview" },
+            gridField1: { raw: 42, type: "Currency" },
+            detailField1: { raw: "A literal static note" },
+          },
+        });
+        control.init(ctx, notifyOutputChanged);
+        control.updateView(ctx);
+        const overrides = await getResolve(control)(ctx);
+        expect(overrides.gridField1).toEqual({ label: "Annual Revenue", value: "" });
+        expect(overrides.detailField1).toBeUndefined();
+        expect(control.updateView(ctx).props.data.details[0].label).toBe("Detail 1");
+        expect(warn).toHaveBeenCalledWith("[InfoCard] Field label metadata unavailable:", expect.any(Error));
+      } finally {
+        warn.mockRestore();
+      }
+    });
+
+    it.each(["{", "null", "[]", '{"gridField1":42,"gridField99":"revenue","detailField1":"@description"}'])(
+      "reports invalid label configuration without changing values (%s)", async (fieldLabelColumns) => {
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+        try {
+          const ctx = createMockContext({
+            fieldLabelColumns,
+            slots: { titleField: { raw: "Harbourview" }, gridField1: { raw: 42, type: "Whole.None" } },
+          });
+          control.init(ctx, notifyOutputChanged);
+          const data = control.updateView(ctx).props.data;
+          expect(data.gridFields[0].value).toBe("42");
+          expect(data.gridFields[0].label).toBe("Grid 1");
+          expect(warn).toHaveBeenCalled();
+        } finally {
+          warn.mockRestore();
+        }
+      },
+    );
 
     it("resolves OptionSet label via metadata when slot is bound to a column", async () => {
       const webAPIMock = jest.fn().mockResolvedValue(BOOKING_RECORD);

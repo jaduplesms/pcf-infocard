@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: InfoCardControl
@@ -17,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [18]
+        node: [22]
     steps:
       - uses: actions/checkout@v6
 
@@ -34,8 +37,36 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
       - name: Build
-        run: npm run build
+        run: npm run build -- --buildMode production
 
       - name: Test
         run: npm test -- --ci
+
+  package:
+    name: Verify shipping solutions
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: InfoCardControl/package-lock.json
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+      - run: npm ci
+      - name: Build and inspect managed and unmanaged packages
+        working-directory: .
+        shell: pwsh
+        run: .\scripts\Build-Release.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shipping-solutions
+          path: artifacts/
+          if-no-files-found: error

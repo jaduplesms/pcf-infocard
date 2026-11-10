@@ -1,7 +1,12 @@
 {
-  "name": "pcf-project",
-  "version": "4.0.0",
-  "description": "Project containing your PowerApps Component Framework (PCF) control.",
+  "name": "pcf-infocard",
+  "private": true,
+  "version": "4.4.23",
+  "description": "Read-only InfoCard PCF sample for Dynamics 365 model-driven forms.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "pcf-scripts build",
     "clean": "pcf-scripts clean",

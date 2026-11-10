@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <CustomControls>
+    <CustomControl>
+      <Name>smp_Sample.InfoCard</Name>
+      <FileName>/Controls/smp_Sample.InfoCard/ControlManifest.xml</FileName>
+    </CustomControl>
+  </CustomControls>
 </ImportExportXml>

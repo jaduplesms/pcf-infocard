@@ -44,3 +44,8 @@ agency.toml
 
 # PCF Workbench harness data — may contain real Dataverse records; tests use tests/test-data.json instead
 InfoCardControl/InfoCard/data.json
+InfoCardControl/InfoCard/metadata.json
+.fluent-cache/
+.playwright-mcp/
+pcf-loop-reports/
+artifacts/
