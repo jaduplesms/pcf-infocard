@@ -7,6 +7,10 @@
 
 A compact, read-only info card PCF control for Dynamics 365 and Power Apps model-driven forms. Designed for Field Service Mobile technicians who spend excessive time scrolling through forms with many read-only fields, InfoCard consolidates the most important information into a single, tappable card.
 
+[![InfoCard Smart Card preview showing a work order with contact actions, an address, service instructions, and status tags.](docs/images/infocard-gallery.png)](docs/images/infocard-gallery.png)
+
+*Actual Smart Card screenshot with fictional sample data. [Full-size image for PCF Gallery](docs/images/infocard-gallery.png).*
+
 InfoCard uses a **slot-based architecture** where admins bind form fields to card zones (header, contact, address, details, grid, tags) directly in the form designer -- no code required. It supports **related entity field fetching** via `@fieldName` syntax, enabling data from lookup records to appear on the card without custom scripting.
 
 **Version:** 4.4.23-alpha.3 (control 4.4.23) | **Namespace:** Sample | **Publisher prefix:** smp | **Control type:** Virtual (React)
